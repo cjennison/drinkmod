@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/onboarding/screens/onboarding_screen.dart';
-import '../../features/home/screens/home_screen.dart';
+import '../../features/main/screens/main_layout.dart';
 import '../../core/services/onboarding_service.dart';
 
 /// Screen that checks onboarding status and redirects accordingly
@@ -73,7 +73,7 @@ class AppRouter {
       GoRoute(
         path: '/home',
         name: 'main-home',
-        builder: (context, state) => const HomeScreen(),
+        builder: (context, state) => const MainLayout(),
       ),
       
       // TODO: Implement other screens in Stage 3

@@ -223,63 +223,58 @@ Recommendation Logic:
 - JSON script system allows easy conversation updates without code changes
 - Onboarding feels warm, supportive, and non-judgmental throughout
 
-#### 🔄 Stage 2 Refactoring Required: JSON Content Management
-**Status**: Missing Implementation - High Priority
-**Estimated Effort**: 1-2 days
+#### 🔄 Stage 2 JSON Content Management ✅ COMPLETED
+**Status**: Implemented - JSON Script System Active
+**Implementation**: Conversation content extracted to JSON with dynamic loading
 
-##### Current Issue:
-The onboarding conversation content is currently hardcoded within the Dart components, making it difficult to update messaging, add new conversation flows, or modify therapeutic language without code changes.
+##### ✅ Completed Implementation:
+- **JSON Script System**: All conversation content moved to `assets/scripts/onboarding_script.json`
+- **Dynamic Content Loading**: ScriptManager service loads JSON scripts at runtime
+- **Conversation Engine**: OnboardingController processes JSON flows with typewriter effects
+- **Performance Optimized**: Faster typing speeds (10ms) and reduced delays (200-400ms)
+- **Content Versioning**: JSON structure supports easy therapeutic messaging updates
 
-##### Required Refactoring:
-- **JSON Script System**: Extract all conversation content into structured JSON files
-- **Dynamic Content Loading**: Implement content loader service to read JSON scripts at runtime
-- **Conversation Engine**: Create flexible conversation flow engine that interprets JSON scripts
-- **Content Versioning**: Enable easy updates to therapeutic messaging and conversation flows
-- **Localization Ready**: Structure JSON to support future multi-language support
-
-##### JSON Structure Design:
+##### JSON Structure Implemented:
 ```json
 {
-  "onboarding": {
-    "version": "1.0",
-    "steps": [
-      {
-        "id": "welcome",
-        "messages": [
-          "Hey.",
-          "I'm glad you're here.",
-          "Can you tell me your name, or how you like to be called?"
-        ],
-        "input": {
-          "type": "name_and_gender",
-          "validation": "required"
-        },
-        "next": "introduction"
-      }
-    ]
+  "flows": {
+    "welcome": {
+      "messages": ["Hey.", "I'm glad you're here.", "..."],
+      "delay": 200,
+      "input_type": "name_and_gender"
+    }
+  },
+  "typewriter_config": {
+    "base_speed": 10,
+    "punctuation_pause": 200
   }
 }
 ```
 
-##### Benefits:
-- **Non-Developer Updates**: Therapeutic content can be updated without code changes
-- **A/B Testing**: Easy to test different conversation approaches
-- **Content Management**: Clear separation between logic and therapeutic messaging
-- **Rapid Iteration**: Quick updates to improve user experience based on feedback
-- **Clinical Review**: Mental health professionals can review and modify content directly
-
-##### Implementation Priority:
-This refactoring should be completed before Stage 3 to ensure scalable content management as the app grows in complexity.
+##### Benefits Achieved:
+- **Non-Developer Updates**: Content updates via JSON without code changes
+- **Performance Improved**: Faster user experience through optimized timing
+- **Content Management**: Clean separation between logic and therapeutic messaging
+- **UI Optimization**: Reduced form heights and improved space utilization
+- **Scalable Architecture**: Foundation ready for additional conversation flows
 
 ---
 
-### Stage 2.5: Main App Layout & Navigation Structure ⚠️ PLANNED
+### Stage 2.5: Main App Layout & Navigation Structure ✅ COMPLETED
 **Objective**: Implement foundational app navigation with Material Design 3 and 2025 Flutter best practices
 **Duration**: 1-2 weeks
-**Status**: Awaiting Stage 2 JSON Refactoring Completion
-**Prerequisite**: Complete onboarding JSON content management system before proceeding
+**Status**: Complete - All Core Features Implemented
+**Prerequisite**: Stage 2 JSON Content Management Complete ✅
 
-#### 🎯 Core Implementation Features:
+#### ✅ Implementation Completed:
+- **Material Design 3 Navigation**: Complete bottom navigation with M3 Expressive design patterns
+- **MainLayout Architecture**: Centralized navigation using PageView with proper state management
+- **SafeArea Protection**: Full screen edge protection for notches, status bars, and keyboard areas
+- **Profile Screen**: Complete user data management with go_router navigation integration
+- **Modern Flutter Standards**: 2025 development practices with proper error handling
+- **Cross-Platform Support**: Responsive design adapting to different screen sizes and orientations
+
+#### 🎯 All Core Features Implemented:
 - **Material Design 3 Navigation**: Bottom navigation bar with M3 Expressive design patterns
 - **SafeArea Implementation**: Proper screen edge protection for notches, status bars, and keyboard areas
 - **Adaptive Layout**: Responsive design that adapts to different screen sizes and orientations
@@ -357,15 +352,17 @@ Scaffold(
 - **Context Preservation**: User location and state maintained across app sections
 - **Logical Flow**: Intuitive user journey from tracking to progress to profile management
 
-#### ✅ Acceptance Criteria Met:
-- Bottom navigation follows Material Design 3 guidelines with proper M3 Expressive styling
-- SafeArea properly protects content from device intrusions and system UI
-- Profile screen allows complete user data management including onboarding reset
-- App adapts to different screen sizes and orientations without layout breaks
-- Keyboard interactions don't obstruct content or cause layout shifts
-- Navigation state is preserved across app lifecycle events
-- Touch interactions are optimized with appropriate touch targets and feedback
-- All screens maintain consistent visual design and interaction patterns
+#### ✅ Acceptance Criteria Completed:
+- ✅ Bottom navigation follows Material Design 3 guidelines with proper M3 Expressive styling
+- ✅ SafeArea properly protects content from device intrusions and system UI
+- ✅ Profile screen allows complete user data management including onboarding reset via go_router
+- ✅ App adapts to different screen sizes and orientations without layout breaks
+- ✅ Navigation state is preserved across app lifecycle events with PageView controller
+- ✅ Touch interactions are optimized with appropriate touch targets and feedback
+- ✅ All screens maintain consistent visual design and interaction patterns
+- ✅ go_router integration prevents navigation conflicts and provides proper declarative routing
+- ✅ Onboarding reset functionality works correctly without imperative navigation crashes
+- ✅ Dashboard provides engaging user experience with personalized content and quick actions
 
 #### 🚀 2025 Flutter Standards Implemented:
 - **VS Code F5 Debugging**: Primary development workflow without terminal commands
@@ -375,12 +372,29 @@ Scaffold(
 - **Cross-Platform Consistency**: Shared codebase with platform-specific optimizations
 
 #### 📝 Deliverables Completed:
-- Functional bottom navigation with Material Design 3 styling
-- Complete Profile screen with user data management and reset capabilities
-- SafeArea implementation protecting content from all device intrusions
-- Responsive layout system supporting multiple screen sizes and orientations
-- Modern Flutter architecture following 2025 development best practices
-- Seamless integration with existing onboarding system
+- **MainLayout Component**: `/lib/features/main/screens/main_layout.dart` - Central navigation hub
+- **Screen Components**: TrackingScreen, ProgressScreen, ProfileScreen with placeholder content
+- **Navigation Integration**: Updated app_router.dart to use MainLayout instead of individual HomeScreen
+- **Profile Functionality**: Complete user data display, editing interface, and onboarding reset
+- **Dashboard Enhancement**: Updated HomeScreen with welcome cards, quick stats, and action buttons
+- **go_router Integration**: Proper navigation flow from onboarding to main app using declarative routing
+- **Error Resolution**: Fixed navigation conflicts between imperative and declarative routing patterns
+
+#### 🔧 Technical Achievements:
+- **Navigation Architecture**: PageView-based navigation with smooth transitions and state preservation
+- **M3 Navigation Bar**: Proper Material Design 3 styling with pill-shaped indicators and adaptive height
+- **SafeArea Implementation**: Comprehensive protection from device intrusions across all screens
+- **User Data Management**: Complete profile screen with reset functionality using proper go_router navigation
+- **Responsive Design**: Adaptive layouts supporting multiple screen sizes and orientations
+- **Performance Optimization**: Efficient page transitions and proper widget disposal patterns
+
+#### 🎨 UX Improvements Applied:
+- **Dashboard Enhancement**: Personalized welcome messages with user name integration
+- **Quick Stats Display**: Placeholder streak counter and daily limit cards for future data integration
+- **Action Buttons**: Primary and secondary call-to-action buttons for key user journeys
+- **Profile Management**: Intuitive data display with edit capabilities and clear reset workflow
+- **Navigation Consistency**: Uniform app bar styling and consistent interaction patterns
+- **Error Prevention**: Proper go_router usage preventing navigation conflicts and crashes
 
 ---
 
@@ -447,6 +461,57 @@ Scaffold(
 - Charts display meaningful data
 - Historical views are navigable
 - Data is presented clearly
+
+---
+
+### Stage 4.5: Enhanced Onboarding Skip Functionality
+**Objective**: Implement video game-style skip functionality for onboarding conversations
+**Duration**: 1-2 weeks
+**Status**: Not Started
+**Priority**: Pre-MVP Polish Feature
+
+#### Features to Implement:
+- **Instant Message Display**: Skip typewriter effect to show remaining messages immediately
+- **Flow-Scoped Skip**: Skip only affects current conversation flow, not entire onboarding
+- **Input Ready State**: Immediately display input forms after skip activation
+- **Visual Skip Indicator**: Clear UI indication when skip mode is active
+- **Smooth Transitions**: Seamless experience between normal and skipped content
+
+#### Skip Behavior Design:
+- **Single Flow Scope**: Skip button only affects current conversation flow (welcome, motivation, etc.)
+- **Message Queue Display**: Instantly render all remaining messages in current flow
+- **Input Immediate**: Show input form immediately after last message in flow
+- **Reset Per Flow**: Skip state resets when moving to next conversation flow
+- **Accessibility**: Keyboard shortcut support and screen reader compatibility
+
+#### Technical Implementation:
+- **Skip State Management**: BLoC state for managing skip mode per conversation flow
+- **Message Queue Processing**: Batch processing of remaining messages in current flow
+- **Animation Overrides**: Disable typewriter effects when skip is active
+- **Flow Boundary Detection**: Identify conversation flow boundaries for scoped skip behavior
+- **User Preference**: Optional setting to remember skip preference across sessions
+
+#### UX Considerations:
+- **Skip Button Placement**: Accessible but not intrusive positioning
+- **Visual Feedback**: Clear indication when content has been skipped
+- **Undo/Replay**: Option to replay skipped content if desired
+- **Performance**: Ensure skip functionality doesn't impact app performance
+- **Testing**: Comprehensive testing across all onboarding flows
+
+#### Deliverables:
+- Skip functionality integrated into existing onboarding system
+- Flow-scoped skip behavior working across all 7 onboarding steps
+- Visual skip indicators and accessibility features
+- User preference settings for skip behavior
+- Performance testing and optimization
+
+#### Acceptance Criteria:
+- Skip button instantly displays remaining messages in current flow only
+- Input forms appear immediately after skip activation
+- Skip state resets properly between conversation flows
+- No performance degradation during skip operations
+- Accessibility standards met for skip functionality
+- User can choose to replay skipped content if desired
 
 ---
 
@@ -556,15 +621,16 @@ Scaffold(
 
 ---
 
-## MVP Definition (Stages 1-5)
+## MVP Definition (Stages 1-4.5)
 The MVP includes core functionality for:
-- User onboarding and goal setting
+- User onboarding and goal setting with enhanced skip functionality
+- Main app navigation and layout structure
 - Daily tracking and control panel
 - Streak counting and basic progress
 - Milestone celebration and rewards
 - Basic analytics and history
 
-**MVP Target**: Fully functional moderation tracking app ready for beta testing
+**MVP Target**: Fully functional moderation tracking app with polished onboarding ready for beta testing
 
 ## Post-MVP Enhancements (Nice-to-Have Features)
 
