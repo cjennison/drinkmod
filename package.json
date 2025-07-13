@@ -1,0 +1,27 @@
+{
+  "name": "drinkmod",
+  "version": "1.0.0",
+  "description": "Drinkmod Flutter development scripts",
+  "scripts": {
+    "dev": "flutter run -d chrome --hot",
+    "dev:mobile": "flutter run --hot",
+    "dev:web": "flutter run -d web-server --web-port=3000 --hot",
+    "build": "flutter build web",
+    "build:android": "flutter build apk",
+    "build:ios": "flutter build ios",
+    "test": "flutter test",
+    "test:watch": "flutter test --watch",
+    "clean": "flutter clean && flutter pub get",
+    "analyze": "flutter analyze",
+    "format": "dart format .",
+    "generate": "flutter packages pub run build_runner build",
+    "generate:watch": "flutter packages pub run build_runner watch"
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cjennison/drinkmod.git"
+  },
+  "author": "Christopher Jennison",
+  "license": "MIT"
+}

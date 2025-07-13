@@ -63,7 +63,7 @@ Drinkmod is a Flutter/Dart mobile application designed to help users practice al
 ### Stage 2: Onboarding & Initial Setup
 **Objective**: Create user onboarding flow for goal and schedule setup
 **Duration**: 2-3 weeks
-**Status**: Not Started
+**Status**: In Progress (Steps 1-3 Complete)
 
 #### Agentic Conversational Experience Design
 The onboarding will feature **Mara**, a virtual helper for DrinkMod, who guides users through setup in a warm, therapeutic conversational format. The experience should feel like chatting with a supportive therapist.

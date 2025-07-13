@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../features/onboarding/screens/onboarding_screen.dart';
 
 /// App Navigation Configuration
 /// Defines all routes and navigation flow for the Drinkmod app
@@ -112,27 +113,6 @@ class HomeScreen extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class OnboardingScreen extends StatelessWidget {
-  const OnboardingScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Welcome')),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Onboarding Screen', style: TextStyle(fontSize: 24)),
-            SizedBox(height: 16),
-            Text('This will be implemented in Stage 2'),
-          ],
         ),
       ),
     );

@@ -2,21 +2,27 @@
   "onboarding_flow": {
     "welcome": [
       {
-        "id": "welcome_1",
+        "id": "introduction_1",
         "speaker": "Mara",
-        "text": "Hey.",
+        "text": "Hello! I'm Mara, your personal guide here at DrinkMod.",
         "delay_after": 1500
       },
       {
-        "id": "welcome_2", 
+        "id": "introduction_2",
         "speaker": "Mara",
-        "text": "I'm glad you're here.",
+        "text": "I'm here to help you build a healthier relationship with alcohol.",
+        "delay_after": 1500
+      },
+      {
+        "id": "introduction_3",
+        "speaker": "Mara",
+        "text": "This is a safe, private space where we'll work together to create a plan that works for you.",
         "delay_after": 2000
       },
       {
         "id": "name_request",
         "speaker": "Mara", 
-        "text": "Can you tell me your name, or how you like to be called?",
+        "text": "Let's start by getting to know each other a bit. What's your name, or what would you like me to call you?",
         "input_type": "name_and_gender",
         "input_config": {
           "name_field": {
@@ -24,7 +30,7 @@
             "required": true
           },
           "gender_field": {
-            "options": ["He/Him", "She/Her", "They/Them", "Other", "Prefer not to say"],
+            "options": ["He/Him", "She/Her", "They/Them", "Prefer not to say"],
             "required": false
           }
         }
