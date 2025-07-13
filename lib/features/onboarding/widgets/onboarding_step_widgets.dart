@@ -72,14 +72,13 @@ class OnboardingStepWidgets {
       'Relationship impact',
       'Work/productivity',
       'Personal control',
-      'Family concerns',
       'Sleep quality',
-      'Mental clarity',
       'Other'
     ];
 
     return InputCard(
       title: "What's driving your journey?",
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 12), // Reduced bottom padding
       child: StatefulBuilder(
         builder: (context, setState) => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -110,7 +109,7 @@ class OnboardingStepWidgets {
                 onChanged: (value) => setState(() {}),
               ),
             ],
-            const SizedBox(height: 20),
+            const SizedBox(height: 12), // Reduced from 20 to 12
             ActionButton(
               text: "Continue",
               onPressed: selectedMotivation.isNotEmpty &&

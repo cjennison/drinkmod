@@ -1,13 +1,13 @@
 {
   "version": "1.0.0",
   "typewriter_config": {
-    "typing_speed": 30,
+    "typing_speed": 10,
     "pause_on_punctuation": {
-      ".": 500,
-      "!": 500,
-      "?": 500,
-      ",": 200,
-      ";": 300
+      ".": 100,
+      "!": 100,
+      "?": 100,
+      ",": 50,
+      ";": 75
     }
   },
   "onboarding_flow": {
@@ -16,19 +16,19 @@
         "id": "greeting",
         "speaker": "agent",
         "text": "Hello! I'm Mara, your personal guide here at DrinkMod.",
-        "delay_after": 1500
+        "delay_after": 300
       },
       {
         "id": "introduction", 
         "speaker": "agent",
         "text": "I'm here to help you build a healthier relationship with alcohol.",
-        "delay_after": 1500
+        "delay_after": 300
       },
       {
         "id": "safety",
         "speaker": "agent", 
         "text": "This is a safe, private space where we'll work together to create a plan that works for you.",
-        "delay_after": 2000
+        "delay_after": 400
       },
       {
         "id": "name_request",
@@ -42,14 +42,14 @@
         "id": "personal_greeting",
         "speaker": "agent",
         "text": "Nice to meet you, {name}!",
-        "delay_after": 1500,
+        "delay_after": 300,
         "dynamic": true
       },
       {
         "id": "motivation_intro",
         "speaker": "agent",
         "text": "I'd love to understand what brings you here today.",
-        "delay_after": 1500
+        "delay_after": 300
       },
       {
         "id": "motivation_question",
@@ -63,7 +63,7 @@
         "id": "pattern_intro",
         "speaker": "agent",
         "text": "Thanks for sharing that with me, {name}. Understanding your current drinking patterns will help me create the best plan for you.",
-        "delay_after": 2000,
+        "delay_after": 400,
         "dynamic": true
       },
       {
@@ -94,19 +94,19 @@
         "id": "summary_intro",
         "speaker": "agent",
         "text": "Perfect! I have a good sense of where you're starting from.",
-        "delay_after": 1500
+        "delay_after": 300
       },
       {
         "id": "plan_creation",
         "speaker": "agent",
         "text": "Let me create a personalized plan based on your goals and current habits.",
-        "delay_after": 2000
+        "delay_after": 400
       },
       {
         "id": "completion",
         "speaker": "agent",
         "text": "Your plan is ready! Let's get started on your journey.",
-        "delay_after": 1000,
+        "delay_after": 200,
         "action": "complete_onboarding"
       }
     ]
