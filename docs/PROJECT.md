@@ -65,31 +65,145 @@ Drinkmod is a Flutter/Dart mobile application designed to help users practice al
 **Duration**: 2-3 weeks
 **Status**: Not Started
 
+#### Agentic Conversational Experience Design
+The onboarding will feature **Mara**, a virtual helper for DrinkMod, who guides users through setup in a warm, therapeutic conversational format. The experience should feel like chatting with a supportive therapist.
+
+#### Technical Implementation:
+- **Typewriter Effect**: Text appears character by character (H, HE, HEL, HELL, HELLO) to simulate real-time conversation
+- **JSON Script System**: Pre-written conversation scripts stored in JSON files for consistent therapeutic messaging
+  - Conversation flow management with dynamic text insertion
+  - Configurable typing speeds and punctuation pauses
+  - Input type definitions with validation rules
+  - Recommendation logic for personalized suggestions
+- **Chat Interface**: Messages appear as chat bubbles with input controls below agent responses
+- **Shared UI Components**: Develop reusable input controls and buttons for consistent experience
+
+#### Conversation Flow & Data Collection:
+
+**1. Initial Welcome & Name Collection**
+```
+Mara: "Hey."
+Mara: "I'm glad you're here."
+Mara: "Can you tell me your name, or how you like to be called?"
+[Input: Text field for name + preferred gender selection]
+```
+
+**2. Introduction & Safety**
+```
+Mara: "Nice to meet you [Name]."
+Mara: "We're going to work on moderating your alcohol consumption."
+Mara: "This is a safe place, and none of this information is shared with anyone."
+```
+
+**3. Motivation Collection**
+```
+Mara: "Can you tell me why you want to moderate your consumption?"
+[Input: Dropdown with common reasons + "Other" text field]
+- Health concerns
+- Financial reasons
+- Relationship impact
+- Work/productivity
+- Personal control
+- Other (custom text)
+```
+
+**4. Current Drinking Pattern Assessment**
+```
+Mara: "Let's talk about your current drinking patterns."
+Mara: "How often do you typically drink?"
+[Input: Frequency selector - Daily, 5-6x/week, 3-4x/week, 1-2x/week, Occasionally]
+
+Mara: "And on days when you do drink, how much would you say you have?"
+[Input: Amount selector with standard drink equivalents]
+```
+
+**5. Favorite Drinks Collection (Playful & Value-Positive)**
+```
+Mara: "Now let's talk about the fun part - what do you love to drink?"
+Mara: "I want you to still enjoy your drinks, we're just working on control."
+Mara: "What's your go-to drink when you want to treat yourself?"
+[Input: Searchable drink library + custom entry with standard drink calculation]
+
+Mara: "Any other favorites? The more we know, the better I can help you plan."
+[Input: Add multiple favorite drinks]
+```
+
+**6. Schedule Recommendation Based on Current Pattern**
+```
+Mara: "Based on what you've told me, I have some recommendations."
+Mara: "Currently you drink [frequency]. Let's aim for [recommended frequency]."
+
+Recommendation Logic:
+- Daily → 3x per week (low-impact schedule)
+- 5-6x/week → Weekends only + one weekday
+- 3-4x/week → Weekends only (Friday-Sunday)
+- 1-2x/week → Same frequency, focus on amount control
+- Occasionally → Same frequency, reinforce positive patterns
+
+[Input: Schedule preference selector with Mara's recommendation highlighted]
+- Weekends Only (Friday-Sunday) [RECOMMENDED]
+- Friday Only
+- Social Occasions Only
+- Custom Weekly Pattern
+- Keep Current Pattern (with amount limits)
+```
+
+**7. Amount Preference Setting**
+```
+Mara: "How many drinks would you like to limit yourself to on drinking days?"
+Mara: "I recommend [X] drinks based on your current pattern and goals."
+
+Recommendation Logic:
+- Consider current consumption
+- Factor in health guidelines (1-2 drinks for moderation)
+- Adjust based on motivation (health vs. control reasons)
+
+[Input: Drink limit slider with recommendation marked]
+```
+
 #### Features to Implement:
-- Welcome and education screens
-- Drinking schedule setup (predefined options + custom)
-- Daily drink limit configuration
-- Favorite drinks library creation
-- Goal setting interface
-- Privacy and data handling consent
+- Agentic chat interface with typewriter text effect
+- JSON script system for conversation management
+- Dynamic data collection within chat flow
+- Intelligent schedule recommendations based on current patterns
+- Playful favorite drinks collection
+- Shared UI component library (inputs, buttons, cards)
+- Real-time validation and feedback
+- Progress indicator showing onboarding completion
 
 #### Predefined Schedule Options:
 - Weekends Only (Friday-Sunday)
 - Friday Only
 - Social Occasions Only
 - Custom Weekly Pattern
+- Reduced Current Pattern (algorithmically determined)
+
+#### Shared UI Components to Develop:
+- **ChatBubble**: Agent message display with typewriter effect
+- **InputCard**: Consistent input styling for forms within chat
+- **DrinkSelector**: Reusable drink selection with standard drink calculation
+- **ScheduleCard**: Visual schedule selection with recommendations
+- **ProgressIndicator**: Onboarding completion status
+- **ActionButton**: Consistent button styling throughout app
 
 #### Deliverables:
-- Complete onboarding flow
-- Schedule and limit setting functionality
-- Favorite drinks management
+- Complete agentic onboarding flow with Mara
+- JSON script management system
+- Typewriter effect text animation
+- Schedule recommendation algorithm
+- Favorite drinks management with standard drink integration
 - Data validation and error handling
+- Shared UI component library
 
 #### Acceptance Criteria:
-- Users can complete onboarding start to finish
-- All schedule types can be configured
-- Drink limits are properly validated
-- Favorite drinks can be added with accurate "drink" calculations
+- Users can complete onboarding start to finish in a conversational flow
+- Mara's typewriter text effect creates engaging, human-like interaction
+- All schedule types can be configured with intelligent recommendations
+- Drink limits are properly validated and explained therapeutically
+- Favorite drinks can be added with accurate standard drink calculations
+- Shared UI components are consistent and reusable across the app
+- JSON script system allows easy conversation updates without code changes
+- Onboarding feels warm, supportive, and non-judgmental throughout
 
 ---
 
