@@ -225,6 +225,116 @@ Recommendation Logic:
 
 ---
 
+### Stage 2.5: Main App Layout & Navigation Structure ✅ COMPLETED
+**Objective**: Implement foundational app navigation with Material Design 3 and 2025 Flutter best practices
+**Duration**: 1-2 weeks
+**Status**: Complete with Modern Mobile Design Standards
+
+#### 🎯 Core Implementation Features:
+- **Material Design 3 Navigation**: Bottom navigation bar with M3 Expressive design patterns
+- **SafeArea Implementation**: Proper screen edge protection for notches, status bars, and keyboard areas
+- **Adaptive Layout**: Responsive design that adapts to different screen sizes and orientations
+- **Profile Screen**: Complete user data management with edit capabilities and reset functionality
+- **Modern Flutter Architecture**: 2025 development standards with proper state management
+
+#### 📱 Navigation Structure (Material Design 3):
+```
+Bottom Navigation Bar (3-5 destinations max per M3 guidelines):
+├── Home (Dashboard) - Primary user landing
+├── Track (Daily logging) - Core functionality access
+├── Progress (Analytics) - Streak and milestone views  
+├── Profile (Settings) - User management and data controls
+```
+
+#### 🔧 Technical Implementation Standards:
+- **SafeArea Wrapping**: Scaffold body wrapped in SafeArea for proper screen protection
+- **Keyboard Handling**: Automatic keyboard area protection for input fields
+- **Responsive Breakpoints**: Material Design window size classes for adaptive layouts
+- **State Preservation**: PageStorageKey for maintaining scroll positions across navigation
+- **Touch-First Design**: Optimized for touch interaction with mouse/keyboard as acceleration
+
+#### 🎨 Design Principles Applied:
+- **M3 Expressive Navigation**: Shorter height navigation bars with pill-shaped active indicators
+- **Adaptive vs Responsive**: UI fits available space rather than just being usable in space
+- **Touch Interface Priority**: Primary interaction model optimized for touch with other inputs as accelerators
+- **Consistent Visual Density**: Appropriate spacing and sizing for mobile form factor
+- **Accessibility Support**: Proper semantic navigation and screen reader compatibility
+
+#### 📋 Profile Screen Features:
+- **User Data Display**: Name, gender, motivation, drinking patterns, and favorite drinks
+- **Edit Capabilities**: Inline editing for all user preferences and settings
+- **Schedule Management**: Modify drinking schedule and limits with visual feedback
+- **Data Reset Options**: Complete onboarding restart with proper data cleanup
+- **Settings Access**: App preferences, privacy controls, and account management
+
+#### 🔄 Data Management Architecture:
+- **SharedPreferences**: Simple app settings, onboarding completion status, user preferences
+- **Drift Database**: Complex relational data (drink entries, schedules, milestones, analytics)
+- **Clear Separation**: Logical data layer boundaries for maintainable architecture
+- **Cross-Platform Storage**: Proper web/mobile data persistence with platform-specific optimizations
+
+#### 🛡️ SafeArea & Responsive Implementation:
+```dart
+// Scaffold with proper SafeArea implementation
+Scaffold(
+  body: SafeArea(
+    child: PageView(
+      controller: _pageController,
+      children: [
+        HomeScreen(),
+        TrackScreen(), 
+        ProgressScreen(),
+        ProfileScreen(),
+      ],
+    ),
+  ),
+  bottomNavigationBar: NavigationBar(
+    // M3 Expressive navigation with adaptive design
+    destinations: [/* navigation destinations */],
+  ),
+)
+```
+
+#### 📊 Layout Best Practices Applied:
+- **No Orientation Locking**: Supports both portrait and landscape modes
+- **MediaQuery Usage**: Uses window size rather than device type for layout decisions
+- **Flexible Navigation**: Bottom nav adapts to content without fixed assumptions
+- **Input Device Support**: Keyboard navigation and mouse interaction support
+- **State Restoration**: Maintains app state through orientation changes and window resizing
+
+#### 🔀 Navigation Flow Integration:
+- **Onboarding → Main App**: Seamless transition after onboarding completion
+- **Deep Navigation**: Each tab maintains its own navigation stack
+- **Context Preservation**: User location and state maintained across app sections
+- **Logical Flow**: Intuitive user journey from tracking to progress to profile management
+
+#### ✅ Acceptance Criteria Met:
+- Bottom navigation follows Material Design 3 guidelines with proper M3 Expressive styling
+- SafeArea properly protects content from device intrusions and system UI
+- Profile screen allows complete user data management including onboarding reset
+- App adapts to different screen sizes and orientations without layout breaks
+- Keyboard interactions don't obstruct content or cause layout shifts
+- Navigation state is preserved across app lifecycle events
+- Touch interactions are optimized with appropriate touch targets and feedback
+- All screens maintain consistent visual design and interaction patterns
+
+#### 🚀 2025 Flutter Standards Implemented:
+- **VS Code F5 Debugging**: Primary development workflow without terminal commands
+- **Modern API Usage**: No deprecated Flutter APIs, updated to latest 3.32.6 standards
+- **Performance Optimizations**: Const widgets, efficient rebuilds, lazy loading
+- **Accessibility Compliance**: Semantic widgets, screen reader support, focus management
+- **Cross-Platform Consistency**: Shared codebase with platform-specific optimizations
+
+#### 📝 Deliverables Completed:
+- Functional bottom navigation with Material Design 3 styling
+- Complete Profile screen with user data management and reset capabilities
+- SafeArea implementation protecting content from all device intrusions
+- Responsive layout system supporting multiple screen sizes and orientations
+- Modern Flutter architecture following 2025 development best practices
+- Seamless integration with existing onboarding system
+
+---
+
 ### Stage 3: Core Tracking & Control Panel
 **Objective**: Implement main dashboard and drinking tracking
 **Duration**: 3-4 weeks
@@ -453,5 +563,5 @@ The MVP includes core functionality for:
 
 ---
 
-**Last Updated**: Initial Plan Creation
-**Next Review**: After Stage 1 Completion
+**Last Updated**: Stage 2.5 Complete - Main App Layout & Navigation Structure with Material Design 3 and 2025 Flutter Standards
+**Next Review**: After Stage 3 Planning - Core Tracking & Control Panel Implementation
