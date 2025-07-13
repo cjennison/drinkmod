@@ -16,6 +16,11 @@ class OnboardingController {
   late VoidCallback _scrollToBottom;
   BuildContext? _context;
 
+  // JSON-driven content variables
+  Map<String, String> _userVariables = {};
+  String _currentFlow = '';
+  int _currentFlowStep = 0;
+
   void initialize({
     required VoidCallback onStateChanged,
     required VoidCallback scrollToBottom,
@@ -38,27 +43,120 @@ class OnboardingController {
     }
   }
 
-  /// Start the welcome conversation flow
+  /// Start the welcome conversation flow using JSON content
   void _startWelcomeFlow() {
     state.isLoading = false;
     _onStateChanged();
+    
+    _currentFlow = 'welcome';
+    _currentFlowStep = 0;
+    _processNextFlowStep();
+  }
 
-    // Start with the introduction
-    _addAgentMessage("Hello! I'm Mara, your personal guide here at DrinkMod.", onComplete: () {
-      Future.delayed(const Duration(milliseconds: 1500), () {
-        _addAgentMessage("I'm here to help you build a healthier relationship with alcohol.", onComplete: () {
-          Future.delayed(const Duration(milliseconds: 1500), () {
-            _addAgentMessage("This is a safe, private space where we'll work together to create a plan that works for you.", onComplete: () {
-              Future.delayed(const Duration(milliseconds: 2000), () {
-                _addAgentMessage("Let's start by getting to know each other a bit. What's your name, or what would you like me to call you?", onComplete: () {
-                  showNameInput();
-                });
-              });
-            });
-          });
+  /// Process the next step in the current flow
+  void _processNextFlowStep() {
+    try {
+      final flowSteps = ScriptManager.instance.getConversationFlow(_currentFlow);
+      
+      if (_currentFlowStep >= flowSteps.length) {
+        // Flow completed, move to next flow
+        _moveToNextFlow();
+        return;
+      }
+      
+      final step = flowSteps[_currentFlowStep];
+      _currentFlowStep++;
+      
+      if (step.inputType != null) {
+        // This step requires input, show the message then the input
+        _addAgentMessageFromScript(step, onComplete: () {
+          _showInputForStep(step);
         });
+      } else {
+        // Regular message, show it and continue to next after delay
+        _addAgentMessageFromScript(step, onComplete: () {
+          if (step.delayAfter != null && step.delayAfter! > 0) {
+            Future.delayed(Duration(milliseconds: step.delayAfter!), () {
+              _processNextFlowStep();
+            });
+          } else {
+            _processNextFlowStep();
+          }
+        });
+      }
+    } catch (e) {
+      print('Error processing flow step: $e');
+      // Fallback to next flow or handle error
+      _moveToNextFlow();
+    }
+  }
+
+  /// Add agent message from script with variable substitution
+  void _addAgentMessageFromScript(ChatMessage scriptMessage, {VoidCallback? onComplete}) {
+    String message = scriptMessage.text;
+    
+    // Replace variables if this is a dynamic message
+    if (scriptMessage.isDynamic) {
+      _userVariables.forEach((key, value) {
+        message = message.replaceAll('{$key}', value);
       });
-    });
+    }
+    
+    _addAgentMessage(message, onComplete: onComplete);
+  }
+
+  /// Move to the next flow in sequence
+  void _moveToNextFlow() {
+    switch (_currentFlow) {
+      case 'welcome':
+        _currentFlow = 'motivation';
+        break;
+      case 'motivation':
+        _currentFlow = 'drinking_patterns';
+        break;
+      case 'drinking_patterns':
+        _currentFlow = 'drinking_amount';
+        break;
+      case 'drinking_amount':
+        _currentFlow = 'favorite_drinks';
+        break;
+      case 'favorite_drinks':
+        _currentFlow = 'summary';
+        break;
+      case 'summary':
+        _completeOnboarding();
+        return;
+      default:
+        _completeOnboarding();
+        return;
+    }
+    
+    _currentFlowStep = 0;
+    _processNextFlowStep();
+  }
+
+  /// Show input widget for a step
+  void _showInputForStep(ChatMessage step) {
+    switch (step.inputType) {
+      case 'name_input':
+        showNameInput();
+        break;
+      case 'motivation_input':
+        showMotivationInput();
+        break;
+      case 'frequency_input':
+        showFrequencyInput();
+        break;
+      case 'amount_input':
+        showAmountInput();
+        break;
+      case 'drinks_input':
+        showDrinksInput();
+        break;
+      default:
+        print('Unknown input type: ${step.inputType}');
+        _processNextFlowStep();
+    }
   }
 
   /// Add agent message with typewriter effect
@@ -103,6 +201,12 @@ class OnboardingController {
     state.nameSubmitted = true;
     state.currentStep = 2;
     
+    // Store variables for dynamic content
+    _userVariables['name'] = name;
+    if (gender.isNotEmpty) {
+      _userVariables['gender'] = gender;
+    }
+    
     // Replace input card with compact response
     messages.removeLast();
     messages.add(CompactResponse(
@@ -113,14 +217,8 @@ class OnboardingController {
     
     _onStateChanged();
 
-    // Continue with next step
-    _addAgentMessage("Nice to meet you, $name! Thank you for sharing that with me.", onComplete: () {
-      Future.delayed(const Duration(milliseconds: 1500), () {
-        _addAgentMessage("Now, I'd love to understand what's driving your journey with DrinkMod. What's your main motivation for wanting to make changes?", onComplete: () {
-          showMotivationInput();
-        });
-      });
-    });
+    // Continue with JSON flow
+    _processNextFlowStep();
   }
 
   // Step 2: Motivation Input
@@ -139,6 +237,9 @@ class OnboardingController {
     state.motivationSubmitted = true;
     state.currentStep = 3;
     
+    // Store motivation for future reference
+    _userVariables['motivation'] = motivation;
+    
     // Replace input card with compact response
     messages.removeLast();
     messages.add(CompactResponse(
@@ -149,14 +250,8 @@ class OnboardingController {
     
     _onStateChanged();
 
-    // Continue with next step
-    _addAgentMessage("Thank you for sharing that with me. That's a meaningful reason, and it shows real self-awareness.", onComplete: () {
-      Future.delayed(const Duration(milliseconds: 1500), () {
-        _addAgentMessage("Now let's talk about where you're at right now. Can you tell me about your current drinking patterns?", onComplete: () {
-          showDrinkingPatternsInput();
-        });
-      });
-    });
+    // Continue with JSON flow
+    _processNextFlowStep();
   }
 
   // Step 3: Drinking Patterns Input
@@ -418,5 +513,15 @@ class OnboardingController {
       }
     }
     return null;
+  }
+
+  /// Alias methods to map JSON input types to existing methods
+  void showFrequencyInput() => showDrinkingPatternsInput();
+  void showAmountInput() => showDrinkingPatternsInput(); // Combined in existing flow
+  void showDrinksInput() => showFavoriteDrinksInput();
+
+  /// Complete onboarding flow
+  void _completeOnboarding() {
+    showReadyButton();
   }
 }

@@ -1,270 +1,262 @@
 {
+  "version": "1.0.0",
+  "typewriter_config": {
+    "typing_speed": 30,
+    "pause_on_punctuation": {
+      ".": 500,
+      "!": 500,
+      "?": 500,
+      ",": 200,
+      ";": 300
+    }
+  },
   "onboarding_flow": {
     "welcome": [
       {
-        "id": "introduction_1",
-        "speaker": "Mara",
+        "id": "greeting",
+        "speaker": "agent",
         "text": "Hello! I'm Mara, your personal guide here at DrinkMod.",
         "delay_after": 1500
       },
       {
-        "id": "introduction_2",
-        "speaker": "Mara",
+        "id": "introduction", 
+        "speaker": "agent",
         "text": "I'm here to help you build a healthier relationship with alcohol.",
         "delay_after": 1500
       },
       {
-        "id": "introduction_3",
-        "speaker": "Mara",
+        "id": "safety",
+        "speaker": "agent", 
         "text": "This is a safe, private space where we'll work together to create a plan that works for you.",
         "delay_after": 2000
       },
       {
         "id": "name_request",
-        "speaker": "Mara", 
+        "speaker": "agent",
         "text": "Let's start by getting to know each other a bit. What's your name, or what would you like me to call you?",
-        "input_type": "name_and_gender",
-        "input_config": {
-          "name_field": {
-            "placeholder": "Your name or preferred name",
-            "required": true
-          },
-          "gender_field": {
-            "options": ["He/Him", "She/Her", "They/Them", "Prefer not to say"],
-            "required": false
-          }
-        }
-      }
-    ],
-    "introduction": [
-      {
-        "id": "intro_1",
-        "speaker": "Mara",
-        "text": "Nice to meet you {name}.",
-        "delay_after": 1000
-      },
-      {
-        "id": "intro_2",
-        "speaker": "Mara", 
-        "text": "We're going to work on moderating your alcohol consumption.",
-        "delay_after": 1500
-      },
-      {
-        "id": "safety",
-        "speaker": "Mara",
-        "text": "This is a safe place, and none of this information is shared with anyone.",
-        "delay_after": 2000
+        "input_type": "name_input"
       }
     ],
     "motivation": [
       {
-        "id": "motivation_request",
-        "speaker": "Mara",
-        "text": "Can you tell me why you want to moderate your consumption?",
-        "input_type": "motivation_selection",
-        "input_config": {
-          "options": [
-            "Health concerns",
-            "Financial reasons", 
-            "Relationship impact",
-            "Work/productivity",
-            "Personal control",
-            "Family concerns",
-            "Sleep quality",
-            "Mental clarity"
-          ],
-          "allow_other": true,
-          "other_placeholder": "Tell me in your own words..."
-        }
-      }
-    ],
-    "current_patterns": [
+        "id": "personal_greeting",
+        "speaker": "agent",
+        "text": "Nice to meet you, {name}!",
+        "delay_after": 1500,
+        "dynamic": true
+      },
       {
-        "id": "frequency_question",
-        "speaker": "Mara",
-        "text": "Let's talk about your current drinking patterns.",
+        "id": "motivation_intro",
+        "speaker": "agent",
+        "text": "I'd love to understand what brings you here today.",
         "delay_after": 1500
       },
       {
-        "id": "frequency_request",
-        "speaker": "Mara",
-        "text": "How often do you typically drink?",
-        "input_type": "frequency_selector",
-        "input_config": {
-          "options": [
-            {"value": "daily", "label": "Daily", "drinks_per_week": 7},
-            {"value": "5-6x", "label": "5-6 times per week", "drinks_per_week": 5.5},
-            {"value": "3-4x", "label": "3-4 times per week", "drinks_per_week": 3.5},
-            {"value": "1-2x", "label": "1-2 times per week", "drinks_per_week": 1.5},
-            {"value": "occasionally", "label": "Occasionally", "drinks_per_week": 0.5}
-          ]
-        }
+        "id": "motivation_question",
+        "speaker": "agent",
+        "text": "What's motivating you to want to change your relationship with alcohol?",
+        "input_type": "motivation_input"
+      }
+    ],
+    "drinking_patterns": [
+      {
+        "id": "pattern_intro",
+        "speaker": "agent",
+        "text": "Thanks for sharing that with me, {name}. Understanding your current drinking patterns will help me create the best plan for you.",
+        "delay_after": 2000,
+        "dynamic": true
       },
       {
-        "id": "amount_request",
-        "speaker": "Mara",
-        "text": "And on days when you do drink, how much would you say you have?",
-        "input_type": "amount_selector",
-        "input_config": {
-          "options": [
-            {"value": 1, "label": "1 drink"},
-            {"value": 2, "label": "2 drinks"},
-            {"value": 3, "label": "3 drinks"},
-            {"value": 4, "label": "4 drinks"},
-            {"value": 5, "label": "5+ drinks"}
-          ],
-          "show_standard_drink_info": true
-        }
+        "id": "frequency_question",
+        "speaker": "agent",
+        "text": "How often do you typically drink alcohol?",
+        "input_type": "frequency_input"
+      }
+    ],
+    "drinking_amount": [
+      {
+        "id": "amount_intro",
+        "speaker": "agent",
+        "text": "Got it. And when you do drink, how much do you typically have?",
+        "input_type": "amount_input"
       }
     ],
     "favorite_drinks": [
       {
         "id": "favorites_intro",
-        "speaker": "Mara",
-        "text": "Now let's talk about the fun part - what do you love to drink?",
-        "delay_after": 1500
-      },
-      {
-        "id": "favorites_value",
-        "speaker": "Mara", 
-        "text": "I want you to still enjoy your drinks, we're just working on control.",
-        "delay_after": 1500
-      },
-      {
-        "id": "favorites_request",
-        "speaker": "Mara",
-        "text": "What's your go-to drink when you want to treat yourself?",
-        "input_type": "drink_selector",
-        "input_config": {
-          "allow_custom": true,
-          "show_standard_drinks": true,
-          "categories": ["Beer", "Wine", "Spirits", "Cocktails", "Other"]
-        }
-      },
-      {
-        "id": "more_favorites",
-        "speaker": "Mara",
-        "text": "Any other favorites? The more we know, the better I can help you plan.",
-        "input_type": "additional_drinks",
-        "input_config": {
-          "max_drinks": 5,
-          "optional": true
-        }
+        "speaker": "agent",
+        "text": "What are your go-to drinks? This helps me understand your preferences.",
+        "input_type": "drinks_input"
       }
     ],
-    "schedule_recommendation": [
+    "summary": [
       {
-        "id": "recommendation_intro",
-        "speaker": "Mara",
-        "text": "Based on what you've told me, I have some recommendations.",
+        "id": "summary_intro",
+        "speaker": "agent",
+        "text": "Perfect! I have a good sense of where you're starting from.",
         "delay_after": 1500
       },
       {
-        "id": "current_assessment",
-        "speaker": "Mara", 
-        "text": "Currently you drink {current_frequency}. Let's aim for {recommended_frequency}.",
-        "dynamic": true,
+        "id": "plan_creation",
+        "speaker": "agent",
+        "text": "Let me create a personalized plan based on your goals and current habits.",
         "delay_after": 2000
       },
       {
-        "id": "schedule_selection",
-        "speaker": "Mara",
-        "text": "Which schedule feels right for you?",
-        "input_type": "schedule_selector",
-        "input_config": {
-          "show_recommendation": true,
-          "options": [
-            {
-              "value": "weekends",
-              "label": "Weekends Only (Friday-Sunday)",
-              "description": "Great for maintaining social connections while reducing overall consumption"
-            },
-            {
-              "value": "friday_only", 
-              "label": "Friday Only",
-              "description": "Perfect for weekly celebration while maintaining clear boundaries"
-            },
-            {
-              "value": "social_only",
-              "label": "Social Occasions Only", 
-              "description": "Drinking becomes intentional and connected to meaningful events"
-            },
-            {
-              "value": "custom",
-              "label": "Custom Weekly Pattern",
-              "description": "Let's create a schedule that works specifically for your life"
-            }
-          ]
-        }
-      }
-    ],
-    "amount_preference": [
-      {
-        "id": "amount_intro",
-        "speaker": "Mara",
-        "text": "How many drinks would you like to limit yourself to on drinking days?",
-        "delay_after": 1000
-      },
-      {
-        "id": "amount_recommendation",
-        "speaker": "Mara",
-        "text": "I recommend {recommended_amount} drinks based on your current pattern and goals.",
-        "dynamic": true,
-        "input_type": "amount_limit_selector",
-        "input_config": {
-          "min": 1,
-          "max": 4,
-          "show_recommendation": true,
-          "show_health_guidelines": true
-        }
-      }
-    ],
-    "completion": [
-      {
-        "id": "setup_complete",
-        "speaker": "Mara",
-        "text": "Perfect! We've got everything set up.",
-        "delay_after": 1500
-      },
-      {
-        "id": "encouragement",
-        "speaker": "Mara",
-        "text": "Remember, this is your journey and you're in control. I'm here to support you every step of the way.",
-        "delay_after": 2000
-      },
-      {
-        "id": "ready_to_start",
-        "speaker": "Mara", 
-        "text": "Ready to start your mindful drinking journey?",
-        "input_type": "completion_action",
-        "input_config": {
-          "primary_button": "Let's do this!",
-          "secondary_button": "Review my settings"
-        }
+        "id": "completion",
+        "speaker": "agent",
+        "text": "Your plan is ready! Let's get started on your journey.",
+        "delay_after": 1000,
+        "action": "complete_onboarding"
       }
     ]
   },
-  "typewriter_config": {
-    "typing_speed": 50,
-    "pause_on_punctuation": {
-      ".": 300,
-      "!": 250, 
-      "?": 250,
-      ",": 150
+  "input_configurations": {
+    "name_input": {
+      "name_field": {
+        "placeholder": "Your name or preferred name",
+        "max_length": 50,
+        "required": true
+      },
+      "gender_field": {
+        "label": "Preferred pronouns (optional)",
+        "options": ["He/Him", "She/Her", "They/Them", "Prefer not to say"],
+        "required": false
+      }
+    },
+    "motivation_input": {
+      "options": [
+        {
+          "id": "health",
+          "label": "Health concerns",
+          "description": "Physical or mental health improvements"
+        },
+        {
+          "id": "financial",
+          "label": "Financial reasons", 
+          "description": "Save money or reduce expenses"
+        },
+        {
+          "id": "relationships",
+          "label": "Relationship impact",
+          "description": "Improve family or social relationships"
+        },
+        {
+          "id": "productivity",
+          "label": "Work/productivity",
+          "description": "Better focus and performance"
+        },
+        {
+          "id": "control",
+          "label": "Personal control",
+          "description": "Feel more in control of habits"
+        },
+        {
+          "id": "sleep",
+          "label": "Better sleep",
+          "description": "Improve sleep quality and energy"
+        },
+        {
+          "id": "anxiety",
+          "label": "Reduce anxiety",
+          "description": "Manage stress without alcohol"
+        },
+        {
+          "id": "social",
+          "label": "Social situations",
+          "description": "Feel confident in social settings"
+        },
+        {
+          "id": "other",
+          "label": "Other reason",
+          "description": "Tell us your specific reason",
+          "custom_input": true
+        }
+      ],
+      "allow_multiple": true,
+      "custom_field": {
+        "placeholder": "Tell us your specific reason...",
+        "max_length": 200
+      }
+    },
+    "frequency_input": {
+      "options": [
+        {
+          "id": "daily",
+          "label": "Daily",
+          "description": "I drink alcohol every day"
+        },
+        {
+          "id": "most_days",
+          "label": "Most days",
+          "description": "5-6 days per week"
+        },
+        {
+          "id": "several_weekly",
+          "label": "Several times a week",
+          "description": "3-4 days per week"
+        },
+        {
+          "id": "weekly",
+          "label": "Weekly",
+          "description": "1-2 days per week"
+        },
+        {
+          "id": "occasional",
+          "label": "Occasionally",
+          "description": "A few times per month"
+        },
+        {
+          "id": "rarely",
+          "label": "Rarely",
+          "description": "Once a month or less"
+        }
+      ]
+    },
+    "amount_input": {
+      "options": [
+        {
+          "id": "1-2",
+          "label": "1-2 drinks",
+          "description": "Light drinking session",
+          "standard_drinks": 1.5
+        },
+        {
+          "id": "3-4", 
+          "label": "3-4 drinks",
+          "description": "Moderate drinking session",
+          "standard_drinks": 3.5
+        },
+        {
+          "id": "5-6",
+          "label": "5-6 drinks", 
+          "description": "Heavy drinking session",
+          "standard_drinks": 5.5
+        },
+        {
+          "id": "7-10",
+          "label": "7-10 drinks",
+          "description": "Very heavy drinking session", 
+          "standard_drinks": 8.5
+        },
+        {
+          "id": "10+",
+          "label": "More than 10 drinks",
+          "description": "Extremely heavy drinking session",
+          "standard_drinks": 12
+        }
+      ]
+    },
+    "drinks_input": {
+      "categories": ["wine", "beer", "spirits", "cocktails"],
+      "allow_custom": true,
+      "custom_field": {
+        "placeholder": "Enter your favorite drink...",
+        "max_length": 100
+      }
     }
   },
   "recommendation_logic": {
-    "schedule_mapping": {
-      "daily": "3x_per_week",
-      "5-6x": "weekends_plus_one",
-      "3-4x": "weekends_only", 
-      "1-2x": "maintain_frequency",
-      "occasionally": "maintain_frequency"
-    },
-    "amount_mapping": {
-      "health_focused": "1-2_drinks",
-      "control_focused": "current_minus_one",
-      "maintenance": "current_amount"
-    }
+    "default_plan": "moderate_reduction"
   }
 }
