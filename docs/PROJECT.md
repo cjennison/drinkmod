@@ -223,12 +223,61 @@ Recommendation Logic:
 - JSON script system allows easy conversation updates without code changes
 - Onboarding feels warm, supportive, and non-judgmental throughout
 
+#### 🔄 Stage 2 Refactoring Required: JSON Content Management
+**Status**: Missing Implementation - High Priority
+**Estimated Effort**: 1-2 days
+
+##### Current Issue:
+The onboarding conversation content is currently hardcoded within the Dart components, making it difficult to update messaging, add new conversation flows, or modify therapeutic language without code changes.
+
+##### Required Refactoring:
+- **JSON Script System**: Extract all conversation content into structured JSON files
+- **Dynamic Content Loading**: Implement content loader service to read JSON scripts at runtime
+- **Conversation Engine**: Create flexible conversation flow engine that interprets JSON scripts
+- **Content Versioning**: Enable easy updates to therapeutic messaging and conversation flows
+- **Localization Ready**: Structure JSON to support future multi-language support
+
+##### JSON Structure Design:
+```json
+{
+  "onboarding": {
+    "version": "1.0",
+    "steps": [
+      {
+        "id": "welcome",
+        "messages": [
+          "Hey.",
+          "I'm glad you're here.",
+          "Can you tell me your name, or how you like to be called?"
+        ],
+        "input": {
+          "type": "name_and_gender",
+          "validation": "required"
+        },
+        "next": "introduction"
+      }
+    ]
+  }
+}
+```
+
+##### Benefits:
+- **Non-Developer Updates**: Therapeutic content can be updated without code changes
+- **A/B Testing**: Easy to test different conversation approaches
+- **Content Management**: Clear separation between logic and therapeutic messaging
+- **Rapid Iteration**: Quick updates to improve user experience based on feedback
+- **Clinical Review**: Mental health professionals can review and modify content directly
+
+##### Implementation Priority:
+This refactoring should be completed before Stage 3 to ensure scalable content management as the app grows in complexity.
+
 ---
 
-### Stage 2.5: Main App Layout & Navigation Structure ✅ COMPLETED
+### Stage 2.5: Main App Layout & Navigation Structure ⚠️ PLANNED
 **Objective**: Implement foundational app navigation with Material Design 3 and 2025 Flutter best practices
 **Duration**: 1-2 weeks
-**Status**: Complete with Modern Mobile Design Standards
+**Status**: Awaiting Stage 2 JSON Refactoring Completion
+**Prerequisite**: Complete onboarding JSON content management system before proceeding
 
 #### 🎯 Core Implementation Features:
 - **Material Design 3 Navigation**: Bottom navigation bar with M3 Expressive design patterns
@@ -563,5 +612,5 @@ The MVP includes core functionality for:
 
 ---
 
-**Last Updated**: Stage 2.5 Complete - Main App Layout & Navigation Structure with Material Design 3 and 2025 Flutter Standards
-**Next Review**: After Stage 3 Planning - Core Tracking & Control Panel Implementation
+**Last Updated**: Stage 2 JSON Refactoring Requirement Added - Content Management System Missing
+**Next Review**: After Stage 2 JSON Refactoring - Enable Dynamic Content Loading for Onboarding
