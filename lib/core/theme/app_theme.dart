@@ -39,7 +39,6 @@ class AppTheme {
         primary: primaryColor,
         secondary: secondaryColor,
         surface: surfaceColor,
-        background: backgroundColor,
         error: errorColor,
       ),
       
@@ -141,7 +140,7 @@ class AppTheme {
       // Chip Theme
       chipTheme: ChipThemeData(
         backgroundColor: Colors.grey[100],
-        selectedColor: primaryColor.withOpacity(0.2),
+        selectedColor: primaryColor.withValues(alpha: 0.2),
         disabledColor: Colors.grey[200],
         labelStyle: const TextStyle(color: textPrimary),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

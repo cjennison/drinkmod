@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Service to manage onboarding completion status and user data
@@ -12,7 +13,7 @@ class OnboardingService {
       final prefs = await SharedPreferences.getInstance();
       return prefs.getBool(_onboardingCompletedKey) ?? false;
     } catch (e) {
-      print('Error checking onboarding completion: $e');
+      developer.log('Error checking onboarding completion: $e', name: 'OnboardingService');
       return false;
     }
   }
@@ -23,9 +24,9 @@ class OnboardingService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_onboardingCompletedKey, true);
       await prefs.setString(_userDataKey, jsonEncode(userData));
-      print('Onboarding completed with data: $userData');
+      developer.log('Onboarding completed with data: $userData', name: 'OnboardingService');
     } catch (e) {
-      print('Error completing onboarding: $e');
+      developer.log('Error completing onboarding: $e', name: 'OnboardingService');
     }
   }
 
@@ -39,7 +40,7 @@ class OnboardingService {
       }
       return null;
     } catch (e) {
-      print('Error getting user data: $e');
+      developer.log('Error getting user data: $e', name: 'OnboardingService');
       return null;
     }
   }
@@ -50,9 +51,9 @@ class OnboardingService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_onboardingCompletedKey);
       await prefs.remove(_userDataKey);
-      print('Onboarding data cleared');
+      developer.log('Onboarding data cleared', name: 'OnboardingService');
     } catch (e) {
-      print('Error clearing onboarding data: $e');
+      developer.log('Error clearing onboarding data: $e', name: 'OnboardingService');
     }
   }
 }
