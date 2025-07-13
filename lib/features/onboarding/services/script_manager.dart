@@ -12,7 +12,7 @@ class ScriptManager {
   /// Load the onboarding script from assets
   Future<void> loadOnboardingScript() async {
     try {
-      final String jsonString = await rootBundle.loadString('scripts/onboarding_script.json');
+      final String jsonString = await rootBundle.loadString('assets/scripts/onboarding_script.json');
       _scriptData = json.decode(jsonString);
     } catch (e) {
       throw Exception('Failed to load onboarding script: $e');
