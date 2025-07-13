@@ -8,6 +8,7 @@ class TypewriterText extends StatefulWidget {
   final int typingSpeed;
   final Map<String, int> punctuationPauses;
   final VoidCallback? onComplete;
+  final bool forceCompleted; // NEW: Forces text to show as completed
 
   const TypewriterText({
     super.key,
@@ -16,6 +17,7 @@ class TypewriterText extends StatefulWidget {
     this.typingSpeed = 25,
     this.punctuationPauses = const {'.': 150, '!': 125, '?': 125, ',': 75},
     this.onComplete,
+    this.forceCompleted = false, // NEW: Default to false
   });
 
   @override
@@ -31,7 +33,14 @@ class _TypewriterTextState extends State<TypewriterText> {
   @override
   void initState() {
     super.initState();
-    _startTyping();
+    // If forceCompleted is true, show full text immediately
+    if (widget.forceCompleted) {
+      _displayedText = widget.text;
+      _currentIndex = widget.text.length;
+      _isCompleted = true;
+    } else {
+      _startTyping();
+    }
   }
 
   @override
@@ -73,8 +82,20 @@ class _TypewriterTextState extends State<TypewriterText> {
   @override
   void didUpdateWidget(TypewriterText oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // If the text changed, reset and start typing the new text
-    if (oldWidget.text != widget.text && !_isCompleted) {
+    
+    // If forceCompleted changed to true, immediately complete
+    if (!oldWidget.forceCompleted && widget.forceCompleted) {
+      _timer?.cancel();
+      setState(() {
+        _displayedText = widget.text;
+        _currentIndex = widget.text.length;
+        _isCompleted = true;
+      });
+      return;
+    }
+    
+    // If the text changed and not forced completed, reset and start typing the new text
+    if (oldWidget.text != widget.text && !widget.forceCompleted && !_isCompleted) {
       _timer?.cancel();
       _displayedText = '';
       _currentIndex = 0;
@@ -85,8 +106,8 @@ class _TypewriterTextState extends State<TypewriterText> {
 
   @override
   Widget build(BuildContext context) {
-    // Show full text immediately if already completed
-    final textToShow = _isCompleted ? widget.text : _displayedText;
+    // Show full text immediately if forceCompleted or already completed
+    final textToShow = (widget.forceCompleted || _isCompleted) ? widget.text : _displayedText;
     
     return Text(
       textToShow,
@@ -101,6 +122,7 @@ class ChatBubble extends StatelessWidget {
   final bool isAgent;
   final bool showTypewriter;
   final VoidCallback? onTypewriterComplete;
+  final bool isTypewriterCompleted; // NEW: Track if typewriter should be completed
 
   const ChatBubble({
     super.key,
@@ -108,6 +130,7 @@ class ChatBubble extends StatelessWidget {
     this.isAgent = true,
     this.showTypewriter = true,
     this.onTypewriterComplete,
+    this.isTypewriterCompleted = false, // NEW: Default to false
   });
 
   @override
@@ -131,6 +154,7 @@ class ChatBubble extends StatelessWidget {
                     height: 1.4,
                   ),
                   onComplete: onTypewriterComplete,
+                  forceCompleted: isTypewriterCompleted, // NEW: Pass completion state
                 )
               : Text(
                   message,

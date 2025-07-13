@@ -63,20 +63,36 @@ Drinkmod is a Flutter/Dart mobile application designed to help users practice al
 ### Stage 2: Onboarding & Initial Setup
 **Objective**: Create user onboarding flow for goal and schedule setup
 **Duration**: 2-3 weeks
-**Status**: In Progress (Steps 1-3 Complete)
+**Status**: Steps 1-3 Complete, Major Bug Fixes Implemented
+
+#### ✅ Progress Completed:
+- **Conversational Interface**: Full Mara introduction with typewriter effect
+- **Data Collection Steps 1-3**: Name/gender collection, motivation assessment, drinking patterns analysis
+- **UI Persistence System**: Fixed typewriter text persistence when scrolling (no re-animation)
+- **Input Card Collapse**: Implemented proper input replacement with compact response display
+- **Development Tooling**: Proper Flutter development workflow with hot reload
+
+#### 🔧 Major Bug Fixes Applied:
+1. **Typewriter Persistence Issue**: Messages no longer re-type when scrolling in/out of view
+   - Implemented `forceCompleted` flag system in TypewriterText widget
+   - Added message completion state tracking with unique IDs
+   - ListView now rebuilds ChatBubbles with persistent completion states
+2. **Input Card Behavior**: Continue button now properly collapses input and shows compact response
+3. **Performance**: Faster typewriter speed (25ms character interval, reduced punctuation pauses)
 
 #### Agentic Conversational Experience Design
-The onboarding will feature **Mara**, a virtual helper for DrinkMod, who guides users through setup in a warm, therapeutic conversational format. The experience should feel like chatting with a supportive therapist.
+The onboarding features **Mara**, a virtual helper for DrinkMod, who guides users through setup in a warm, therapeutic conversational format. The experience feels like chatting with a supportive therapist.
 
 #### Technical Implementation:
-- **Typewriter Effect**: Text appears character by character (H, HE, HEL, HELL, HELLO) to simulate real-time conversation
+- **Typewriter Effect**: Text appears character by character with persistence across scroll events
 - **JSON Script System**: Pre-written conversation scripts stored in JSON files for consistent therapeutic messaging
   - Conversation flow management with dynamic text insertion
-  - Configurable typing speeds and punctuation pauses
+  - Configurable typing speeds and punctuation pauses (optimized for engagement)
   - Input type definitions with validation rules
   - Recommendation logic for personalized suggestions
-- **Chat Interface**: Messages appear as chat bubbles with input controls below agent responses
-- **Shared UI Components**: Develop reusable input controls and buttons for consistent experience
+- **Clean GPT-Style Interface**: Messages appear as clean text without chat bubbles per user feedback
+- **Shared UI Components**: Reusable InputCard, ActionButton, CompactResponse widgets
+- **State Management**: Message completion tracking with ValueKey system for ListView persistence
 
 #### Conversation Flow & Data Collection:
 

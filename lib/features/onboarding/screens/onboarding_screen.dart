@@ -29,6 +29,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   bool _nameSubmitted = false;
   bool _motivationSubmitted = false;
   bool _drinkingPatternsSubmitted = false;
+  
+  // Track typewriter completion states by message ID
+  final Map<String, bool> _messageCompletionStates = {};
+  int _messageIdCounter = 0;
 
   @override
   void initState() {
@@ -96,13 +100,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _addAgentMessage(String message, {VoidCallback? onComplete}) {
+    final messageId = 'message_${_messageIdCounter++}';
     setState(() {
+      _messageCompletionStates[messageId] = false; // Start as not completed
       _messages.add(
         ChatBubble(
+          key: ValueKey(messageId), // Use ValueKey for consistent widget identity
           message: message,
           isAgent: true,
           showTypewriter: true,
+          isTypewriterCompleted: _messageCompletionStates[messageId] ?? false,
           onTypewriterComplete: () {
+            // Mark this message as completed
+            setState(() {
+              _messageCompletionStates[messageId] = true;
+            });
             onComplete?.call();
             _scrollToBottom();
           },
@@ -443,7 +455,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     controller: _scrollController,
                     padding: const EdgeInsets.all(16),
                     itemCount: _messages.length,
-                    itemBuilder: (context, index) => _messages[index],
+                    itemBuilder: (context, index) {
+                      final widget = _messages[index];
+                      // If it's a ChatBubble, rebuild it with current completion state
+                      if (widget is ChatBubble && widget.showTypewriter) {
+                        final messageId = (widget.key as ValueKey?)?.value as String?;
+                        if (messageId != null) {
+                          return ChatBubble(
+                            key: widget.key,
+                            message: widget.message,
+                            isAgent: widget.isAgent,
+                            showTypewriter: widget.showTypewriter,
+                            isTypewriterCompleted: _messageCompletionStates[messageId] ?? false,
+                            onTypewriterComplete: widget.onTypewriterComplete,
+                          );
+                        }
+                      }
+                      return widget;
+                    },
                   ),
           ),
         ],
