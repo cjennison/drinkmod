@@ -1,6 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/onboarding/screens/onboarding_screen.dart';
+import '../../features/home/screens/home_screen.dart';
+import '../../core/services/onboarding_service.dart';
+
+/// Screen that checks onboarding status and redirects accordingly
+class OnboardingCheckScreen extends StatefulWidget {
+  const OnboardingCheckScreen({super.key});
+
+  @override
+  State<OnboardingCheckScreen> createState() => _OnboardingCheckScreenState();
+}
+
+class _OnboardingCheckScreenState extends State<OnboardingCheckScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkOnboardingStatus();
+  }
+
+  Future<void> _checkOnboardingStatus() async {
+    final isCompleted = await OnboardingService.isOnboardingCompleted();
+    
+    if (mounted) {
+      if (isCompleted) {
+        context.go('/home');
+      } else {
+        context.go('/onboarding');
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+  }
+}
 
 /// App Navigation Configuration
 /// Defines all routes and navigation flow for the Drinkmod app
@@ -16,11 +55,11 @@ class AppRouter {
   static final GoRouter router = GoRouter(
     initialLocation: home,
     routes: [
-      // Home route - will check if user needs onboarding
+      // Home route - checks onboarding status and redirects accordingly
       GoRoute(
         path: home,
         name: 'home',
-        builder: (context, state) => const HomeScreen(),
+        builder: (context, state) => const OnboardingCheckScreen(),
       ),
       
       // Onboarding flow
@@ -30,36 +69,44 @@ class AppRouter {
         builder: (context, state) => const OnboardingScreen(),
       ),
       
-      // Main app routes
+      // Main home screen after onboarding
       GoRoute(
-        path: dashboard,
-        name: 'dashboard',
-        builder: (context, state) => const DashboardScreen(),
+        path: '/home',
+        name: 'main-home',
+        builder: (context, state) => const HomeScreen(),
       ),
       
-      GoRoute(
-        path: tracking,
-        name: 'tracking',
-        builder: (context, state) => const TrackingScreen(),
-      ),
+      // TODO: Implement other screens in Stage 3
+      // // Main app routes
+      // GoRoute(
+      //   path: dashboard,
+      //   name: 'dashboard',
+      //   builder: (context, state) => const DashboardScreen(),
+      // ),
       
-      GoRoute(
-        path: analytics,
-        name: 'analytics',
-        builder: (context, state) => const AnalyticsScreen(),
-      ),
+      // GoRoute(
+      //   path: tracking,
+      //   name: 'tracking',
+      //   builder: (context, state) => const TrackingScreen(),
+      // ),
       
-      GoRoute(
-        path: milestones,
-        name: 'milestones',
-        builder: (context, state) => const MilestonesScreen(),
-      ),
+      // GoRoute(
+      //   path: analytics,
+      //   name: 'analytics',
+      //   builder: (context, state) => const AnalyticsScreen(),
+      // ),
       
-      GoRoute(
-        path: settings,
-        name: 'settings',
-        builder: (context, state) => const SettingsScreen(),
-      ),
+      // GoRoute(
+      //   path: milestones,
+      //   name: 'milestones',
+      //   builder: (context, state) => const MilestonesScreen(),
+      // ),
+      
+      // GoRoute(
+      //   path: settings,
+      //   name: 'settings',
+      //   builder: (context, state) => const SettingsScreen(),
+      // ),
     ],
     
     // Error handling
@@ -70,156 +117,4 @@ class AppRouter {
       ),
     ),
   );
-}
-
-// Placeholder screens for Stage 1 - will be implemented in future stages
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Drinkmod')),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                'Welcome to Drinkmod',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Your companion for mindful drinking',
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 48),
-              ElevatedButton(
-                onPressed: () => context.go(AppRouter.onboarding),
-                child: const Text('Get Started'),
-              ),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () => context.go(AppRouter.dashboard),
-                child: const Text('Go to Dashboard'),
-              ),
-              const SizedBox(height: 32),
-              const Text(
-                'Stage 1 Foundation Complete',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class DashboardScreen extends StatelessWidget {
-  const DashboardScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Dashboard')),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Dashboard Screen', style: TextStyle(fontSize: 24)),
-            SizedBox(height: 16),
-            Text('This will be implemented in Stage 3'),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class TrackingScreen extends StatelessWidget {
-  const TrackingScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Track Drinks')),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Tracking Screen', style: TextStyle(fontSize: 24)),
-            SizedBox(height: 16),
-            Text('This will be implemented in Stage 3'),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class AnalyticsScreen extends StatelessWidget {
-  const AnalyticsScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Analytics')),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Analytics Screen', style: TextStyle(fontSize: 24)),
-            SizedBox(height: 16),
-            Text('This will be implemented in Stage 4'),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class MilestonesScreen extends StatelessWidget {
-  const MilestonesScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Milestones')),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Milestones Screen', style: TextStyle(fontSize: 24)),
-            SizedBox(height: 16),
-            Text('This will be implemented in Stage 5'),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('Settings Screen', style: TextStyle(fontSize: 24)),
-            SizedBox(height: 16),
-            Text('This will be implemented in later stages'),
-          ],
-        ),
-      ),
-    );
-  }
 }

@@ -74,8 +74,6 @@ class ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
     Widget button = isPrimary
         ? ElevatedButton.icon(
             onPressed: onPressed,
