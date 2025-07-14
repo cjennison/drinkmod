@@ -18,6 +18,7 @@ class _OnboardingClassicScreenState extends State<OnboardingClassicScreen> {
   String _selectedGender = OnboardingConstants.genderMale;
   String _selectedSchedule = OnboardingConstants.scheduleWeekendsOnly;
   int _selectedLimit = 2;
+  int _selectedWeeklyLimit = 4; // For open schedules
   String _selectedMotivation = OnboardingConstants.motivationHealth;
   String _selectedFrequency = OnboardingConstants.frequencyOnceOrTwiceWeek;
   String _selectedAmount = OnboardingConstants.amount1To2;
@@ -25,11 +26,33 @@ class _OnboardingClassicScreenState extends State<OnboardingClassicScreen> {
 
   final List<String> _genderOptions = OnboardingConstants.genderOptions;
   final List<String> _scheduleOptions = OnboardingConstants.scheduleOptions;
-  final List<int> _limitOptions = OnboardingConstants.drinkLimitOptions;
   final List<String> _motivationOptions = OnboardingConstants.motivationOptions;
   final List<String> _frequencyOptions = OnboardingConstants.frequencyOptions;
   final List<String> _amountOptions = OnboardingConstants.amountOptions;
   final List<String> _drinkOptions = OnboardingConstants.drinkOptions;
+
+  bool get _isOpenSchedule {
+    return OnboardingConstants.scheduleTypeMap[_selectedSchedule] == OnboardingConstants.scheduleTypeOpen;
+  }
+
+  List<int> get _validDailyLimits {
+    if (!_isOpenSchedule) {
+      return OnboardingConstants.drinkLimitOptions;
+    }
+    
+    // For open schedules, daily limit cannot exceed half the weekly limit
+    final maxDaily = (_selectedWeeklyLimit / 2).floor();
+    final validLimits = OnboardingConstants.drinkLimitOptions
+        .where((limit) => limit <= maxDaily)
+        .toList();
+    
+    // Ensure at least one option is available (minimum 1 drink)
+    if (validLimits.isEmpty) {
+      return [1];
+    }
+    
+    return validLimits;
+  }
 
   @override
   void dispose() {
@@ -54,6 +77,11 @@ class _OnboardingClassicScreenState extends State<OnboardingClassicScreen> {
         'favoriteDrinks': _selectedDrinks,
         'onboardingCompleted': true,
       };
+
+      // Add weekly limit for open schedules
+      if (_isOpenSchedule) {
+        userData['weeklyLimit'] = _selectedWeeklyLimit;
+      }
 
       await OnboardingService.completeOnboarding(userData);
       
@@ -132,17 +160,72 @@ class _OnboardingClassicScreenState extends State<OnboardingClassicScreen> {
                     child: Text(_formatLabel(schedule)),
                   );
                 }).toList(),
-                onChanged: (value) => setState(() => _selectedSchedule = value!),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedSchedule = value!;
+                    // Set default weekly limit for open schedules
+                    if (_isOpenSchedule) {
+                      _selectedWeeklyLimit = OnboardingConstants.defaultWeeklyLimits[_selectedSchedule] ?? 4;
+                      // Ensure daily limit doesn't exceed half of weekly limit
+                      final maxDaily = (_selectedWeeklyLimit / 2).floor();
+                      _selectedLimit = _selectedLimit <= maxDaily ? _selectedLimit : maxDaily.clamp(1, OnboardingConstants.drinkLimitOptions.last);
+                    }
+                  });
+                },
               ),
               const SizedBox(height: 24),
 
+              // Weekly Limit (for open schedules only)
+              if (_isOpenSchedule) ...[
+                const Text('Weekly Drink Limit', style: TextStyle(fontWeight: FontWeight.w500)),
+                const SizedBox(height: 8),
+                const Text(
+                  'Open schedules allow drinking any day but limit total drinks per week.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<int>(
+                  value: _selectedWeeklyLimit,
+                  decoration: const InputDecoration(border: OutlineInputBorder()),
+                  items: [2, 3, 4, 5, 6, 7, 8, 10, 12].map((limit) {
+                    return DropdownMenuItem(
+                      value: limit,
+                      child: Text('$limit drinks per week'),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedWeeklyLimit = value!;
+                      // Ensure daily limit doesn't exceed half of weekly limit
+                      final maxDaily = (_selectedWeeklyLimit / 2).floor();
+                      if (_selectedLimit > maxDaily) {
+                        _selectedLimit = maxDaily.clamp(1, OnboardingConstants.drinkLimitOptions.last);
+                      }
+                    });
+                  },
+                ),
+                const SizedBox(height: 24),
+              ],
+
               // Daily Limit
-              const Text('Daily Drink Limit', style: TextStyle(fontWeight: FontWeight.w500)),
+              Text(
+                _isOpenSchedule ? 'Maximum Drinks Per Day' : 'Daily Drink Limit',
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              if (_isOpenSchedule)
+                Text(
+                  'Cannot exceed half your weekly limit (max ${(_selectedWeeklyLimit / 2).floor()} drinks per day).',
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              if (_isOpenSchedule) const SizedBox(height: 8),
               const SizedBox(height: 8),
               DropdownButtonFormField<int>(
                 value: _selectedLimit,
-                decoration: const InputDecoration(border: OutlineInputBorder()),
-                items: _limitOptions.map((limit) {
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                ),
+                items: _validDailyLimits.map((limit) {
                   return DropdownMenuItem(
                     value: limit,
                     child: Text('$limit drink${limit > 1 ? 's' : ''}'),

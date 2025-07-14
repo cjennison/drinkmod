@@ -4,8 +4,6 @@ import '../../../core/services/onboarding_service.dart';
 import '../../../core/constants/onboarding_constants.dart';
 import '../widgets/name_editor_dialog.dart';
 import '../widgets/motivation_editor_dialog.dart';
-import '../widgets/schedule_editor_dialog.dart';
-import '../widgets/drink_limit_editor_dialog.dart';
 import '../widgets/favorite_drinks_editor_dialog.dart';
 import '../widgets/drinking_patterns_editor_dialog.dart';
 
@@ -25,6 +23,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
+    _loadUserData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Reload data when returning from sub-pages
     _loadUserData();
   }
 
@@ -100,35 +105,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _editSchedule() async {
-    await showDialog(
-      context: context,
-      builder: (context) => ScheduleEditorDialog(
-        currentSchedule: userData?['scheduleType'],
-        onScheduleChanged: (schedule) {
-          setState(() {
-            userData?['scheduleType'] = schedule;
-          });
-          // Note: Database sync will be handled by home screen on next load
-        },
-      ),
-    );
+    if (mounted) {
+      context.push('/profile/schedule-editor', extra: {
+        'currentSchedule': userData?['schedule'],
+        'currentDailyLimit': userData?['drinkLimit'],
+        'currentWeeklyLimit': userData?['weeklyLimit'],
+      });
+    }
   }
 
-  Future<void> _editDrinkLimit() async {
-    await showDialog(
-      context: context,
-      builder: (context) => DrinkLimitEditorDialog(
-        currentLimit: userData?['drinkLimit'],
-        onLimitChanged: (limit) async {
-          setState(() {
-            userData?['drinkLimit'] = limit;
-          });
-          // Note: Database sync will be handled by home screen on next load
-        },
-      ),
-    );
-  }
-  
   Future<void> _editFavoriteDrinks() async {
     final currentDrinks = userData?['favoriteDrinks'];
     List<String> drinksList = [];
@@ -170,11 +155,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
 
 
-  String _formatScheduleType(String? scheduleType) {
-    if (scheduleType == null) return 'Not set';
-    return OnboardingConstants.getDisplayText(scheduleType);
-  }
-
   String _formatMotivation(String? motivation) {
     if (motivation == null) return 'Not set';
     return OnboardingConstants.getDisplayText(motivation);
@@ -200,6 +180,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         trailing: const Icon(Icons.edit),
         onTap: onEdit,
+      ),
+    );
+  }
+
+  Widget _buildScheduleCard() {
+    final schedule = userData?['schedule'];
+    final dailyLimit = userData?['drinkLimit'];
+    final weeklyLimit = userData?['weeklyLimit'];
+    
+    String scheduleText = 'Not set';
+    List<String> limitInfo = [];
+    
+    if (schedule != null) {
+      scheduleText = OnboardingConstants.getDisplayText(schedule);
+      
+      if (dailyLimit != null) {
+        limitInfo.add('Daily: $dailyLimit drinks');
+      }
+      
+      final isOpen = OnboardingConstants.scheduleTypeMap[schedule] == OnboardingConstants.scheduleTypeOpen;
+      if (isOpen && weeklyLimit != null) {
+        limitInfo.add('Weekly: $weeklyLimit drinks');
+      }
+    }
+    
+    return Card(
+      child: ListTile(
+        title: const Text(
+          'Drinking Schedule & Limits',
+          style: TextStyle(fontWeight: FontWeight.w600),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 4),
+            Text(
+              scheduleText,
+              style: TextStyle(
+                color: schedule != null ? null : Colors.grey,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            if (limitInfo.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              ...limitInfo.map((info) => Text(
+                info,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                ),
+              )),
+            ],
+          ],
+        ),
+        trailing: const Icon(Icons.edit),
+        onTap: _editSchedule,
       ),
     );
   }
@@ -238,12 +274,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 : 'Not set', 
               _editNameAndGender),
             _buildEditableInfoCard('Motivation', _formatMotivation(userData?['motivation']), _editMotivation),
+            _buildEditableInfoCard('Old Drinking Patterns', 
+              '${OnboardingConstants.getDisplayText(userData?['drinkingFrequency'] ?? '')}, ${OnboardingConstants.getDisplayText(userData?['drinkingAmount'] ?? '')}', 
+              _editDrinkingPatterns),
             
             const SizedBox(height: 24),
             
-            // Drinking Patterns Section
+            // Drinking Schedule Section
             const Text(
-              'Drinking Patterns',
+              'Drinking Schedule & Limits',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -251,11 +290,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 16),
             
-            _buildEditableInfoCard('Drinking Patterns', 
-              '${OnboardingConstants.getDisplayText(userData?['drinkingFrequency'] ?? '')}, ${OnboardingConstants.getDisplayText(userData?['drinkingAmount'] ?? '')}', 
-              _editDrinkingPatterns),
-            _buildEditableInfoCard('Schedule Type', _formatScheduleType(userData?['scheduleType']), _editSchedule),
-            _buildEditableInfoCard('Drink Limit', userData?['drinkLimit']?.toString(), _editDrinkLimit),
+            _buildScheduleCard(),
             
             const SizedBox(height: 24),
             

@@ -271,7 +271,7 @@ class HiveDatabaseService {
     
     switch (scheduleType) {
       case OnboardingConstants.scheduleTypeStrict:
-        final result = _isStrictScheduleDrinkingDay(schedule, checkDate);
+        final result = _checkStrictScheduleDrinkingDay(schedule, checkDate);
         developer.log('Strict schedule check result: $result for schedule: $schedule', name: 'HiveDatabaseService');
         return result;
       case OnboardingConstants.scheduleTypeOpen:
@@ -284,8 +284,54 @@ class HiveDatabaseService {
     }
   }
   
+  /// Check if user can add another drink today (handles both strict and open schedules)
+  bool canAddDrinkToday({DateTime? date}) {
+    final checkDate = date ?? DateTime.now();
+    final userData = getUserData();
+    if (userData == null) return true;
+    
+    final schedule = userData['schedule'] as String?;
+    if (schedule == null) return true;
+    
+    final scheduleType = OnboardingConstants.scheduleTypeMap[schedule];
+    
+    switch (scheduleType) {
+      case OnboardingConstants.scheduleTypeStrict:
+        return _canAddDrinkStrictSchedule(checkDate, userData, schedule);
+      case OnboardingConstants.scheduleTypeOpen:
+        return _canAddDrinkOpenSchedule(checkDate, userData, schedule);
+      default:
+        return true;
+    }
+  }
+  
+  /// Get remaining drinks allowed for today
+  int getRemainingDrinksToday({DateTime? date}) {
+    final checkDate = date ?? DateTime.now();
+    final userData = getUserData();
+    if (userData == null) return 2;
+    
+    final schedule = userData['schedule'] as String?;
+    if (schedule == null) return 2;
+    
+    final scheduleType = OnboardingConstants.scheduleTypeMap[schedule];
+    
+    switch (scheduleType) {
+      case OnboardingConstants.scheduleTypeStrict:
+        return _getRemainingDrinksStrictSchedule(checkDate, userData);
+      case OnboardingConstants.scheduleTypeOpen:
+        return _getRemainingDrinksOpenSchedule(checkDate, userData, schedule);
+      default:
+        return 2;
+    }
+  }
+
+  // =============================================================================
+  // STRICT SCHEDULE LOGIC
+  // =============================================================================
+  
   /// Check if date is a drinking day for strict schedules
-  bool _isStrictScheduleDrinkingDay(String schedule, DateTime date) {
+  bool _checkStrictScheduleDrinkingDay(String schedule, DateTime date) {
     developer.log('Checking strict schedule: $schedule for weekday: ${date.weekday}', name: 'HiveDatabaseService');
     
     switch (schedule) {
@@ -305,41 +351,97 @@ class HiveDatabaseService {
     }
   }
   
-  /// Check if user can add another drink today
-  bool canAddDrinkToday({DateTime? date}) {
-    final checkDate = date ?? DateTime.now();
-    
+  /// Check if user can add drink for strict schedule
+  bool _canAddDrinkStrictSchedule(DateTime date, Map<String, dynamic> userData, String schedule) {
     // First check if today is a drinking day
-    if (!isDrinkingDay(date: checkDate)) {
+    if (!_checkStrictScheduleDrinkingDay(schedule, date)) {
       return false;
     }
     
-    final userData = getUserData();
-    if (userData == null) return true;
-    
     final dailyLimit = userData['drinkLimit'] as int? ?? 2;
-    final todaysDrinks = getTotalDrinksForDate(checkDate);
+    final todaysDrinks = getTotalDrinksForDate(date);
     
     return todaysDrinks < dailyLimit;
   }
   
-  /// Get remaining drinks allowed for today
-  int getRemainingDrinksToday({DateTime? date}) {
-    final checkDate = date ?? DateTime.now();
-    
-    if (!isDrinkingDay(date: checkDate)) {
+  /// Get remaining drinks for strict schedule
+  int _getRemainingDrinksStrictSchedule(DateTime date, Map<String, dynamic> userData) {
+    final schedule = userData['schedule'] as String?;
+    if (schedule == null || !_checkStrictScheduleDrinkingDay(schedule, date)) {
       return 0;
     }
     
-    final userData = getUserData();
-    if (userData == null) return 2;
-    
     final dailyLimit = userData['drinkLimit'] as int? ?? 2;
-    final todaysDrinks = getTotalDrinksForDate(checkDate);
+    final todaysDrinks = getTotalDrinksForDate(date);
     
     return (dailyLimit - todaysDrinks.round()).clamp(0, dailyLimit);
   }
 
+  // =============================================================================
+  // OPEN SCHEDULE LOGIC
+  // =============================================================================
+  
+  /// Check if user can add drink for open schedule (weekly + daily limits)
+  bool _canAddDrinkOpenSchedule(DateTime date, Map<String, dynamic> userData, String schedule) {
+    // Check daily limit first
+    final todaysDrinks = getTotalDrinksForDate(date);
+    if (todaysDrinks >= OnboardingConstants.maxDrinksPerDayOpen) {
+      developer.log('Open schedule: Daily limit reached ($todaysDrinks >= ${OnboardingConstants.maxDrinksPerDayOpen})', name: 'HiveDatabaseService');
+      return false;
+    }
+    
+    // Check weekly limit
+    final weeklyLimit = userData['weeklyLimit'] as int? ?? OnboardingConstants.defaultWeeklyLimits[schedule] ?? 4;
+    final weeklyDrinks = _getWeeklyDrinks(date);
+    
+    if (weeklyDrinks >= weeklyLimit) {
+      developer.log('Open schedule: Weekly limit reached ($weeklyDrinks >= $weeklyLimit)', name: 'HiveDatabaseService');
+      return false;
+    }
+    
+    developer.log('Open schedule: Can add drink (daily: $todaysDrinks/${OnboardingConstants.maxDrinksPerDayOpen}, weekly: $weeklyDrinks/$weeklyLimit)', name: 'HiveDatabaseService');
+    return true;
+  }
+  
+  /// Get remaining drinks for open schedule (limited by both daily and weekly)
+  int _getRemainingDrinksOpenSchedule(DateTime date, Map<String, dynamic> userData, String schedule) {
+    // Calculate remaining based on daily limit
+    final todaysDrinks = getTotalDrinksForDate(date);
+    final remainingDaily = (OnboardingConstants.maxDrinksPerDayOpen - todaysDrinks.round()).clamp(0, OnboardingConstants.maxDrinksPerDayOpen);
+    
+    // Calculate remaining based on weekly limit
+    final weeklyLimit = userData['weeklyLimit'] as int? ?? OnboardingConstants.defaultWeeklyLimits[schedule] ?? 4;
+    final weeklyDrinks = _getWeeklyDrinks(date);
+    final remainingWeekly = (weeklyLimit - weeklyDrinks.round()).clamp(0, weeklyLimit);
+    
+    // Return the more restrictive limit
+    final remaining = [remainingDaily, remainingWeekly].reduce((a, b) => a < b ? a : b);
+    developer.log('Open schedule remaining: daily=$remainingDaily, weekly=$remainingWeekly, final=$remaining', name: 'HiveDatabaseService');
+    return remaining;
+  }
+  
+  /// Get total drinks for the current week
+  double _getWeeklyDrinks(DateTime date) {
+    // Get Monday of the current week
+    final monday = date.subtract(Duration(days: date.weekday - 1));
+    final startOfWeek = DateTime(monday.year, monday.month, monday.day);
+    final endOfWeek = startOfWeek.add(const Duration(days: 7));
+    
+    final allEntries = getAllDrinkEntries();
+    double weeklyTotal = 0.0;
+    
+    for (final entry in allEntries) {
+      final drinkDate = DateTime.parse(entry['drinkDate']);
+      if (drinkDate.isAfter(startOfWeek.subtract(const Duration(milliseconds: 1))) && 
+          drinkDate.isBefore(endOfWeek)) {
+        weeklyTotal += entry['standardDrinks'] as double;
+      }
+    }
+    
+    developer.log('Weekly drinks for week starting ${startOfWeek.toString().split(' ')[0]}: $weeklyTotal', name: 'HiveDatabaseService');
+    return weeklyTotal;
+  }
+  
   // =============================================================================
   // FAVORITE DRINKS OPERATIONS
   // =============================================================================

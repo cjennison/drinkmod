@@ -47,6 +47,16 @@ class OnboardingConstants {
     scheduleFridayOnly,
   ];
 
+  // Default weekly limits for open schedules
+  static const Map<String, int> defaultWeeklyLimits = {
+    scheduleSocialOccasions: 4,
+    scheduleCustomWeekly: 6,
+    scheduleReducedCurrent: 5,
+  };
+
+  // Maximum drinks per day for open schedules
+  static const int maxDrinksPerDayOpen = 2;
+
   // Motivations
   static const String motivationHealth = 'health';
   static const String motivationWeightLoss = 'weight_loss';
@@ -123,6 +133,7 @@ class OnboardingConstants {
 
   // Drink limits
   static const List<int> drinkLimitOptions = [1, 2, 3, 4, 5, 6];
+  static const List<int> weeklyLimitOptions = [2, 3, 4, 5, 6, 7, 8, 10, 12, 14];
 
   /// Get human-readable display text for any onboarding value
   static String getDisplayText(String value) {

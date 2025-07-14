@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../features/onboarding/screens/onboarding_screen.dart';
-import '../../features/onboarding/screens/onboarding_mode_selector.dart';
 import '../../features/onboarding/screens/onboarding_classic_screen.dart';
 import '../../features/main/screens/main_layout.dart';
+import '../../features/profile/screens/schedule_editor_screen.dart';
 import '../../core/services/onboarding_service.dart';
 
 /// Screen that checks onboarding status and redirects accordingly
@@ -52,15 +51,15 @@ class _OnboardingCheckScreenState extends State<OnboardingCheckScreen> {
           print('Navigating to /home');
           context.go('/home');
         } else {
-          print('Navigating to /onboarding-selector');
-          context.go('/onboarding-selector');
+          print('Navigating to /onboarding-classic');
+          context.go('/onboarding-classic');
         }
       }
     } catch (e) {
       print('Error checking onboarding status: $e');
-      // Fallback to onboarding selector on error
+      // Fallback to classic onboarding on error
       if (mounted) {
-        context.go('/onboarding-selector');
+        context.go('/onboarding-classic');
       }
     } finally {
       _isChecking = false;
@@ -108,21 +107,7 @@ class AppRouter {
         builder: (context, state) => const OnboardingCheckScreen(),
       ),
       
-      // Onboarding mode selector
-      GoRoute(
-        path: '/onboarding-selector',
-        name: 'onboarding-selector',
-        builder: (context, state) => const OnboardingModeSelectorScreen(),
-      ),
-      
-      // Onboarding flow - Agent mode
-      GoRoute(
-        path: onboarding,
-        name: 'onboarding',
-        builder: (context, state) => const OnboardingScreen(),
-      ),
-      
-      // Onboarding flow - Classic mode
+      // Onboarding flow - Classic mode (default for now)
       GoRoute(
         path: '/onboarding-classic',
         name: 'onboarding-classic',
@@ -136,37 +121,19 @@ class AppRouter {
         builder: (context, state) => const MainLayout(),
       ),
       
-      // TODO: Implement other screens in Stage 3
-      // // Main app routes
-      // GoRoute(
-      //   path: dashboard,
-      //   name: 'dashboard',
-      //   builder: (context, state) => const DashboardScreen(),
-      // ),
-      
-      // GoRoute(
-      //   path: tracking,
-      //   name: 'tracking',
-      //   builder: (context, state) => const TrackingScreen(),
-      // ),
-      
-      // GoRoute(
-      //   path: analytics,
-      //   name: 'analytics',
-      //   builder: (context, state) => const AnalyticsScreen(),
-      // ),
-      
-      // GoRoute(
-      //   path: milestones,
-      //   name: 'milestones',
-      //   builder: (context, state) => const MilestonesScreen(),
-      // ),
-      
-      // GoRoute(
-      //   path: settings,
-      //   name: 'settings',
-      //   builder: (context, state) => const SettingsScreen(),
-      // ),
+      // Profile sub-pages
+      GoRoute(
+        path: '/profile/schedule-editor',
+        name: 'schedule-editor',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return ScheduleEditorScreen(
+            currentSchedule: extra?['currentSchedule'],
+            currentDailyLimit: extra?['currentDailyLimit'],
+            currentWeeklyLimit: extra?['currentWeeklyLimit'],
+          );
+        },
+      ),
     ],
     
     // Error handling

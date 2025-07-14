@@ -106,7 +106,7 @@ class _ScheduleEditorDialogState extends State<ScheduleEditorDialog> {
           onPressed: selectedSchedule != null ? () async {
             // Save the schedule
             await OnboardingService.updateUserData({
-              'scheduleType': selectedSchedule,
+              'schedule': selectedSchedule,
             });
             
             widget.onScheduleChanged(selectedSchedule!);
