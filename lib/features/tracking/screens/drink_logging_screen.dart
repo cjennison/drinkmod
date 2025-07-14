@@ -45,6 +45,7 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
   int? _hungerLevel;
   int? _stressLevel;
   String? _sleepQuality;
+  bool _isInitializing = false;
 
   @override
   void initState() {
@@ -54,33 +55,37 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
     
     // If editing, populate form with existing data
     if (widget.editingEntry != null) {
+      _isInitializing = true;
       _populateFromExistingEntry();
     }
   }
 
   void _populateFromExistingEntry() async {
     final entry = widget.editingEntry!;
-    _selectedDate = DateTime(entry.timestamp.year, entry.timestamp.month, entry.timestamp.day);
-    _selectedTimeOfDay = entry.timeOfDay; // Use the stored time of day directly
-    _location = entry.location;
-    _socialContext = entry.socialContext;
-    _moodBefore = entry.moodBefore;
-    _triggers = entry.triggers ?? [];
-    _triggerDescription = entry.triggerDescription;
-    _intention = entry.intention;
-    _urgeIntensity = entry.urgeIntensity;
-    _consideredAlternatives = entry.consideredAlternatives;
-    _alternatives = entry.alternatives;
-    _energyLevel = entry.energyLevel;
-    _hungerLevel = entry.hungerLevel;
-    _stressLevel = entry.stressLevel;
-    _sleepQuality = entry.sleepQuality;
+    
+    setState(() {
+      _selectedDate = DateTime(entry.timestamp.year, entry.timestamp.month, entry.timestamp.day);
+      _selectedTimeOfDay = entry.timeOfDay; // Use the stored time of day directly
+      _location = entry.location;
+      _socialContext = entry.socialContext;
+      _moodBefore = entry.moodBefore;
+      _triggers = entry.triggers ?? [];
+      _triggerDescription = entry.triggerDescription;
+      _intention = entry.intention;
+      _urgeIntensity = entry.urgeIntensity;
+      _consideredAlternatives = entry.consideredAlternatives;
+      _alternatives = entry.alternatives;
+      _energyLevel = entry.energyLevel;
+      _hungerLevel = entry.hungerLevel;
+      _stressLevel = entry.stressLevel;
+      _sleepQuality = entry.sleepQuality;
+    });
     
     // Find matching drink from new database
     final drinkService = DrinkDatabaseService.instance;
     final allDrinks = await drinkService.getAllDrinks();
     
-    _selectedDrink = allDrinks.firstWhere(
+    final matchedDrink = allDrinks.firstWhere(
       (d) => d.name == entry.drinkName,
       orElse: () => DrinkInfo(
         id: 'fallback',
@@ -92,6 +97,11 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
         isBasic: false,
       ),
     );
+    
+    setState(() {
+      _selectedDrink = matchedDrink;
+      _isInitializing = false;
+    });
   }
 
   @override
@@ -203,14 +213,25 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
           const SizedBox(height: 24),
           
           // Drink selection and display
-          DrinkSelectionWidget(
-            selectedDrink: _selectedDrink,
-            onDrinkSelected: (DrinkInfo drink) {
-              setState(() {
-                _selectedDrink = drink;
-              });
-            },
-          ),
+          if (_isInitializing) 
+            const Center(
+              child: Column(
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Loading drink information...'),
+                ],
+              ),
+            )
+          else
+            DrinkSelectionWidget(
+              selectedDrink: _selectedDrink,
+              onDrinkSelected: (DrinkInfo drink) {
+                setState(() {
+                  _selectedDrink = drink;
+                });
+              },
+            ),
         ],
       ),
     );
