@@ -153,8 +153,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-
-
   String _formatMotivation(String? motivation) {
     if (motivation == null) return 'Not set';
     return OnboardingConstants.getDisplayText(motivation);
@@ -163,6 +161,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _formatGender(String? gender) {
     if (gender == null) return '';
     return OnboardingConstants.getDisplayText(gender);
+  }
+
+  String _formatDrinkingPatterns(Map<String, dynamic>? userData) {
+    if (userData == null) return 'Not set';
+    
+    final frequency = userData['drinkingFrequency'] ?? '';
+    final amount = userData['drinkingAmount'] ?? '';
+    
+    final displayFrequency = OnboardingConstants.getDisplayText(frequency);
+    final displayAmount = OnboardingConstants.getDisplayText(amount);
+    
+    // If both are "Not set", just return "Not set"
+    if (displayFrequency == 'Not set' && displayAmount == 'Not set') {
+      return 'Not set';
+    }
+    
+    // If one is "Not set", only show the other
+    if (displayFrequency == 'Not set') {
+      return displayAmount;
+    }
+    if (displayAmount == 'Not set') {
+      return displayFrequency;
+    }
+    
+    // Both have values, combine them
+    return '$displayFrequency, $displayAmount';
   }
 
   Widget _buildEditableInfoCard(String title, String? value, VoidCallback onEdit) {
@@ -286,7 +310,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               _editNameAndGender),
             _buildEditableInfoCard('Motivation', _formatMotivation(userData?['motivation']), _editMotivation),
             _buildEditableInfoCard('Old Drinking Patterns', 
-              '${OnboardingConstants.getDisplayText(userData?['drinkingFrequency'] ?? '')}, ${OnboardingConstants.getDisplayText(userData?['drinkingAmount'] ?? '')}', 
+              _formatDrinkingPatterns(userData), 
               _editDrinkingPatterns),
             
             const SizedBox(height: 24),

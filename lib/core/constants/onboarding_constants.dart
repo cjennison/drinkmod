@@ -138,6 +138,11 @@ class OnboardingConstants {
 
   /// Get human-readable display text for any onboarding value
   static String getDisplayText(String value) {
+    // Handle null or empty values
+    if (value.isEmpty) {
+      return 'Not set';
+    }
+    
     switch (value) {
       // Gender
       case genderMale:
@@ -213,7 +218,7 @@ class OnboardingConstants {
       // Fallback - capitalize and replace underscores
       default:
         return value.split('_').map((word) => 
-          word[0].toUpperCase() + word.substring(1)).join(' ');
+          word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '').join(' ');
     }
   }
 

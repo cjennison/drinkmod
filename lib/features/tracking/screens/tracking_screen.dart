@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/models/drink_entry.dart';
 import '../../../core/services/hive_database_service.dart';
 import '../../../core/utils/drink_calculator.dart';
+import '../widgets/drink_item_view_modal.dart';
 import 'drink_logging_screen.dart';
 import 'drink_logging_cubit.dart';
 
@@ -391,6 +392,9 @@ class _TrackingScreenState extends State<TrackingScreen> {
     // Use timeOfDay from enhanced metadata, fallback to timestamp if not available
     final timeStr = entry['timeOfDay'] as String? ?? DateFormat('h:mm a').format(drinkDate);
     
+    // Check if drink has additional content beyond basic info
+    final hasAdditionalContent = _drinkHasAdditionalContent(entry);
+    
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
@@ -404,7 +408,18 @@ class _TrackingScreenState extends State<TrackingScreen> {
             ),
           ),
         ),
-        title: Text(drinkName),
+        title: Row(
+          children: [
+            Expanded(child: Text(drinkName)),
+            if (hasAdditionalContent)
+              Icon(
+                Icons.star,
+                size: 16,
+                color: Colors.amber.shade600,
+                key: const ValueKey('additional-content-indicator'),
+              ),
+          ],
+        ),
         subtitle: Text(timeStr),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
@@ -795,44 +810,12 @@ class _TrackingScreenState extends State<TrackingScreen> {
         );
       }
     }
-  }
-
-  void _viewDrinkDetails(Map<String, dynamic> entry) {
-    // Show detailed view of the drink entry
+  }  void _viewDrinkDetails(Map<String, dynamic> entry) async {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(entry['drinkName']),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Standard Drinks: ${(entry['standardDrinks'] as double).toStringAsFixed(1)}'),
-            const SizedBox(height: 8),
-            Text('Time: ${DateFormat('h:mm a').format(DateTime.parse(entry['drinkDate']))}'),
-            if (entry['reason'] != null) ...[
-              const SizedBox(height: 8),
-              Text('Reason: ${entry['reason']}'),
-            ],
-            if (entry['notes'] != null) ...[
-              const SizedBox(height: 8),
-              Text('Notes: ${entry['notes']}'),
-            ],
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _editDrink(entry);
-            },
-            child: const Text('Edit'),
-          ),
-        ],
+      builder: (context) => DrinkItemViewModal(
+        entry: entry,
+        onEdit: () => _editDrink(entry),
       ),
     );
   }
@@ -850,6 +833,48 @@ class _TrackingScreenState extends State<TrackingScreen> {
     } else {
       return 'Night';
     }
+  }
+
+  /// Check if a drink entry has additional content beyond basic info
+  bool _drinkHasAdditionalContent(Map<String, dynamic> entry) {
+    // Check for context info
+    if (entry['location'] != null || entry['socialContext'] != null) {
+      return true;
+    }
+    
+    // Check for emotional info
+    if (entry['moodBefore'] != null || 
+        (entry['triggers'] != null && _hasTriggersContent(entry['triggers'])) ||
+        entry['triggerDescription'] != null) {
+      return true;
+    }
+    
+    // Check for reflection info
+    if (entry['intention'] != null && entry['intention'] != 'Quick logged' || 
+        entry['urgeIntensity'] != null || 
+        entry['consideredAlternatives'] != null) {
+      return true;
+    }
+    
+    // Check for notes or other additional fields
+    if (entry['notes'] != null && (entry['notes'] as String).isNotEmpty) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  /// Helper method to check if triggers content exists
+  bool _hasTriggersContent(dynamic triggers) {
+    if (triggers == null) return false;
+    if (triggers is List) {
+      return triggers.isNotEmpty;
+    }
+    if (triggers is String) {
+      String cleanString = triggers.replaceAll(RegExp(r'[\[\]]'), '').trim();
+      return cleanString.isNotEmpty;
+    }
+    return false;
   }
 
   @override

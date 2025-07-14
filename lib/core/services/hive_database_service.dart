@@ -142,7 +142,7 @@ class HiveDatabaseService {
   // DRINK ENTRIES OPERATIONS
   // =============================================================================
   
-  /// Create a new drink entry
+  /// Create a new drink entry with enhanced therapeutic data
   Future<String> createDrinkEntry({
     required DateTime drinkDate,
     required String drinkName,
@@ -151,6 +151,20 @@ class HiveDatabaseService {
     String? timeOfDay,
     String? reason,
     String? notes,
+    // Enhanced therapeutic fields
+    String? location,
+    String? socialContext,
+    int? moodBefore,
+    List<String>? triggers,
+    String? triggerDescription,
+    String? intention,
+    int? urgeIntensity,
+    bool? consideredAlternatives,
+    String? alternatives,
+    int? energyLevel,
+    int? hungerLevel,
+    int? stressLevel,
+    String? sleepQuality,
   }) async {
     if (!_isInitialized) await initialize();
     
@@ -165,10 +179,24 @@ class HiveDatabaseService {
       'reason': reason,
       'notes': notes,
       'createdAt': DateTime.now().toIso8601String(),
+      // Enhanced therapeutic data
+      'location': location,
+      'socialContext': socialContext,
+      'moodBefore': moodBefore,
+      'triggers': triggers,
+      'triggerDescription': triggerDescription,
+      'intention': intention,
+      'urgeIntensity': urgeIntensity,
+      'consideredAlternatives': consideredAlternatives,
+      'alternatives': alternatives,
+      'energyLevel': energyLevel,
+      'hungerLevel': hungerLevel,
+      'stressLevel': stressLevel,
+      'sleepQuality': sleepQuality,
     };
     
     await _drinkEntriesBox.put(entryId, entry);
-    developer.log('Drink entry created: $entry', name: 'HiveDatabaseService');
+    developer.log('Drink entry created with enhanced data: $entry', name: 'HiveDatabaseService');
     
     return entryId;
   }

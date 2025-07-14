@@ -58,8 +58,8 @@ class DrinkLoggingCubit extends Cubit<DrinkLoggingState> {
         isScheduleCompliant: isScheduleCompliant,
       );
       
-      // Save to database using the enhanced entry
-      await _databaseService.createDrinkEntry(
+      // Save to database with all enhanced therapeutic data
+      final databaseEntryId = await _databaseService.createDrinkEntry(
         drinkDate: updatedEntry.timestamp,
         drinkName: updatedEntry.drinkName,
         standardDrinks: updatedEntry.standardDrinks,
@@ -67,19 +67,27 @@ class DrinkLoggingCubit extends Cubit<DrinkLoggingState> {
         timeOfDay: updatedEntry.timeOfDay,
         reason: updatedEntry.triggerDescription,
         notes: updatedEntry.intention,
+        // Enhanced therapeutic fields
+        location: updatedEntry.location,
+        socialContext: updatedEntry.socialContext,
+        moodBefore: updatedEntry.moodBefore,
+        triggers: updatedEntry.triggers,
+        triggerDescription: updatedEntry.triggerDescription,
+        intention: updatedEntry.intention,
+        urgeIntensity: updatedEntry.urgeIntensity,
+        consideredAlternatives: updatedEntry.consideredAlternatives,
+        alternatives: updatedEntry.alternatives,
+        energyLevel: updatedEntry.energyLevel,
+        hungerLevel: updatedEntry.hungerLevel,
+        stressLevel: updatedEntry.stressLevel,
+        sleepQuality: updatedEntry.sleepQuality,
       );
       
-      // For now, we'll save the enhanced data as metadata
-      // In a future update, we'll extend the database schema
-      if (await _shouldSaveEnhancedData(updatedEntry)) {
-        await _saveEnhancedMetadata(updatedEntry);
-      }
+      // Update the entry with the database-generated ID
+      final finalEntry = updatedEntry.copyWith(id: databaseEntryId);
       
-      print('DrinkLoggingCubit - About to emit DrinkLoggingSuccess');
-      emit(DrinkLoggingSuccess(updatedEntry));
-      print('DrinkLoggingCubit - DrinkLoggingSuccess emitted');
+      emit(DrinkLoggingSuccess(finalEntry));
     } catch (e) {
-      print('DrinkLoggingCubit - Error occurred: $e');
       emit(DrinkLoggingError('Failed to log drink: $e'));
     }
   }
@@ -99,70 +107,4 @@ class DrinkLoggingCubit extends Cubit<DrinkLoggingState> {
     }
   }
 
-  /// Check if we should save enhanced therapeutic data
-  Future<bool> _shouldSaveEnhancedData(DrinkEntry entry) async {
-    // Save if any therapeutic fields are filled
-    return entry.moodBefore != null ||
-           entry.triggers?.isNotEmpty == true ||
-           entry.triggerDescription?.isNotEmpty == true ||
-           entry.intention?.isNotEmpty == true ||
-           entry.urgeIntensity != null ||
-           entry.location?.isNotEmpty == true ||
-           entry.socialContext?.isNotEmpty == true;
-  }
-
-  /// Save enhanced metadata for therapeutic analysis
-  Future<void> _saveEnhancedMetadata(DrinkEntry entry) async {
-    try {
-      // Save to a separate box for enhanced drink data
-      final enhancedData = {
-        'entryId': entry.id,
-        'timestamp': entry.timestamp.toIso8601String(),
-        'timeOfDay': entry.timeOfDay,
-        'location': entry.location,
-        'socialContext': entry.socialContext,
-        'moodBefore': entry.moodBefore,
-        'triggers': entry.triggers,
-        'triggerDescription': entry.triggerDescription,
-        'intention': entry.intention,
-        'urgeIntensity': entry.urgeIntensity,
-        'consideredAlternatives': entry.consideredAlternatives,
-        'alternatives': entry.alternatives,
-        'energyLevel': entry.energyLevel,
-        'hungerLevel': entry.hungerLevel,
-        'stressLevel': entry.stressLevel,
-        'sleepQuality': entry.sleepQuality,
-      };
-      
-      // For now, store as app setting with unique key
-      await _databaseService.setSetting(
-        'enhanced_drink_${entry.id}', 
-        enhancedData,
-      );
-    } catch (e) {
-      // Don't fail the whole operation if metadata save fails
-      print('Warning: Failed to save enhanced drink metadata: $e');
-    }
-  }
-
-  /// Get enhanced data for a drink entry
-  Future<Map<String, dynamic>?> getEnhancedData(String entryId) async {
-    try {
-      return _databaseService.getSetting<Map<String, dynamic>>(
-        'enhanced_drink_$entryId',
-      );
-    } catch (e) {
-      print('Warning: Failed to load enhanced drink metadata: $e');
-      return null;
-    }
-  }
-
-  /// Delete enhanced data for a drink entry
-  Future<void> deleteEnhancedData(String entryId) async {
-    try {
-      await _databaseService.removeSetting('enhanced_drink_$entryId');
-    } catch (e) {
-      print('Warning: Failed to delete enhanced drink metadata: $e');
-    }
-  }
 }
