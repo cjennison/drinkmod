@@ -23,6 +23,38 @@ Drinkmod is a Flutter/Dart mobile application designed to help users practice al
 7. **Flexible Goal Adjustment**: Easy modification of goals based on progress
 8. **Anonymous Data Backup**: Secure, private data storage and recovery
 
+## Mobile & Therapeutic Design Principles
+
+### Mobile-First UX Requirements
+1. **One-Handed Operation**: All primary functions accessible within thumb reach
+2. **Quick Access Patterns**: Critical features (logging, crisis support) ≤ 2 taps from any screen
+3. **Gesture-Driven Navigation**: Swipe patterns for common actions and quick shortcuts
+4. **Offline-First Architecture**: Core functionality available without internet connection
+5. **Biometric Security**: Face ID/Touch ID protection for sensitive addiction data
+6. **Discrete Usage**: Option for stealth mode and private notifications
+7. **Voice Accessibility**: Voice commands for hands-free logging and navigation
+8. **Haptic Feedback**: Subtle vibrations for confirmations and positive reinforcement
+
+### Therapeutic UX Requirements
+1. **Empowerment Language**: All copy focuses on user control and positive choice
+2. **Non-Judgmental Design**: No shame-inducing colors, icons, or messaging
+3. **Crisis-Aware Architecture**: Emergency support accessible from every screen
+4. **Progress-Focused**: Celebrate any positive change, however small
+5. **Mindfulness Integration**: Built-in moments for reflection and awareness
+6. **Harm Reduction Support**: Tools and resources for high-risk situations
+7. **Personalization**: Adaptive messaging based on user patterns and preferences
+8. **Privacy by Design**: Anonymous usage options and comprehensive data protection
+
+### Addiction-Informed Technical Requirements
+1. **Real-Time Pattern Recognition**: ML algorithms for early intervention triggers
+2. **Behavioral Data Capture**: Comprehensive logging of context, mood, and triggers
+3. **Therapeutic Intervention System**: Automated support delivery based on risk indicators
+4. **Crisis Escalation Protocols**: Clear pathways from app to professional support
+5. **Evidence-Based Content**: All therapeutic interventions based on clinical research
+6. **Data Portability**: Export capabilities for sharing with healthcare providers
+7. **Relapse Recovery Features**: Immediate support and positive reframing after setbacks
+8. **Long-Term Sustainability**: Features supporting months/years of continued use
+
 ## Development Stages
 
 ### Stage 1: Foundation & Core Infrastructure ✅ COMPLETED
@@ -409,36 +441,178 @@ Scaffold(
 ---
 
 ### Stage 3: Core Tracking & Control Panel
-**Objective**: Implement main dashboard and drinking tracking
-**Duration**: 3-4 weeks
+**Objective**: Implement therapeutically-informed main dashboard and drinking tracking with mobile-first UX
+**Duration**: 4-5 weeks (Extended for therapeutic depth)
 **Status**: Not Started
 
-#### Features to Implement:
-- Main control panel dashboard
-- Today's allowance display with examples
-- Drink logging interface (quick entry + detailed)
-- "Why did you drink?" categorization
-- Real-time allowance updates
-- Over-limit tracking and gentle notifications
+#### Enhanced Features to Implement:
 
-#### Dashboard Elements:
-- Today's drinking status (allowed/not allowed)
-- Remaining drinks with specific examples
-- Quick drink logging buttons
-- Streak counter
-- Progress indicators
+##### 🎯 Core Dashboard (Therapeutic Focus)
+- **Today's Status Overview**: Visual allowance display with empowering language
+- **Personalized Welcome**: Time-aware greetings with user's name and current streak
+- **Allowance Visualization**: Progress bars/circles showing remaining drinks with specific examples
+- **Contextual Encouragement**: Dynamic messaging based on current status and patterns
+- **Quick Actions Hub**: Primary CTAs for logging, viewing progress, and emergency support
+
+##### 📱 Mobile-Optimized Drink Logging
+- **One-Tap Quick Log**: Favorite drinks accessible within 1 tap from any screen
+- **Progressive Disclosure**: Basic log → detailed entry → reflection prompts
+- **Smart Defaults**: Pre-filled based on time of day, location, and historical patterns
+- **Undo Functionality**: 30-second undo window for accidental entries
+- **Offline Capability**: Full logging functionality without internet connection
+
+##### 🧠 Therapeutic Logging Enhancement
+- **Mindful Check-ins**: "How are you feeling?" before and after logging
+- **Intention Setting**: "What's your plan for this drink?" with guided options
+- **Context Capture**: Automatic time, estimated location category, social context
+- **Reflection Prompts**: Post-drink "How did that feel?" with therapeutic framing
+- **Trigger Awareness**: Optional quick trigger identification during logging
+
+##### ⚡ Real-Time Therapeutic Interventions
+- **Pre-Limit Gentle Nudges**: "You have 1 drink left today. How are you feeling?"
+- **Over-Limit Support**: Compassionate messaging without shame or judgment
+- **Urge Surfing Triggers**: Quick access to urge management when approaching limits
+- **Celebration Moments**: Positive reinforcement for staying within limits
+- **Micro-Reflections**: Brief therapeutic check-ins throughout the day
+
+##### 📊 Intelligent Dashboard Elements
+- **Adaptive Goal Display**: Shows today's specific schedule (drinking day vs. non-drinking day)
+- **Streak Visualization**: Current streak with next milestone progress
+- **Weekly Pattern View**: Last 7 days at-a-glance with trend indicators
+- **Mood Integration**: Simple mood tracking correlated with drinking patterns
+- **Success Indicators**: Visual celebration of adherence and positive choices
+
+##### 🎨 Mobile UX Enhancements
+- **Gesture Navigation**: Swipe patterns for common actions (log drink, view history)
+- **Haptic Feedback**: Subtle vibrations for confirmations and celebrations
+- **Dark Mode Optimization**: OLED-friendly dark theme for evening use
+- **One-Handed Use**: All primary functions accessible with thumb reach
+- **Voice Commands**: Optional voice logging for accessibility and convenience
+
+##### 🔒 Privacy & Security Features
+- **Biometric Lock**: Face ID/fingerprint protection for sensitive data
+- **Stealth Mode**: Discrete app icon and notification options
+- **Data Encryption**: Local database encryption for sensitive information
+- **Anonymous Mode**: Option to use app without identifying information
+- **Emergency Data Wipe**: Quick data deletion in crisis situations
+
+##### 📈 Early Analytics Foundation
+- **Adherence Tracking**: Daily/weekly adherence rates with trend analysis
+- **Pattern Recognition**: Time-of-day, day-of-week drinking patterns
+- **Trigger Correlation**: Basic correlation between triggers and consumption
+- **Goal Adjustment Alerts**: Suggestions when patterns indicate goal misalignment
+- **Progress Momentum**: Visual indicators of positive trajectory
+
+##### 🚨 Crisis Prevention Features
+- **Escalation Detection**: Algorithm to identify concerning patterns
+- **Emergency Contacts**: Quick access to support person or crisis line
+- **Therapist Communication**: Optional data sharing with healthcare providers
+- **Harm Reduction Resources**: Information for high-risk situations
+- **Crisis Plan Integration**: Personal crisis management plan access
+
+#### Mobile-First Dashboard Layout:
+```
+┌─────────────────────────────────┐
+│ Good morning, [Name]! 🌅        │ ← Personalized greeting
+│ Day 12 streak • Today: 2 drinks │ ← Status bar
+├─────────────────────────────────┤
+│ ● ● ○ ○                        │ ← Visual allowance
+│ "Remaining: 2 drinks"           │ ← Clear language
+│ Example: 2 beers OR 1 cocktail  │ ← Concrete examples
+├─────────────────────────────────┤
+│ [📝 Log a Drink] [📊 Progress] │ ← Primary actions
+├─────────────────────────────────┤
+│ This Week: ████░░░ 5/7 days    │ ← Weekly view
+│ Feeling: 😊 | Urges: Low       │ ← Mood integration
+└─────────────────────────────────┘
+```
+
+#### Drink Logging Flow (Mobile-Optimized):
+1. **Quick Entry**: Tap favorite drink → Confirm → Done (3 taps total)
+2. **Detailed Entry**: Add drink → Select amount → Add context → Reflection
+3. **Mindful Mode**: Pre-drink intention → Log drink → Post-drink reflection
+4. **Emergency Mode**: Crisis resources → Harm reduction → Support contact
+
+#### Therapeutic Messaging Framework:
+- **Empowerment Language**: "You're in control" vs. "Don't drink"
+- **Progress Focus**: Celebrate any positive change, no matter how small
+- **Non-Judgmental**: "Notice what happened" vs. "You failed"
+- **Forward-Looking**: "What would help you tomorrow?" vs. dwelling on mistakes
+- **Strength-Based**: Highlight user's existing coping skills and resources
+
+#### Advanced Features for Stage 3:
+- **Smart Notifications**: ML-driven personalized reminder timing
+- **Location Awareness**: Automatic context detection (home, work, social)
+- **Calendar Integration**: Sync with phone calendar for event-based planning
+- **Weather Correlation**: Track weather patterns with drinking behaviors
+- **Exercise Integration**: Connect with health apps for holistic view
+
+#### Data Models to Implement:
+```dart
+// Enhanced DrinkEntry model
+class DrinkEntry {
+  String id;
+  DateTime timestamp;
+  String drinkId; // References FavoriteDrink
+  double amount; // Standard drinks
+  String? location; // Home, Work, Social, Other
+  List<String>? triggers; // Emotional, Social, Environmental
+  int? moodBefore; // 1-10 scale
+  int? moodAfter; // 1-10 scale
+  String? intention; // Pre-drink intention
+  String? reflection; // Post-drink reflection
+  bool isWithinLimit; // Calculated field
+  Map<String, dynamic>? metadata; // Extensible data
+}
+
+// Mood tracking
+class MoodEntry {
+  String id;
+  DateTime timestamp;
+  int mood; // 1-10 scale
+  List<String>? tags; // Happy, Stressed, Anxious, etc.
+  String? note; // Optional reflection
+}
+
+// Quick trigger tracking
+class TriggerEntry {
+  String id;
+  DateTime timestamp;
+  String category; // Emotional, Social, Environmental, Physical
+  String specific; // Stress, Boredom, Social pressure, etc.
+  int intensity; // 1-10 scale
+  bool didDrink; // Whether user drank after trigger
+  String? copingStrategy; // What they did instead
+}
+```
 
 #### Deliverables:
-- Functional main dashboard
-- Drink logging system
-- Real-time data updates
-- Intuitive UX for daily use
+- **Therapeutically-informed main dashboard** with empowering UX
+- **Mobile-optimized drink logging system** with progressive disclosure
+- **Real-time therapeutic interventions** and support features
+- **Privacy and security features** for sensitive data protection
+- **Early analytics foundation** for pattern recognition
+- **Crisis prevention features** with emergency support access
+- **Comprehensive data models** supporting therapeutic goals
 
 #### Acceptance Criteria:
-- Dashboard accurately reflects current allowance
-- Drink logging is quick and easy
-- Data updates immediately after logging
-- Clear visual feedback for all states
+- ✅ Dashboard accurately reflects current allowance with therapeutic messaging
+- ✅ Drink logging is accessible within 2 taps maximum from any screen
+- ✅ Data updates immediately after logging with positive reinforcement
+- ✅ Clear visual feedback for all states using empowering language
+- ✅ Mobile-first design supports one-handed use and gesture navigation
+- ✅ Privacy features protect sensitive information with biometric security
+- ✅ Therapeutic interventions provide support without judgment
+- ✅ Crisis prevention features are accessible within emergency timeframes
+- ✅ Analytics foundation captures data needed for later pattern recognition
+- ✅ Offline functionality maintains core features without internet connection
+
+#### Success Metrics for Stage 3:
+- **Engagement**: Daily active usage rates and session duration
+- **Therapeutic Effectiveness**: Adherence improvement rates after implementation
+- **User Experience**: Task completion rates for logging and dashboard navigation
+- **Crisis Prevention**: Early warning system accuracy and intervention effectiveness
+- **Data Quality**: Completeness and accuracy of logged drinking data
 
 ---
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/onboarding/screens/onboarding_screen.dart';
+import '../../features/onboarding/screens/onboarding_mode_selector.dart';
+import '../../features/onboarding/screens/onboarding_classic_screen.dart';
 import '../../features/main/screens/main_layout.dart';
 import '../../core/services/onboarding_service.dart';
 
@@ -13,29 +15,73 @@ class OnboardingCheckScreen extends StatefulWidget {
 }
 
 class _OnboardingCheckScreenState extends State<OnboardingCheckScreen> {
+  bool _isChecking = false;
+
   @override
   void initState() {
     super.initState();
+    print('OnboardingCheckScreen initState called');
     _checkOnboardingStatus();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Check onboarding status every time we return to this screen
+    print('OnboardingCheckScreen didChangeDependencies called');
+    if (!_isChecking) {
+      _checkOnboardingStatus();
+    }
+  }
+
   Future<void> _checkOnboardingStatus() async {
-    final isCompleted = await OnboardingService.isOnboardingCompleted();
+    if (_isChecking) return;
     
-    if (mounted) {
-      if (isCompleted) {
-        context.go('/home');
-      } else {
-        context.go('/onboarding');
+    try {
+      _isChecking = true;
+      print('Checking onboarding status...');
+      
+      // Debug the current state
+      await OnboardingService.debugOnboardingState();
+      
+      final isCompleted = await OnboardingService.isOnboardingCompleted();
+      print('Onboarding completed: $isCompleted');
+      
+      if (mounted) {
+        if (isCompleted) {
+          print('Navigating to /home');
+          context.go('/home');
+        } else {
+          print('Navigating to /onboarding-selector');
+          context.go('/onboarding-selector');
+        }
       }
+    } catch (e) {
+      print('Error checking onboarding status: $e');
+      // Fallback to onboarding selector on error
+      if (mounted) {
+        context.go('/onboarding-selector');
+      }
+    } finally {
+      _isChecking = false;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       body: Center(
-        child: CircularProgressIndicator(),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text(
+              'Checking status...',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -62,11 +108,25 @@ class AppRouter {
         builder: (context, state) => const OnboardingCheckScreen(),
       ),
       
-      // Onboarding flow
+      // Onboarding mode selector
+      GoRoute(
+        path: '/onboarding-selector',
+        name: 'onboarding-selector',
+        builder: (context, state) => const OnboardingModeSelectorScreen(),
+      ),
+      
+      // Onboarding flow - Agent mode
       GoRoute(
         path: onboarding,
         name: 'onboarding',
         builder: (context, state) => const OnboardingScreen(),
+      ),
+      
+      // Onboarding flow - Classic mode
+      GoRoute(
+        path: '/onboarding-classic',
+        name: 'onboarding-classic',
+        builder: (context, state) => const OnboardingClassicScreen(),
       ),
       
       // Main home screen after onboarding

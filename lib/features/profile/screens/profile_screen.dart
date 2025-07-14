@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/services/onboarding_service.dart';
+import '../../../core/constants/onboarding_constants.dart';
+import '../widgets/name_editor_dialog.dart';
+import '../widgets/motivation_editor_dialog.dart';
+import '../widgets/schedule_editor_dialog.dart';
+import '../widgets/drink_limit_editor_dialog.dart';
+import '../widgets/favorite_drinks_editor_dialog.dart';
+import '../widgets/drinking_patterns_editor_dialog.dart';
 
 /// Profile screen for user data management and settings
 /// Allows users to view and edit their information, and reset onboarding
@@ -62,7 +69,123 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  Widget _buildInfoCard(String title, String? value) {
+  Future<void> _editNameAndGender() async {
+    await showDialog(
+      context: context,
+      builder: (context) => NameEditorDialog(
+        currentName: userData?['name'],
+        currentGender: userData?['gender'],
+        onDataChanged: (name, gender) {
+          setState(() {
+            userData?['name'] = name;
+            userData?['gender'] = gender;
+          });
+        },
+      ),
+    );
+  }
+
+  Future<void> _editMotivation() async {
+    await showDialog(
+      context: context,
+      builder: (context) => MotivationEditorDialog(
+        currentMotivation: userData?['motivation'],
+        onMotivationChanged: (motivation) {
+          setState(() {
+            userData?['motivation'] = motivation;
+          });
+        },
+      ),
+    );
+  }
+
+  Future<void> _editSchedule() async {
+    await showDialog(
+      context: context,
+      builder: (context) => ScheduleEditorDialog(
+        currentSchedule: userData?['scheduleType'],
+        onScheduleChanged: (schedule) {
+          setState(() {
+            userData?['scheduleType'] = schedule;
+          });
+          // Note: Database sync will be handled by home screen on next load
+        },
+      ),
+    );
+  }
+
+  Future<void> _editDrinkLimit() async {
+    await showDialog(
+      context: context,
+      builder: (context) => DrinkLimitEditorDialog(
+        currentLimit: userData?['drinkLimit'],
+        onLimitChanged: (limit) async {
+          setState(() {
+            userData?['drinkLimit'] = limit;
+          });
+          // Note: Database sync will be handled by home screen on next load
+        },
+      ),
+    );
+  }
+  
+  Future<void> _editFavoriteDrinks() async {
+    final currentDrinks = userData?['favoriteDrinks'];
+    List<String> drinksList = [];
+    
+    if (currentDrinks != null) {
+      if (currentDrinks is List) {
+        drinksList = currentDrinks.cast<String>();
+      }
+    }
+    
+    await showDialog(
+      context: context,
+      builder: (context) => FavoriteDrinksEditorDialog(
+        currentDrinks: drinksList,
+        onDrinksChanged: (drinks) {
+          setState(() {
+            userData?['favoriteDrinks'] = drinks;
+          });
+        },
+      ),
+    );
+  }
+
+  Future<void> _editDrinkingPatterns() async {
+    await showDialog(
+      context: context,
+      builder: (context) => DrinkingPatternsEditorDialog(
+        currentFrequency: userData?['drinkingFrequency'],
+        currentAmount: userData?['drinkingAmount'],
+        onPatternsChanged: (frequency, amount) async {
+          setState(() {
+            userData?['drinkingFrequency'] = frequency;
+            userData?['drinkingAmount'] = amount;
+          });
+        },
+      ),
+    );
+  }
+
+
+
+  String _formatScheduleType(String? scheduleType) {
+    if (scheduleType == null) return 'Not set';
+    return OnboardingConstants.getDisplayText(scheduleType);
+  }
+
+  String _formatMotivation(String? motivation) {
+    if (motivation == null) return 'Not set';
+    return OnboardingConstants.getDisplayText(motivation);
+  }
+
+  String _formatGender(String? gender) {
+    if (gender == null) return '';
+    return OnboardingConstants.getDisplayText(gender);
+  }
+
+  Widget _buildEditableInfoCard(String title, String? value, VoidCallback onEdit) {
     return Card(
       child: ListTile(
         title: Text(
@@ -75,15 +198,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             color: value != null ? null : Colors.grey,
           ),
         ),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () {
-          // TODO: Implement inline editing in future update
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Editing will be available in a future update'),
-            ),
-          );
-        },
+        trailing: const Icon(Icons.edit),
+        onTap: onEdit,
       ),
     );
   }
@@ -116,9 +232,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 16),
             
-            _buildInfoCard('Name', userData?['name']),
-            _buildInfoCard('Gender', userData?['gender']),
-            _buildInfoCard('Motivation', userData?['motivation']),
+            _buildEditableInfoCard('Name & Gender', 
+              userData?['name'] != null && userData?['gender'] != null
+                ? '${userData!['name']} (${_formatGender(userData!['gender'])})'
+                : 'Not set', 
+              _editNameAndGender),
+            _buildEditableInfoCard('Motivation', _formatMotivation(userData?['motivation']), _editMotivation),
             
             const SizedBox(height: 24),
             
@@ -132,10 +251,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             const SizedBox(height: 16),
             
-            _buildInfoCard('Frequency', userData?['drinkingFrequency']),
-            _buildInfoCard('Amount', userData?['drinkingAmount']),
-            _buildInfoCard('Schedule Type', userData?['scheduleType']),
-            _buildInfoCard('Drink Limit', userData?['drinkLimit']?.toString()),
+            _buildEditableInfoCard('Drinking Patterns', 
+              '${OnboardingConstants.getDisplayText(userData?['drinkingFrequency'] ?? '')}, ${OnboardingConstants.getDisplayText(userData?['drinkingAmount'] ?? '')}', 
+              _editDrinkingPatterns),
+            _buildEditableInfoCard('Schedule Type', _formatScheduleType(userData?['scheduleType']), _editSchedule),
+            _buildEditableInfoCard('Drink Limit', userData?['drinkLimit']?.toString(), _editDrinkLimit),
             
             const SizedBox(height: 24),
             
@@ -163,14 +283,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     color: userData?['favoriteDrinks'] != null ? null : Colors.grey,
                   ),
                 ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Editing will be available in a future update'),
-                    ),
-                  );
-                },
+                trailing: const Icon(Icons.edit),
+                onTap: _editFavoriteDrinks,
               ),
             ),
             

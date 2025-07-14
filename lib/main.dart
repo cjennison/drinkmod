@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'core/database/database.dart';
 import 'core/navigation/app_router.dart';
 import 'core/theme/app_theme.dart';
 
@@ -15,18 +13,11 @@ class DrinkmodApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiRepositoryProvider(
-      providers: [
-        RepositoryProvider<AppDatabase>(
-          create: (context) => AppDatabase(),
-        ),
-      ],
-      child: MaterialApp.router(
-        title: 'Drinkmod',
-        theme: AppTheme.lightTheme,
-        routerConfig: AppRouter.router,
-        debugShowCheckedModeBanner: false,
-      ),
+    return MaterialApp.router(
+      title: 'Drinkmod',
+      theme: AppTheme.lightTheme,
+      routerConfig: AppRouter.router,
+      debugShowCheckedModeBanner: false,
     );
   }
 }

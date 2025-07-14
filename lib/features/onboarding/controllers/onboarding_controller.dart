@@ -17,7 +17,7 @@ class OnboardingController {
   BuildContext? _context;
 
   // JSON-driven content variables
-  Map<String, String> _userVariables = {};
+  final Map<String, String> _userVariables = {};
   String _currentFlow = '';
   int _currentFlowStep = 0;
 

@@ -1,17 +1,15 @@
-import 'dart:convert';
 import 'dart:developer' as developer;
-import 'package:shared_preferences/shared_preferences.dart';
+import 'hive_database_service.dart';
 
 /// Service to manage onboarding completion status and user data
 class OnboardingService {
-  static const String _onboardingCompletedKey = 'onboarding_completed';
-  static const String _userDataKey = 'user_data';
+  static final HiveDatabaseService _hiveService = HiveDatabaseService.instance;
 
   /// Check if onboarding has been completed
   static Future<bool> isOnboardingCompleted() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getBool(_onboardingCompletedKey) ?? false;
+      await _hiveService.initialize();
+      return _hiveService.isOnboardingCompleted();
     } catch (e) {
       developer.log('Error checking onboarding completion: $e', name: 'OnboardingService');
       return false;
@@ -21,10 +19,8 @@ class OnboardingService {
   /// Mark onboarding as completed and save user data
   static Future<void> completeOnboarding(Map<String, dynamic> userData) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_onboardingCompletedKey, true);
-      await prefs.setString(_userDataKey, jsonEncode(userData));
-      developer.log('Onboarding completed with data: $userData', name: 'OnboardingService');
+      await _hiveService.initialize();
+      await _hiveService.completeOnboarding(userData);
     } catch (e) {
       developer.log('Error completing onboarding: $e', name: 'OnboardingService');
     }
@@ -33,27 +29,47 @@ class OnboardingService {
   /// Get saved user data
   static Future<Map<String, dynamic>?> getUserData() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final userDataString = prefs.getString(_userDataKey);
-      if (userDataString != null) {
-        return jsonDecode(userDataString) as Map<String, dynamic>;
-      }
-      return null;
+      await _hiveService.initialize();
+      return _hiveService.getUserData();
     } catch (e) {
       developer.log('Error getting user data: $e', name: 'OnboardingService');
       return null;
     }
   }
 
+  /// Update specific user data fields
+  static Future<void> updateUserData(Map<String, dynamic> updates) async {
+    try {
+      await _hiveService.initialize();
+      await _hiveService.updateUserData(updates);
+    } catch (e) {
+      developer.log('Error updating user data: $e', name: 'OnboardingService');
+    }
+  }
+
   /// Clear onboarding data (for testing purposes)
   static Future<void> clearOnboardingData() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_onboardingCompletedKey);
-      await prefs.remove(_userDataKey);
-      developer.log('Onboarding data cleared', name: 'OnboardingService');
+      await _hiveService.initialize();
+      await _hiveService.clearAllData();
     } catch (e) {
       developer.log('Error clearing onboarding data: $e', name: 'OnboardingService');
+    }
+  }
+
+  /// Debug method to log current onboarding state
+  static Future<void> debugOnboardingState() async {
+    try {
+      await _hiveService.initialize();
+      final isCompleted = _hiveService.isOnboardingCompleted();
+      final userData = _hiveService.getUserData();
+      
+      developer.log('=== ONBOARDING DEBUG STATE ===', name: 'OnboardingService');
+      developer.log('Completion flag: $isCompleted', name: 'OnboardingService');
+      developer.log('User data: $userData', name: 'OnboardingService');
+      developer.log('==============================', name: 'OnboardingService');
+    } catch (e) {
+      developer.log('Error debugging onboarding state: $e', name: 'OnboardingService');
     }
   }
 }
