@@ -6,6 +6,7 @@ import '../../../core/services/drink_database_service.dart';
 import '../widgets/time_of_day_selector_widget.dart';
 import '../widgets/drink_selection_widget.dart';
 import 'drink_logging_cubit.dart';
+import 'limit_exceeded_warning_screen.dart';
 
 /// Progressive disclosure drink logging screen with therapeutic features
 class DrinkLoggingScreen extends StatefulWidget {
@@ -703,6 +704,79 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
       return;
     }
 
+    // Check if adding this drink would exceed the daily limit
+    if (widget.editingEntry == null) { // Only check for new entries, not edits
+      await _checkLimitAndProceed();
+    } else {
+      await _proceedWithSave();
+    }
+  }
+
+  /// Check if user has exceeded their limit and show warning if needed
+  Future<void> _checkLimitAndProceed() async {
+    final databaseService = HiveDatabaseService.instance;
+    final selectedDate = _selectedDate ?? DateTime.now();
+    final currentDrinks = databaseService.getTotalDrinksForDate(selectedDate);
+    
+    // Get user data to check their limit
+    final userData = databaseService.getUserData();
+    if (userData == null) {
+      await _proceedWithSave();
+      return;
+    }
+    
+    final dailyLimit = userData['drinkLimit'] as int? ?? 2;
+    final proposedTotal = currentDrinks + (_selectedDrink?.standardDrinks ?? 0);
+    
+    // If they would exceed their limit, show warning
+    if (proposedTotal > dailyLimit && currentDrinks >= dailyLimit) {
+      await _showLimitExceededWarning(currentDrinks, dailyLimit);
+    } else {
+      await _proceedWithSave();
+    }
+  }
+
+  /// Show the therapeutic warning screen
+  Future<void> _showLimitExceededWarning(double currentDrinks, int dailyLimit) async {
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (context) => LimitExceededWarningScreen(
+          currentDrinks: currentDrinks,
+          dailyLimit: dailyLimit,
+          onProceed: () {
+            Navigator.of(context).pop(true);
+          },
+          onCancel: () {
+            // User chose to stick to their goal - clear state and go back to home
+            _clearFormState();
+            Navigator.of(context).pop(false);
+            // Navigate back to home, clearing the drink logging screen
+            if (mounted) {
+              Navigator.of(context).popUntil((route) => route.isFirst);
+              // Show positive reinforcement
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Great choice! You\'re staying on track with your goals.'),
+                  backgroundColor: Colors.green,
+                  duration: const Duration(seconds: 3),
+                ),
+              );
+            }
+          },
+        ),
+      ),
+    );
+    
+    // If user chose to proceed, continue with save
+    if (result == true) {
+      await _proceedWithSave();
+    }
+    // If result is false or null, user cancelled - already handled in onCancel
+  }
+
+  /// Actually save the drink entry
+  Future<void> _proceedWithSave() async {
+
     final standardDrinks = _selectedDrink!.standardDrinks;
 
     final entry = DrinkEntry(
@@ -757,6 +831,37 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
           ),
         );
       }
+    }
+  }
+
+  /// Clear all form state when user decides to stick to their goal
+  void _clearFormState() {
+    setState(() {
+      _selectedDrink = null;
+      _selectedTimeOfDay = 'Afternoon'; // Reset to default
+      _location = null;
+      _socialContext = null;
+      _moodBefore = null;
+      _triggers.clear();
+      _triggerDescription = null;
+      _intention = null;
+      _urgeIntensity = null;
+      _consideredAlternatives = null;
+      _alternatives = null;
+      _energyLevel = null;
+      _hungerLevel = null;
+      _stressLevel = null;
+      _sleepQuality = null;
+      _currentStep = 0; // Reset to first step
+    });
+    
+    // Reset page controller to first page
+    if (_pageController.hasClients) {
+      _pageController.animateToPage(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
     }
   }
 
