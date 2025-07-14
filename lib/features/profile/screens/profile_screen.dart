@@ -69,7 +69,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (shouldReset == true && mounted) {
       await OnboardingService.clearOnboardingData();
       if (mounted) {
-        context.go('/onboarding');
+        context.go('/');
       }
     }
   }
