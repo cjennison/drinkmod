@@ -148,6 +148,7 @@ class HiveDatabaseService {
     required String drinkName,
     required double standardDrinks,
     required String drinkType,
+    String? timeOfDay,
     String? reason,
     String? notes,
   }) async {
@@ -160,6 +161,7 @@ class HiveDatabaseService {
       'drinkName': drinkName,
       'standardDrinks': standardDrinks,
       'drinkType': drinkType,
+      'timeOfDay': timeOfDay,
       'reason': reason,
       'notes': notes,
       'createdAt': DateTime.now().toIso8601String(),
@@ -556,7 +558,7 @@ class HiveDatabaseService {
     if (todaysDrinks >= dailyLimit) {
       return {
         'canLog': false,
-        'message': "You've reached your daily limit of $dailyLimit drinks. How are you feeling?",
+        'message': "You've reached your daily limit of $dailyLimit drinks.",
         'status': 'limit_reached',
       };
     }
