@@ -9,6 +9,7 @@ class TypewriterText extends StatefulWidget {
   final Map<String, int> punctuationPauses;
   final VoidCallback? onComplete;
   final bool forceCompleted; // NEW: Forces text to show as completed
+  final bool showTypingIndicator; // NEW: Show typing indicator while typing
 
   const TypewriterText({
     super.key,
@@ -18,6 +19,7 @@ class TypewriterText extends StatefulWidget {
     this.punctuationPauses = const {'.': 150, '!': 125, '?': 125, ',': 75},
     this.onComplete,
     this.forceCompleted = false, // NEW: Default to false
+    this.showTypingIndicator = true, // NEW: Default to true
   });
 
   @override
@@ -108,10 +110,21 @@ class _TypewriterTextState extends State<TypewriterText> {
   Widget build(BuildContext context) {
     // Show full text immediately if forceCompleted or already completed
     final textToShow = (widget.forceCompleted || _isCompleted) ? widget.text : _displayedText;
+    final shouldShowTypingIndicator = widget.showTypingIndicator && 
+                                     !widget.forceCompleted && 
+                                     !_isCompleted && 
+                                     textToShow.isNotEmpty;
     
-    return Text(
-      textToShow,
-      style: widget.style,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          textToShow,
+          style: widget.style,
+        ),
+        if (shouldShowTypingIndicator) 
+          const TypingIndicator(),
+      ],
     );
   }
 }
@@ -168,6 +181,30 @@ class ChatBubble extends StatelessWidget {
                   ),
                 ),
         ),
+      ),
+    );
+  }
+}
+
+/// Material Design linear progress indicator for content loading
+class TypingIndicator extends StatelessWidget {
+  const TypingIndicator({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          LinearProgressIndicator(
+            backgroundColor: theme.colorScheme.surfaceContainerHighest,
+            valueColor: AlwaysStoppedAnimation<Color>(theme.colorScheme.primary),
+          ),
+          const SizedBox(height: 4),
+        ],
       ),
     );
   }
