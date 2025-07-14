@@ -440,19 +440,54 @@ Scaffold(
 
 ---
 
-### Stage 3: Core Tracking & Control Panel
+### Stage 3: Core Tracking & Control Panel ⚙️ IN PROGRESS
 **Objective**: Implement therapeutically-informed main dashboard and drinking tracking with mobile-first UX
 **Duration**: 4-5 weeks (Extended for therapeutic depth)
-**Status**: Not Started
+**Status**: In Progress - Schedule System & Dashboard Enhancement
 
-#### Enhanced Features to Implement:
+#### ✅ Completed Implementation:
 
-##### 🎯 Core Dashboard (Therapeutic Focus)
-- **Today's Status Overview**: Visual allowance display with empowering language
-- **Personalized Welcome**: Time-aware greetings with user's name and current streak
-- **Allowance Visualization**: Progress bars/circles showing remaining drinks with specific examples
-- **Contextual Encouragement**: Dynamic messaging based on current status and patterns
-- **Quick Actions Hub**: Primary CTAs for logging, viewing progress, and emergency support
+##### 🎯 Schedule Type System (COMPLETED)
+- **Schedule Classification**: Added `scheduleTypeStrict` and `scheduleTypeOpen` constants
+- **Strict Schedules**: Day-specific restrictions (Weekends, Fridays only)
+- **Open Schedules**: Flexible daily drinking with weekly limits (disabled in profile for now)
+- **Profile Restrictions**: Limited to strict schedules only (Weekends/Fridays) until weekly limit system implemented
+
+##### 📅 Date & Schedule Integration (COMPLETED)
+- **Current Date Display**: Added formatted date display to home screen using `intl` package
+- **Schedule Checking**: Implemented `isDrinkingDay()` method in HiveDatabaseService
+- **Drinking Day Logic**: Weekends = Fri/Sat/Sun, Friday Only = Friday
+- **Permission System**: `canAddDrinkToday()` checks both schedule and daily limits
+
+##### 🏠 Enhanced Dashboard Features (COMPLETED)
+- **Real-Time Status**: Dashboard now reflects schedule-aware drinking permissions  
+- **Therapeutic Messaging**: Different messages for non-drinking days vs. limit reached
+- **Smart Quick Logging**: Blocks logging on non-drinking days with supportive messaging
+- **Remaining Drinks**: Accurate calculation based on schedule and current consumption
+
+#### 🔧 Technical Implementation Details:
+
+##### Database Service Enhancements:
+```dart
+// New methods in HiveDatabaseService:
+bool isDrinkingDay({DateTime? date})           // Check schedule compliance
+bool canAddDrinkToday({DateTime? date})        // Combined schedule + limit check
+int getRemainingDrinksToday({DateTime? date})  // Accurate remaining count
+bool _isStrictScheduleDrinkingDay()            // Weekday logic for strict schedules
+```
+
+##### Schedule Type Constants:
+```dart
+static const Map<String, String> scheduleTypeMap = {
+  scheduleWeekendsOnly: scheduleTypeStrict,     // Fri/Sat/Sun only
+  scheduleFridayOnly: scheduleTypeStrict,       // Friday only  
+  scheduleSocialOccasions: scheduleTypeOpen,    // Any day (disabled)
+  scheduleCustomWeekly: scheduleTypeOpen,       // Custom days (disabled)
+  scheduleReducedCurrent: scheduleTypeOpen,     // Reduced pattern (disabled)
+};
+```
+
+##### Enhanced Features to Implement:
 
 ##### 📱 Mobile-Optimized Drink Logging
 - **One-Tap Quick Log**: Favorite drinks accessible within 1 tap from any screen

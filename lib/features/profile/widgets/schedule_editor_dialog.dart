@@ -31,21 +31,8 @@ class _ScheduleEditorDialogState extends State<ScheduleEditorDialog> {
       'title': OnboardingConstants.getDisplayText(OnboardingConstants.scheduleFridayOnly),
       'description': 'Social drinking on Fridays',
     },
-    {
-      'type': OnboardingConstants.scheduleSocialOccasions,
-      'title': OnboardingConstants.getDisplayText(OnboardingConstants.scheduleSocialOccasions),
-      'description': 'When out with friends or special events',
-    },
-    {
-      'type': OnboardingConstants.scheduleCustomWeekly,
-      'title': OnboardingConstants.getDisplayText(OnboardingConstants.scheduleCustomWeekly),
-      'description': 'Set specific days of the week',
-    },
-    {
-      'type': OnboardingConstants.scheduleReducedCurrent,
-      'title': OnboardingConstants.getDisplayText(OnboardingConstants.scheduleReducedCurrent),
-      'description': 'Less frequent than current habit',
-    },
+    // Note: Open schedules (social occasions, custom, reduced current) disabled for now
+    // as they require more complex weekly limit tracking implementation
   ];
 
   @override

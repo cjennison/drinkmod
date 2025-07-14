@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../../core/services/onboarding_service.dart';
 import '../../../core/services/hive_database_service.dart';
 import '../widgets/dashboard_stats_card.dart';
@@ -92,6 +93,11 @@ class _HomeScreenState extends State<HomeScreen> {
       final today = DateTime.now();
       final logs = await _databaseService.getDrinkLogsForDate(today);
       
+      // Check if today is a drinking day based on schedule
+      final isDrinkingDay = _databaseService.isDrinkingDay();
+      final canAddDrink = _databaseService.canAddDrinkToday();
+      final remainingDrinks = _databaseService.getRemainingDrinksToday();
+      
       // Calculate basic stats
       final totalDrinks = logs.fold<double>(0, (sum, log) => sum + (log['standardDrinks'] ?? 0.0));
       final drinkLimit = currentUser!['drinkLimit'] ?? 2;
@@ -99,9 +105,10 @@ class _HomeScreenState extends State<HomeScreen> {
       final stats = {
         'todaysDrinks': totalDrinks,
         'dailyLimit': drinkLimit,
-        'remaining': (drinkLimit - totalDrinks).clamp(0, drinkLimit),
+        'remaining': remainingDrinks,
         'logsToday': logs.length,
-        'isAllowedDay': true, // TODO: Check schedule
+        'isAllowedDay': isDrinkingDay,
+        'canAddDrink': canAddDrink,
       };
       
       if (mounted) {
@@ -119,6 +126,7 @@ class _HomeScreenState extends State<HomeScreen> {
         'remaining': drinkLimit,
         'logsToday': 0,
         'isAllowedDay': true,
+        'canAddDrink': true,
       };
       
       if (mounted) {
@@ -133,12 +141,14 @@ class _HomeScreenState extends State<HomeScreen> {
     if (currentUser == null) return;
     
     try {
-      // Check limit status first
-      final currentTotal = dashboardStats?['todaysDrinks'] ?? 0.0;
-      final drinkLimit = dashboardStats?['dailyLimit'] ?? 2;
-      
-      if (currentTotal >= drinkLimit) {
-        _showTherapeuticMessage('You\'ve reached your daily limit. Consider taking a break.');
+      // Check if user can add drinks today (includes schedule and limit checking)
+      if (!_databaseService.canAddDrinkToday()) {
+        final isDrinkingDay = _databaseService.isDrinkingDay();
+        if (!isDrinkingDay) {
+          _showTherapeuticMessage('Today isn\'t one of your scheduled drinking days. You\'re doing great staying on track!');
+        } else {
+          _showTherapeuticMessage('You\'ve reached your daily limit. Consider taking a break.');
+        }
         return;
       }
       
@@ -222,6 +232,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Current Date Display
+                    Text(
+                      DateFormat('EEEE, MMMM d, y').format(DateTime.now()),
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    
                     // Dashboard Stats
                     if (dashboardStats != null && userName != null)
                       DashboardStatsCard(
@@ -267,7 +287,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     // Quick Log Section
                     QuickLogSection(
                       favoriteDrinks: favoriteDrinks,
-                      canLogToday: dashboardStats != null ? (dashboardStats!['todaysDrinks'] as double) < (dashboardStats!['dailyLimit'] as int) : true,
+                      canLogToday: dashboardStats?['canAddDrink'] ?? false,
                       onQuickLog: _handleQuickLog,
                       onDetailedLog: _handleDetailedLog,
                     ),

@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 import 'package:hive/hive.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
+import '../constants/onboarding_constants.dart';
 
 /// Central Hive-based storage service for all app data
 class HiveDatabaseService {
@@ -113,7 +114,7 @@ class HiveDatabaseService {
     if (userData == null) return false;
     
     // Check for required fields
-    final requiredFields = ['name', 'gender', 'scheduleType', 'drinkLimit', 'motivation'];
+    final requiredFields = ['name', 'gender', 'schedule', 'drinkLimit', 'motivation'];
     
     for (final field in requiredFields) {
       if (!userData.containsKey(field) || 
@@ -243,6 +244,103 @@ class HiveDatabaseService {
   }
 
   // =============================================================================
+  // SCHEDULE CHECKING OPERATIONS
+  // =============================================================================
+  
+  /// Check if today is a drinking day based on user's schedule
+  bool isDrinkingDay({DateTime? date}) {
+    final checkDate = date ?? DateTime.now();
+    final userData = getUserData();
+    if (userData == null) {
+      developer.log('No user data found, defaulting to allow drinking', name: 'HiveDatabaseService');
+      return true; // Default to allow if no data
+    }
+    
+    // Use the standardized 'schedule' field
+    final schedule = userData['schedule'] as String?;
+    
+    if (schedule == null) {
+      developer.log('No schedule found in user data: $userData', name: 'HiveDatabaseService');
+      return true;
+    }
+    
+    developer.log('Checking schedule: $schedule for date: ${checkDate.weekday} (${checkDate.toString()})', name: 'HiveDatabaseService');
+    
+    // Check schedule type
+    final scheduleType = OnboardingConstants.scheduleTypeMap[schedule];
+    
+    switch (scheduleType) {
+      case OnboardingConstants.scheduleTypeStrict:
+        final result = _isStrictScheduleDrinkingDay(schedule, checkDate);
+        developer.log('Strict schedule check result: $result for schedule: $schedule', name: 'HiveDatabaseService');
+        return result;
+      case OnboardingConstants.scheduleTypeOpen:
+        // Open schedules allow drinking any day (but with weekly limits)
+        developer.log('Open schedule allows drinking any day', name: 'HiveDatabaseService');
+        return true;
+      default:
+        developer.log('Unknown schedule type, defaulting to allow', name: 'HiveDatabaseService');
+        return true;
+    }
+  }
+  
+  /// Check if date is a drinking day for strict schedules
+  bool _isStrictScheduleDrinkingDay(String schedule, DateTime date) {
+    developer.log('Checking strict schedule: $schedule for weekday: ${date.weekday}', name: 'HiveDatabaseService');
+    
+    switch (schedule) {
+      case OnboardingConstants.scheduleWeekendsOnly:
+        // Friday (5), Saturday (6), Sunday (7)
+        final isWeekend = date.weekday >= 5 && date.weekday <= 7;
+        developer.log('Weekend check: weekday ${date.weekday} >= 5 && <= 7 = $isWeekend', name: 'HiveDatabaseService');
+        return isWeekend;
+      case OnboardingConstants.scheduleFridayOnly:
+        // Friday (5) only
+        final isFriday = date.weekday == 5;
+        developer.log('Friday check: weekday ${date.weekday} == 5 = $isFriday', name: 'HiveDatabaseService');
+        return isFriday;
+      default:
+        developer.log('Unknown strict schedule type: $schedule, defaulting to allow', name: 'HiveDatabaseService');
+        return true;
+    }
+  }
+  
+  /// Check if user can add another drink today
+  bool canAddDrinkToday({DateTime? date}) {
+    final checkDate = date ?? DateTime.now();
+    
+    // First check if today is a drinking day
+    if (!isDrinkingDay(date: checkDate)) {
+      return false;
+    }
+    
+    final userData = getUserData();
+    if (userData == null) return true;
+    
+    final dailyLimit = userData['drinkLimit'] as int? ?? 2;
+    final todaysDrinks = getTotalDrinksForDate(checkDate);
+    
+    return todaysDrinks < dailyLimit;
+  }
+  
+  /// Get remaining drinks allowed for today
+  int getRemainingDrinksToday({DateTime? date}) {
+    final checkDate = date ?? DateTime.now();
+    
+    if (!isDrinkingDay(date: checkDate)) {
+      return 0;
+    }
+    
+    final userData = getUserData();
+    if (userData == null) return 2;
+    
+    final dailyLimit = userData['drinkLimit'] as int? ?? 2;
+    final todaysDrinks = getTotalDrinksForDate(checkDate);
+    
+    return (dailyLimit - todaysDrinks.round()).clamp(0, dailyLimit);
+  }
+
+  // =============================================================================
   // FAVORITE DRINKS OPERATIONS
   // =============================================================================
   
@@ -321,7 +419,6 @@ class HiveDatabaseService {
     final today = DateTime.now();
     final todaysDrinks = getTotalDrinksForDate(today);
     final dailyLimit = userData['drinkLimit'] ?? 0;
-    final scheduleType = userData['scheduleType'] ?? '';
     
     // Calculate streak
     final streak = _calculateStreak(dailyLimit);
@@ -329,8 +426,8 @@ class HiveDatabaseService {
     // Calculate weekly adherence
     final weeklyAdherence = _calculateWeeklyAdherence(dailyLimit);
     
-    // Check if today is allowed drinking day
-    final isAllowedDay = _isAllowedDrinkingDay(today, scheduleType);
+    // Check if today is allowed drinking day using the new method
+    final isAllowedDay = isDrinkingDay(date: today);
     
     return {
       'todaysDrinks': todaysDrinks,
@@ -377,23 +474,6 @@ class HiveDatabaseService {
     }
     
     return adherentDays / 7.0;
-  }
-  
-  /// Check if today is an allowed drinking day based on schedule
-  bool _isAllowedDrinkingDay(DateTime date, String scheduleType) {
-    switch (scheduleType) {
-      case 'weekends_only':
-        return date.weekday == DateTime.friday || 
-               date.weekday == DateTime.saturday || 
-               date.weekday == DateTime.sunday;
-      case 'friday_only':
-        return date.weekday == DateTime.friday;
-      case 'social_occasions':
-      case 'custom_weekly':
-      case 'reduced_current':
-      default:
-        return true; // Allow all days for these schedule types
-    }
   }
   
   // =============================================================================

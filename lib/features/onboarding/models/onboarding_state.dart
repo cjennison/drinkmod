@@ -86,8 +86,9 @@ class OnboardingState {
       'drinkingFrequency': drinkingFrequency,
       'drinkingAmount': drinkingAmount,
       'favoriteDrinks': favoriteDrinks,
-      'selectedSchedule': selectedSchedule,
+      'schedule': selectedSchedule,
       'drinkLimit': drinkLimit,
+      'onboardingCompleted': true,
     };
   }
 }

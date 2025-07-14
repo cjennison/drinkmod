@@ -46,7 +46,7 @@ class _OnboardingClassicScreenState extends State<OnboardingClassicScreen> {
       final userData = {
         'name': _nameController.text.trim(),
         'gender': _selectedGender,
-        'scheduleType': _selectedSchedule,
+        'schedule': _selectedSchedule,
         'drinkLimit': _selectedLimit,
         'drinkingFrequency': _selectedFrequency,
         'drinkingAmount': _selectedAmount,

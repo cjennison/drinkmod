@@ -29,6 +29,24 @@ class OnboardingConstants {
     scheduleReducedCurrent,
   ];
 
+  // Schedule type classifications
+  static const String scheduleTypeStrict = 'strict';
+  static const String scheduleTypeOpen = 'open';
+  
+  static const Map<String, String> scheduleTypeMap = {
+    scheduleWeekendsOnly: scheduleTypeStrict,
+    scheduleFridayOnly: scheduleTypeStrict,
+    scheduleSocialOccasions: scheduleTypeOpen,
+    scheduleCustomWeekly: scheduleTypeOpen,
+    scheduleReducedCurrent: scheduleTypeOpen,
+  };
+
+  // Available schedule options for profile (strict schedules only for now)
+  static const List<String> profileScheduleOptions = [
+    scheduleWeekendsOnly,
+    scheduleFridayOnly,
+  ];
+
   // Motivations
   static const String motivationHealth = 'health';
   static const String motivationWeightLoss = 'weight_loss';
