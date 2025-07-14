@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/models/drink_entry.dart';
-import '../../../core/utils/drink_calculator.dart';
 import '../../../core/services/hive_database_service.dart';
+import '../../../core/services/drink_database_service.dart';
+import '../widgets/time_of_day_selector_widget.dart';
+import '../widgets/drink_selection_widget.dart';
 import 'drink_logging_cubit.dart';
 
 /// Progressive disclosure drink logging screen with therapeutic features
@@ -26,8 +28,7 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
   final int _totalSteps = 4;
 
   // Form data
-  DrinkSuggestion? _selectedDrink;
-  double? _customStandardDrinks;
+  DrinkInfo? _selectedDrink;
   DateTime? _selectedDate;
   String? _selectedTimeOfDay;
   String? _location;
@@ -56,7 +57,7 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
     }
   }
 
-  void _populateFromExistingEntry() {
+  void _populateFromExistingEntry() async {
     final entry = widget.editingEntry!;
     _selectedDate = DateTime(entry.timestamp.year, entry.timestamp.month, entry.timestamp.day);
     _selectedTimeOfDay = entry.timeOfDay; // Use the stored time of day directly
@@ -74,16 +75,22 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
     _stressLevel = entry.stressLevel;
     _sleepQuality = entry.sleepQuality;
     
-    // Find matching drink
-    final drinks = DrinkCalculator.getCommonDrinks();
-    _selectedDrink = drinks.firstWhere(
-      (d) => d.name == entry.drinkName,
-      orElse: () => DrinkSuggestion('Custom', 'custom', entry.standardDrinks),
-    );
+    // Find matching drink from new database
+    final drinkService = DrinkDatabaseService.instance;
+    final allDrinks = await drinkService.getAllDrinks();
     
-    if (_selectedDrink!.name == 'Custom') {
-      _customStandardDrinks = entry.standardDrinks;
-    }
+    _selectedDrink = allDrinks.firstWhere(
+      (d) => d.name == entry.drinkName,
+      orElse: () => DrinkInfo(
+        id: 'fallback',
+        name: entry.drinkName,
+        description: 'Previously logged drink',
+        ingredients: [entry.drinkName],
+        standardDrinks: entry.standardDrinks,
+        category: 'other',
+        isBasic: false,
+      ),
+    );
   }
 
   @override
@@ -184,155 +191,26 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
           const SizedBox(height: 24),
           
           // Time selection
-          _buildTimeSelector(),
+          TimeOfDaySelectorWidget(
+            selectedTimeOfDay: _selectedTimeOfDay,
+            onTimeOfDaySelected: (timeOfDay) {
+              setState(() {
+                _selectedTimeOfDay = timeOfDay;
+              });
+            },
+          ),
           const SizedBox(height: 24),
           
-          // Drink selection
-          _buildDrinkSelector(),
-          
-          if (_selectedDrink?.name == 'Custom') ...[
-            const SizedBox(height: 16),
-            _buildCustomDrinkInput(),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTimeSelector() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Time of day:',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: TriggerConstants.timeOfDayOptions.map((timeOfDay) {
-                final isSelected = _selectedTimeOfDay == timeOfDay;
-                return FilterChip(
-                  label: Text(timeOfDay),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    setState(() {
-                      _selectedTimeOfDay = selected ? timeOfDay : null;
-                    });
-                  },
-                );
-              }).toList(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDrinkSelector() {
-    final drinks = DrinkCalculator.getCommonDrinks();
-    drinks.add(DrinkSuggestion('Custom', 'custom', 1.0));
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Select drink type:',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: 16),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 3,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
+          // Drink selection and display
+          DrinkSelectionWidget(
+            selectedDrink: _selectedDrink,
+            onDrinkSelected: (DrinkInfo drink) {
+              setState(() {
+                _selectedDrink = drink;
+              });
+            },
           ),
-          itemCount: drinks.length,
-          itemBuilder: (context, index) {
-            final drink = drinks[index];
-            final isSelected = _selectedDrink?.name == drink.name;
-            
-            return Card(
-              elevation: isSelected ? 4 : 1,
-              color: isSelected ? Theme.of(context).primaryColor.withOpacity(0.1) : null,
-              child: InkWell(
-                onTap: () {
-                  setState(() {
-                    _selectedDrink = drink;
-                  });
-                },
-                borderRadius: BorderRadius.circular(8),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        drink.name,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${drink.standardDrinks.toStringAsFixed(1)} ${drink.standardDrinks == 1 ? 'drink' : 'drinks'}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCustomDrinkInput() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Custom drink amount:',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
-              initialValue: _customStandardDrinks?.toString(),
-              decoration: const InputDecoration(
-                labelText: 'Standard drinks',
-                hintText: 'e.g., 1.5',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              onChanged: (value) {
-                setState(() {
-                  _customStandardDrinks = double.tryParse(value);
-                });
-              },
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'One standard drink = 14g of pure alcohol\n(12oz beer, 5oz wine, 1.5oz spirits)',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.grey.shade600,
-              ),
-            ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -776,7 +654,7 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
               onPressed: state is DrinkLoggingLoading 
                   ? null 
                   : _currentStep < _totalSteps - 1 
-                      ? _nextStep 
+                      ? (_selectedDrink != null ? _nextStep : null)
                       : _saveEntry,
               child: state is DrinkLoggingLoading
                   ? const SizedBox(
@@ -825,15 +703,13 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
       return;
     }
 
-    final standardDrinks = _selectedDrink!.name == 'Custom' 
-        ? (_customStandardDrinks ?? 1.0)
-        : _selectedDrink!.standardDrinks;
+    final standardDrinks = _selectedDrink!.standardDrinks;
 
     final entry = DrinkEntry(
       id: widget.editingEntry?.id,
       timestamp: _selectedDate ?? DateTime.now(),
       timeOfDay: _selectedTimeOfDay!,
-      drinkId: _selectedDrink!.name,
+      drinkId: _selectedDrink!.id,
       drinkName: _selectedDrink!.name,
       standardDrinks: standardDrinks,
       location: _location,

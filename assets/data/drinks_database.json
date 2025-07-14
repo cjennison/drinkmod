@@ -1,0 +1,310 @@
+{
+  "drinks": [
+    {
+      "id": "beer_light",
+      "name": "Light Beer",
+      "description": "Light beer (12 oz)",
+      "ingredients": ["Light beer"],
+      "standardDrinks": 1.0,
+      "category": "beer",
+      "isBasic": true
+    },
+    {
+      "id": "beer_regular",
+      "name": "Beer",
+      "description": "Regular beer (12 oz)",
+      "ingredients": ["Beer"],
+      "standardDrinks": 1.0,
+      "category": "beer",
+      "isBasic": true
+    },
+    {
+      "id": "beer_craft",
+      "name": "Craft Beer",
+      "description": "Craft beer (12 oz)",
+      "ingredients": ["Craft beer"],
+      "standardDrinks": 1.4,
+      "category": "beer",
+      "isBasic": false
+    },
+    {
+      "id": "beer_strong",
+      "name": "Strong Beer",
+      "description": "Strong beer (12 oz)",
+      "ingredients": ["Strong beer"],
+      "standardDrinks": 1.8,
+      "category": "beer",
+      "isBasic": false
+    },
+    {
+      "id": "wine_white",
+      "name": "White Wine",
+      "description": "White wine (5 oz)",
+      "ingredients": ["White wine"],
+      "standardDrinks": 1.0,
+      "category": "wine",
+      "isBasic": true
+    },
+    {
+      "id": "wine_red",
+      "name": "Red Wine",
+      "description": "Red wine (5 oz)",
+      "ingredients": ["Red wine"],
+      "standardDrinks": 1.1,
+      "category": "wine",
+      "isBasic": true
+    },
+    {
+      "id": "wine_fortified",
+      "name": "Fortified Wine",
+      "description": "Fortified wine (3 oz)",
+      "ingredients": ["Fortified wine"],
+      "standardDrinks": 1.5,
+      "category": "wine",
+      "isBasic": false
+    },
+    {
+      "id": "vodka_shot",
+      "name": "Vodka",
+      "description": "Vodka shot (1.5 oz)",
+      "ingredients": ["Vodka"],
+      "standardDrinks": 1.0,
+      "category": "spirits",
+      "isBasic": true
+    },
+    {
+      "id": "whiskey_shot",
+      "name": "Whiskey",
+      "description": "Whiskey shot (1.5 oz)",
+      "ingredients": ["Whiskey"],
+      "standardDrinks": 1.0,
+      "category": "spirits",
+      "isBasic": true
+    },
+    {
+      "id": "rum_shot",
+      "name": "Rum",
+      "description": "Rum shot (1.5 oz)",
+      "ingredients": ["Rum"],
+      "standardDrinks": 1.0,
+      "category": "spirits",
+      "isBasic": true
+    },
+    {
+      "id": "gin_shot",
+      "name": "Gin",
+      "description": "Gin shot (1.5 oz)",
+      "ingredients": ["Gin"],
+      "standardDrinks": 1.0,
+      "category": "spirits",
+      "isBasic": true
+    },
+    {
+      "id": "tequila_shot",
+      "name": "Tequila",
+      "description": "Tequila shot (1.5 oz)",
+      "ingredients": ["Tequila"],
+      "standardDrinks": 1.0,
+      "category": "spirits",
+      "isBasic": true
+    },
+    {
+      "id": "cocktail_martini",
+      "name": "Martini",
+      "description": "Classic martini with gin and vermouth",
+      "ingredients": ["Gin", "Dry vermouth", "Olive or lemon twist"],
+      "standardDrinks": 2.0,
+      "category": "cocktails",
+      "isBasic": false
+    },
+    {
+      "id": "cocktail_manhattan",
+      "name": "Manhattan",
+      "description": "Whiskey cocktail with sweet vermouth and bitters",
+      "ingredients": ["Whiskey", "Sweet vermouth", "Angostura bitters", "Cherry"],
+      "standardDrinks": 2.0,
+      "category": "cocktails",
+      "isBasic": false
+    },
+    {
+      "id": "cocktail_old_fashioned",
+      "name": "Old Fashioned",
+      "description": "Classic whiskey cocktail with sugar and bitters",
+      "ingredients": ["Whiskey", "Sugar cube", "Angostura bitters", "Orange peel"],
+      "standardDrinks": 1.5,
+      "category": "cocktails",
+      "isBasic": false
+    },
+    {
+      "id": "cocktail_margarita",
+      "name": "Margarita",
+      "description": "Tequila cocktail with lime juice and triple sec",
+      "ingredients": ["Tequila", "Triple sec", "Lime juice", "Salt rim"],
+      "standardDrinks": 1.5,
+      "category": "cocktails",
+      "isBasic": false
+    },
+    {
+      "id": "cocktail_cosmopolitan",
+      "name": "Cosmopolitan",
+      "description": "Vodka cocktail with cranberry juice and lime",
+      "ingredients": ["Vodka", "Triple sec", "Cranberry juice", "Lime juice"],
+      "standardDrinks": 1.5,
+      "category": "cocktails",
+      "isBasic": false
+    },
+    {
+      "id": "cocktail_mojito",
+      "name": "Mojito",
+      "description": "Rum cocktail with mint, lime, and soda water",
+      "ingredients": ["White rum", "Fresh mint", "Lime juice", "Sugar", "Soda water"],
+      "standardDrinks": 1.0,
+      "category": "cocktails",
+      "isBasic": false
+    },
+    {
+      "id": "cocktail_pina_colada",
+      "name": "Pina Colada",
+      "description": "Tropical rum cocktail with coconut and pineapple",
+      "ingredients": ["White rum", "Coconut cream", "Pineapple juice"],
+      "standardDrinks": 1.5,
+      "category": "cocktails",
+      "isBasic": false
+    },
+    {
+      "id": "cocktail_bloody_mary",
+      "name": "Bloody Mary",
+      "description": "Vodka cocktail with tomato juice and spices",
+      "ingredients": ["Vodka", "Tomato juice", "Worcestershire sauce", "Hot sauce", "Celery salt"],
+      "standardDrinks": 1.0,
+      "category": "cocktails",
+      "isBasic": false
+    },
+    {
+      "id": "cocktail_moscow_mule",
+      "name": "Moscow Mule",
+      "description": "Vodka cocktail with ginger beer and lime",
+      "ingredients": ["Vodka", "Ginger beer", "Lime juice"],
+      "standardDrinks": 1.0,
+      "category": "cocktails",
+      "isBasic": false
+    },
+    {
+      "id": "cocktail_whiskey_sour",
+      "name": "Whiskey Sour",
+      "description": "Whiskey cocktail with lemon juice and simple syrup",
+      "ingredients": ["Whiskey", "Lemon juice", "Simple syrup", "Egg white (optional)"],
+      "standardDrinks": 1.5,
+      "category": "cocktails",
+      "isBasic": false
+    },
+    {
+      "id": "cocktail_gin_tonic",
+      "name": "Gin & Tonic",
+      "description": "Classic gin cocktail with tonic water",
+      "ingredients": ["Gin", "Tonic water", "Lime wedge"],
+      "standardDrinks": 1.0,
+      "category": "cocktails",
+      "isBasic": false
+    },
+    {
+      "id": "cocktail_rum_coke",
+      "name": "Rum & Coke",
+      "description": "Simple rum cocktail with cola",
+      "ingredients": ["Rum", "Cola", "Lime wedge"],
+      "standardDrinks": 1.0,
+      "category": "cocktails",
+      "isBasic": false
+    },
+    {
+      "id": "cocktail_vodka_soda",
+      "name": "Vodka Soda",
+      "description": "Light vodka cocktail with soda water",
+      "ingredients": ["Vodka", "Soda water", "Lime wedge"],
+      "standardDrinks": 1.0,
+      "category": "cocktails",
+      "isBasic": false
+    },
+    {
+      "id": "cocktail_long_island",
+      "name": "Long Island Iced Tea",
+      "description": "Strong cocktail with multiple spirits",
+      "ingredients": ["Vodka", "Rum", "Gin", "Tequila", "Triple sec", "Cola", "Lemon juice"],
+      "standardDrinks": 3.0,
+      "category": "cocktails",
+      "isBasic": false
+    },
+    {
+      "id": "cocktail_mai_tai",
+      "name": "Mai Tai",
+      "description": "Tropical rum cocktail with orgeat and orange liqueur",
+      "ingredients": ["Dark rum", "Light rum", "Orange liqueur", "Orgeat syrup", "Lime juice"],
+      "standardDrinks": 2.0,
+      "category": "cocktails",
+      "isBasic": false
+    },
+    {
+      "id": "cocktail_negroni",
+      "name": "Negroni",
+      "description": "Italian cocktail with gin, Campari, and sweet vermouth",
+      "ingredients": ["Gin", "Campari", "Sweet vermouth", "Orange peel"],
+      "standardDrinks": 1.5,
+      "category": "cocktails",
+      "isBasic": false
+    },
+    {
+      "id": "cocktail_aperol_spritz",
+      "name": "Aperol Spritz",
+      "description": "Italian aperitif with Aperol, prosecco, and soda",
+      "ingredients": ["Aperol", "Prosecco", "Soda water", "Orange slice"],
+      "standardDrinks": 1.5,
+      "category": "cocktails",
+      "isBasic": false
+    },
+    {
+      "id": "cocktail_espresso_martini",
+      "name": "Espresso Martini",
+      "description": "Vodka cocktail with coffee liqueur and espresso",
+      "ingredients": ["Vodka", "Coffee liqueur", "Fresh espresso", "Sugar syrup"],
+      "standardDrinks": 1.5,
+      "category": "cocktails",
+      "isBasic": false
+    },
+    {
+      "id": "cocktail_french_75",
+      "name": "French 75",
+      "description": "Gin cocktail with lemon juice and champagne",
+      "ingredients": ["Gin", "Lemon juice", "Simple syrup", "Champagne"],
+      "standardDrinks": 1.5,
+      "category": "cocktails",
+      "isBasic": false
+    },
+    {
+      "id": "cocktail_daiquiri",
+      "name": "Daiquiri",
+      "description": "Classic rum cocktail with lime juice and simple syrup",
+      "ingredients": ["White rum", "Lime juice", "Simple syrup"],
+      "standardDrinks": 1.5,
+      "category": "cocktails",
+      "isBasic": false
+    },
+    {
+      "id": "champagne",
+      "name": "Champagne",
+      "description": "Sparkling wine (5 oz)",
+      "ingredients": ["Champagne"],
+      "standardDrinks": 1.0,
+      "category": "wine",
+      "isBasic": false
+    },
+    {
+      "id": "prosecco",
+      "name": "Prosecco",
+      "description": "Italian sparkling wine (5 oz)",
+      "ingredients": ["Prosecco"],
+      "standardDrinks": 1.0,
+      "category": "wine",
+      "isBasic": false
+    }
+  ]
+}
