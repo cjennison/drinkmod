@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/services/onboarding_service.dart';
 import '../../../core/constants/onboarding_constants.dart';
+import '../widgets/weekly_pattern_selector.dart';
 
 /// Screen for editing user's drinking schedule and limits
 class ScheduleEditorScreen extends StatefulWidget {
@@ -23,6 +24,7 @@ class _ScheduleEditorScreenState extends State<ScheduleEditorScreen> {
   String? selectedSchedule;
   int selectedDailyLimit = 2;
   int selectedWeeklyLimit = 4;
+  List<int> customWeeklyPattern = [];
   
   final List<Map<String, dynamic>> scheduleOptions = [
     {
@@ -47,7 +49,7 @@ class _ScheduleEditorScreenState extends State<ScheduleEditorScreen> {
       'type': OnboardingConstants.scheduleCustomWeekly,
       'title': OnboardingConstants.getDisplayText(OnboardingConstants.scheduleCustomWeekly),
       'description': 'Custom weekly drinking plan',
-      'isStrict': false,
+      'isStrict': true,
     },
   ];
 
@@ -82,12 +84,31 @@ class _ScheduleEditorScreenState extends State<ScheduleEditorScreen> {
     selectedDailyLimit = widget.currentDailyLimit ?? 2;
     selectedWeeklyLimit = widget.currentWeeklyLimit ?? 4;
     
+    // Load current weekly pattern if it exists
+    _loadCurrentWeeklyPattern();
+    
     // Ensure daily limit doesn't exceed half of weekly limit for open schedules
     if (_isOpenSchedule) {
       final maxDaily = (selectedWeeklyLimit / 2).floor();
       if (selectedDailyLimit > maxDaily) {
         selectedDailyLimit = maxDaily;
       }
+    }
+  }
+
+  Future<void> _loadCurrentWeeklyPattern() async {
+    try {
+      final userData = await OnboardingService.getUserData();
+      if (userData != null && userData.containsKey('weeklyPattern')) {
+        final pattern = userData['weeklyPattern'];
+        if (pattern is List) {
+          setState(() {
+            customWeeklyPattern = List<int>.from(pattern);
+          });
+        }
+      }
+    } catch (e) {
+      print('Error loading weekly pattern: $e');
     }
   }
 
@@ -102,6 +123,11 @@ class _ScheduleEditorScreenState extends State<ScheduleEditorScreen> {
       
       if (_isOpenSchedule) {
         updateData['weeklyLimit'] = selectedWeeklyLimit;
+      }
+      
+      // Add custom weekly pattern for custom schedules
+      if (selectedSchedule == OnboardingConstants.scheduleCustomWeekly) {
+        updateData['weeklyPattern'] = customWeeklyPattern;
       }
       
       await OnboardingService.updateUserData(updateData);
@@ -188,6 +214,33 @@ class _ScheduleEditorScreenState extends State<ScheduleEditorScreen> {
                 ),
               );
             }),
+            
+            // Custom Weekly Pattern Selector
+            if (selectedSchedule == OnboardingConstants.scheduleCustomWeekly) ...[
+              const SizedBox(height: 24),
+              const Text(
+                'Custom Weekly Pattern',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: WeeklyPatternSelector(
+                    initialPattern: customWeeklyPattern,
+                    onPatternChanged: (pattern) {
+                      setState(() {
+                        customWeeklyPattern = pattern;
+                      });
+                      _autoSave();
+                    },
+                  ),
+                ),
+              ),
+            ],
             
             if (selectedSchedule != null) ...[
               const SizedBox(height: 24),

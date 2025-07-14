@@ -37,7 +37,7 @@ class OnboardingConstants {
     scheduleWeekendsOnly: scheduleTypeStrict,
     scheduleFridayOnly: scheduleTypeStrict,
     scheduleSocialOccasions: scheduleTypeOpen,
-    scheduleCustomWeekly: scheduleTypeOpen,
+    scheduleCustomWeekly: scheduleTypeStrict,
     scheduleReducedCurrent: scheduleTypeOpen,
   };
 
@@ -45,6 +45,7 @@ class OnboardingConstants {
   static const List<String> profileScheduleOptions = [
     scheduleWeekendsOnly,
     scheduleFridayOnly,
+    scheduleCustomWeekly,
   ];
 
   // Default weekly limits for open schedules

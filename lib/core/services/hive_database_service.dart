@@ -3,6 +3,7 @@ import 'package:hive/hive.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import '../constants/onboarding_constants.dart';
+import 'schedule_service.dart';
 
 /// Central Hive-based storage service for all app data
 class HiveDatabaseService {
@@ -46,6 +47,9 @@ class HiveDatabaseService {
       
       _isInitialized = true;
       developer.log('HiveDatabaseService initialized successfully', name: 'HiveDatabaseService');
+      
+      // Run data migrations
+      await _migrateScheduleData();
     } catch (e) {
       developer.log('Error initializing HiveDatabaseService: $e', name: 'HiveDatabaseService');
       rethrow;
@@ -256,32 +260,7 @@ class HiveDatabaseService {
       return true; // Default to allow if no data
     }
     
-    // Use the standardized 'schedule' field
-    final schedule = userData['schedule'] as String?;
-    
-    if (schedule == null) {
-      developer.log('No schedule found in user data: $userData', name: 'HiveDatabaseService');
-      return true;
-    }
-    
-    developer.log('Checking schedule: $schedule for date: ${checkDate.weekday} (${checkDate.toString()})', name: 'HiveDatabaseService');
-    
-    // Check schedule type
-    final scheduleType = OnboardingConstants.scheduleTypeMap[schedule];
-    
-    switch (scheduleType) {
-      case OnboardingConstants.scheduleTypeStrict:
-        final result = _checkStrictScheduleDrinkingDay(schedule, checkDate);
-        developer.log('Strict schedule check result: $result for schedule: $schedule', name: 'HiveDatabaseService');
-        return result;
-      case OnboardingConstants.scheduleTypeOpen:
-        // Open schedules allow drinking any day (but with weekly limits)
-        developer.log('Open schedule allows drinking any day', name: 'HiveDatabaseService');
-        return true;
-      default:
-        developer.log('Unknown schedule type, defaulting to allow', name: 'HiveDatabaseService');
-        return true;
-    }
+    return ScheduleService.isDrinkingDay(userData, date: checkDate);
   }
   
   /// Check if user can add another drink today (handles both strict and open schedules)
@@ -329,32 +308,10 @@ class HiveDatabaseService {
   // =============================================================================
   // STRICT SCHEDULE LOGIC
   // =============================================================================
-  
-  /// Check if date is a drinking day for strict schedules
-  bool _checkStrictScheduleDrinkingDay(String schedule, DateTime date) {
-    developer.log('Checking strict schedule: $schedule for weekday: ${date.weekday}', name: 'HiveDatabaseService');
-    
-    switch (schedule) {
-      case OnboardingConstants.scheduleWeekendsOnly:
-        // Friday (5), Saturday (6), Sunday (7)
-        final isWeekend = date.weekday >= 5 && date.weekday <= 7;
-        developer.log('Weekend check: weekday ${date.weekday} >= 5 && <= 7 = $isWeekend', name: 'HiveDatabaseService');
-        return isWeekend;
-      case OnboardingConstants.scheduleFridayOnly:
-        // Friday (5) only
-        final isFriday = date.weekday == 5;
-        developer.log('Friday check: weekday ${date.weekday} == 5 = $isFriday', name: 'HiveDatabaseService');
-        return isFriday;
-      default:
-        developer.log('Unknown strict schedule type: $schedule, defaulting to allow', name: 'HiveDatabaseService');
-        return true;
-    }
-  }
-  
   /// Check if user can add drink for strict schedule
   bool _canAddDrinkStrictSchedule(DateTime date, Map<String, dynamic> userData, String schedule) {
     // First check if today is a drinking day
-    if (!_checkStrictScheduleDrinkingDay(schedule, date)) {
+    if (!ScheduleService.isDrinkingDay(userData, date: date)) {
       return false;
     }
     
@@ -366,8 +323,7 @@ class HiveDatabaseService {
   
   /// Get remaining drinks for strict schedule
   int _getRemainingDrinksStrictSchedule(DateTime date, Map<String, dynamic> userData) {
-    final schedule = userData['schedule'] as String?;
-    if (schedule == null || !_checkStrictScheduleDrinkingDay(schedule, date)) {
+    if (!ScheduleService.isDrinkingDay(userData, date: date)) {
       return 0;
     }
     
@@ -612,5 +568,27 @@ class HiveDatabaseService {
       'status': 'within_limit',
       'remaining': remaining,
     };
+  }
+  
+  /// Migrate existing schedule data to include weekly patterns
+  Future<void> _migrateScheduleData() async {
+    final userData = getUserData();
+    if (userData == null) return;
+    
+    final schedule = userData['schedule'] as String?;
+    if (schedule == null) return;
+    
+    // Check if weeklyPattern already exists
+    if (userData.containsKey('weeklyPattern')) return;
+    
+    // Add weekly pattern for strict schedules that don't have it
+    final scheduleType = OnboardingConstants.scheduleTypeMap[schedule];
+    if (scheduleType == OnboardingConstants.scheduleTypeStrict) {
+      final pattern = ScheduleService.getPatternForSchedule(schedule);
+      if (pattern != null) {
+        await updateUserData({'weeklyPattern': pattern});
+        developer.log('Migrated schedule $schedule to weekly pattern: $pattern', name: 'HiveDatabaseService');
+      }
+    }
   }
 }

@@ -188,12 +188,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final schedule = userData?['schedule'];
     final dailyLimit = userData?['drinkLimit'];
     final weeklyLimit = userData?['weeklyLimit'];
+    final weeklyPattern = userData?['weeklyPattern'] as List<dynamic>?;
     
     String scheduleText = 'Not set';
     List<String> limitInfo = [];
     
     if (schedule != null) {
       scheduleText = OnboardingConstants.getDisplayText(schedule);
+      
+      // Add weekly pattern display for custom schedules
+      if (schedule == OnboardingConstants.scheduleCustomWeekly && weeklyPattern != null) {
+        final dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        final selectedDays = List<int>.from(weeklyPattern)..sort();
+        if (selectedDays.isNotEmpty) {
+          final daysList = selectedDays.map((day) => dayNames[day]).join(', ');
+          scheduleText += ' ($daysList)';
+        }
+      }
       
       if (dailyLimit != null) {
         limitInfo.add('Daily: $dailyLimit drinks');
