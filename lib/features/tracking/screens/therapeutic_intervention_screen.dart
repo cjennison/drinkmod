@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/drink_intervention_utils.dart';
 
-/// Therapeutic intervention screen shown when user tries to log a drink after reaching their limit
-class LimitExceededWarningScreen extends StatefulWidget {
-  final double currentDrinks;
-  final int dailyLimit;
+/// Universal therapeutic intervention screen for all drink logging interventions
+/// Provides consistent therapeutic approach regardless of intervention type
+class TherapeuticInterventionScreen extends StatefulWidget {
+  final DrinkInterventionResult interventionResult;
   final VoidCallback onProceed;
   final VoidCallback onCancel;
 
-  const LimitExceededWarningScreen({
+  const TherapeuticInterventionScreen({
     super.key,
-    required this.currentDrinks,
-    required this.dailyLimit,
+    required this.interventionResult,
     required this.onProceed,
     required this.onCancel,
   });
 
   @override
-  State<LimitExceededWarningScreen> createState() => _LimitExceededWarningScreenState();
+  State<TherapeuticInterventionScreen> createState() => _TherapeuticInterventionScreenState();
 }
 
-class _LimitExceededWarningScreenState extends State<LimitExceededWarningScreen> {
+class _TherapeuticInterventionScreenState extends State<TherapeuticInterventionScreen> {
   int? _currentMood;
   String? _selectedReason;
   bool _hasReflected = false;
@@ -32,6 +32,7 @@ class _LimitExceededWarningScreenState extends State<LimitExceededWarningScreen>
     'Emotional difficulty',
     'Peer influence',
     'Special occasion',
+    'Boredom',
     'Other',
   ];
 
@@ -39,7 +40,7 @@ class _LimitExceededWarningScreenState extends State<LimitExceededWarningScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Check In'),
+        title: const Text('Therapeutic Check-In'),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: widget.onCancel,
@@ -50,55 +51,19 @@ class _LimitExceededWarningScreenState extends State<LimitExceededWarningScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Warning header
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.orange.shade50,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.orange.shade200),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.warning_amber_rounded,
-                    color: Colors.orange.shade600,
-                    size: 56,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'You\'ve reached your daily limit',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: Colors.orange.shade800,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${widget.currentDrinks.toStringAsFixed(1)} of ${widget.dailyLimit} drinks today',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Colors.orange.shade700,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
+            // Dynamic header based on intervention type
+            _buildInterventionHeader(),
             
             const SizedBox(height: 24),
             
-            // Therapeutic check-in
+            // Universal therapeutic check-in
             Text(
               'Let\'s take a moment to check in',
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 8),
             Text(
-              'Before you have another drink, let\'s reflect on how you\'re feeling right now.',
+              'Before you decide, let\'s reflect on how you\'re feeling right now.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Colors.grey.shade600,
               ),
@@ -111,7 +76,7 @@ class _LimitExceededWarningScreenState extends State<LimitExceededWarningScreen>
             
             const SizedBox(height: 24),
             
-            // Reason selector
+            // Reason selection
             _buildReasonSelector(),
             
             const SizedBox(height: 24),
@@ -129,6 +94,81 @@ class _LimitExceededWarningScreenState extends State<LimitExceededWarningScreen>
     );
   }
 
+  Widget _buildInterventionHeader() {
+    Color headerColor;
+    IconData headerIcon;
+    String headerTitle;
+    
+    // Customize header based on intervention type
+    if (widget.interventionResult.isScheduleViolation) {
+      headerColor = Colors.orange.shade600;
+      headerIcon = Icons.calendar_today;
+      headerTitle = 'Alcohol-Free Day';
+    } else if (widget.interventionResult.isLimitExceeded) {
+      headerColor = Colors.red.shade600;
+      headerIcon = Icons.warning;
+      headerTitle = 'Daily Limit Reached';
+    } else if (widget.interventionResult.isApproachingLimit) {
+      headerColor = Colors.orange.shade600;
+      headerIcon = Icons.warning_amber;
+      headerTitle = 'Approaching Daily Limit';
+    } else if (widget.interventionResult.isRetroactive) {
+      headerColor = Colors.blue.shade600;
+      headerIcon = Icons.history;
+      headerTitle = 'Retroactive Entry';
+    } else {
+      headerColor = Colors.blue.shade600;
+      headerIcon = Icons.info;
+      headerTitle = 'Mindful Check-In';
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: headerColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: headerColor.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            headerIcon,
+            color: headerColor,
+            size: 56,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            headerTitle,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              color: headerColor,
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            widget.interventionResult.userMessage,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              color: headerColor.withValues(alpha: 0.8),
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'This therapeutic information will help you understand your patterns and make mindful choices.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Colors.grey.shade600,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMoodSelector() {
     return Card(
       child: Padding(
@@ -137,15 +177,18 @@ class _LimitExceededWarningScreenState extends State<LimitExceededWarningScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'How are you feeling right now? (1-10)',
+              'How are you feeling right now?',
               style: Theme.of(context).textTheme.titleMedium,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: List.generate(10, (index) {
+              children: List.generate(5, (index) {
                 final mood = index + 1;
+                final emojis = ['😢', '😕', '😐', '😊', '😄'];
+                final labels = ['Very Low', 'Low', 'Neutral', 'Good', 'Great'];
                 final isSelected = _currentMood == mood;
+                
                 return GestureDetector(
                   onTap: () {
                     setState(() {
@@ -153,34 +196,41 @@ class _LimitExceededWarningScreenState extends State<LimitExceededWarningScreen>
                     });
                   },
                   child: Container(
-                    width: 32,
-                    height: 32,
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
                       color: isSelected 
-                          ? Theme.of(context).primaryColor 
-                          : Colors.grey.shade200,
-                    ),
-                    child: Center(
-                      child: Text(
-                        mood.toString(),
-                        style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.black87,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        ),
+                          ? Theme.of(context).primaryColor.withValues(alpha: 0.2)
+                          : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isSelected 
+                            ? Theme.of(context).primaryColor
+                            : Colors.transparent,
+                        width: 2,
                       ),
+                    ),
+                    child: Column(
+                      children: [
+                        Text(
+                          emojis[index],
+                          style: const TextStyle(fontSize: 24),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          labels[index],
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: isSelected 
+                                ? Theme.of(context).primaryColor
+                                : Colors.grey.shade600,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 );
               }),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('😢 Low', style: Theme.of(context).textTheme.bodySmall),
-                Text('😊 High', style: Theme.of(context).textTheme.bodySmall),
-              ],
             ),
           ],
         ),
@@ -295,7 +345,7 @@ class _LimitExceededWarningScreenState extends State<LimitExceededWarningScreen>
         ElevatedButton.icon(
           onPressed: widget.onCancel,
           icon: const Icon(Icons.favorite),
-          label: const Text('I\'ll stick to my goal'),
+          label: Text(_getStayOnTrackButtonText()),
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.green,
             foregroundColor: Colors.white,
@@ -308,8 +358,8 @@ class _LimitExceededWarningScreenState extends State<LimitExceededWarningScreen>
         // Secondary action - proceed anyway
         OutlinedButton.icon(
           onPressed: canProceed ? widget.onProceed : null,
-          icon: const Icon(Icons.warning_amber_rounded),
-          label: const Text('Continue anyway'),
+          icon: const Icon(Icons.check_circle_outline),
+          label: Text(_getProceedButtonText()),
           style: OutlinedButton.styleFrom(
             foregroundColor: Colors.orange.shade700,
             side: BorderSide(color: Colors.orange.shade300),
@@ -329,5 +379,27 @@ class _LimitExceededWarningScreenState extends State<LimitExceededWarningScreen>
         ],
       ],
     );
+  }
+
+  String _getStayOnTrackButtonText() {
+    if (widget.interventionResult.isScheduleViolation) {
+      return 'Honor my alcohol-free day';
+    } else if (widget.interventionResult.isLimitExceeded) {
+      return 'I\'ll stick to my goal';
+    } else if (widget.interventionResult.isApproachingLimit) {
+      return 'Stop here for today';
+    } else {
+      return 'Choose differently';
+    }
+  }
+
+  String _getProceedButtonText() {
+    if (widget.interventionResult.isScheduleViolation) {
+      return 'Continue logging';
+    } else if (widget.interventionResult.isLimitExceeded || widget.interventionResult.isApproachingLimit) {
+      return 'Continue anyway';
+    } else {
+      return 'Proceed mindfully';
+    }
   }
 }

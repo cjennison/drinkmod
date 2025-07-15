@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import '../../../core/models/drink_entry.dart';
 import '../../../core/services/hive_database_service.dart';
 import '../../../core/services/drink_database_service.dart';
-import '../widgets/time_of_day_selector_widget.dart';
-import '../widgets/drink_selection_widget.dart';
+import '../../../core/utils/drink_intervention_utils.dart';
+import '../../../core/widgets/app_snackbar.dart';
+import '../widgets/drink_selection_log_widget.dart';
+import '../widgets/context_log_widget.dart';
+import '../widgets/emotional_checkin_log_widget.dart';
+import '../widgets/therapeutic_reflection_log_widget.dart';
 import 'drink_logging_cubit.dart';
-import 'limit_exceeded_warning_screen.dart';
+import 'therapeutic_intervention_screen.dart';
 
 /// Progressive disclosure drink logging screen with therapeutic features
 class DrinkLoggingScreen extends StatefulWidget {
@@ -110,7 +115,7 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
       create: (context) => DrinkLoggingCubit(HiveDatabaseService.instance),
       child: Scaffold(
         appBar: AppBar(
-          title: Text(widget.editingEntry != null ? 'Edit Drink' : 'Log a Drink'),
+          title: Text(_getAppBarTitle()),
           actions: [
             if (_currentStep > 0)
               TextButton(
@@ -137,10 +142,83 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
                       });
                     },
                     children: [
-                      _buildDrinkSelectionStep(),
-                      _buildContextStep(),
-                      _buildEmotionalCheckInStep(),
-                      _buildTherapeuticReflectionStep(),
+                      DrinkSelectionLogWidget(
+                        selectedDate: _selectedDate,
+                        selectedTimeOfDay: _selectedTimeOfDay,
+                        selectedDrink: _selectedDrink,
+                        isInitializing: _isInitializing,
+                        onTimeOfDaySelected: (timeOfDay) {
+                          setState(() {
+                            _selectedTimeOfDay = timeOfDay;
+                          });
+                        },
+                        onDrinkSelected: (drink) {
+                          setState(() {
+                            _selectedDrink = drink;
+                          });
+                        },
+                        onShowDatePicker: _showDatePicker,
+                      ),
+                      ContextLogWidget(
+                        location: _location,
+                        socialContext: _socialContext,
+                        onLocationSelected: (location) {
+                          setState(() {
+                            _location = location;
+                          });
+                        },
+                        onSocialContextSelected: (context) {
+                          setState(() {
+                            _socialContext = context;
+                          });
+                        },
+                      ),
+                      EmotionalCheckinLogWidget(
+                        moodBefore: _moodBefore,
+                        triggers: _triggers,
+                        triggerDescription: _triggerDescription,
+                        onMoodSelected: (mood) {
+                          setState(() {
+                            _moodBefore = mood;
+                          });
+                        },
+                        onTriggersChanged: (triggers) {
+                          setState(() {
+                            _triggers = triggers;
+                          });
+                        },
+                        onTriggerDescriptionChanged: (description) {
+                          setState(() {
+                            _triggerDescription = description;
+                          });
+                        },
+                      ),
+                      TherapeuticReflectionLogWidget(
+                        intention: _intention,
+                        urgeIntensity: _urgeIntensity,
+                        consideredAlternatives: _consideredAlternatives,
+                        alternatives: _alternatives,
+                        onIntentionChanged: (intention) {
+                          setState(() {
+                            _intention = intention;
+                          });
+                        },
+                        onUrgeIntensityChanged: (intensity) {
+                          setState(() {
+                            _urgeIntensity = intensity;
+                          });
+                        },
+                        onConsideredAlternativesChanged: (considered) {
+                          setState(() {
+                            _consideredAlternatives = considered;
+                          });
+                        },
+                        onAlternativesChanged: (alternatives) {
+                          setState(() {
+                            _alternatives = alternatives;
+                          });
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -153,6 +231,29 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
         ),
       ),
     );
+  }
+
+  String _getAppBarTitle() {
+    final selectedDate = _selectedDate ?? DateTime.now();
+    final isToday = _isSameDay(selectedDate, DateTime.now());
+    
+    if (widget.editingEntry != null) {
+      return 'Edit Drink';
+    }
+    
+    if (isToday) {
+      return 'Log a Drink';
+    } else {
+      final formatter = DateFormat('MMM d');
+      return 'Add Drink for ${formatter.format(selectedDate)}';
+    }
+  }
+
+  /// Check if two dates are the same day
+  bool _isSameDay(DateTime date1, DateTime date2) {
+    return date1.year == date2.year &&
+           date1.month == date2.month &&
+           date1.day == date2.day;
   }
 
   Widget _buildProgressIndicator() {
@@ -182,478 +283,21 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
     );
   }
 
-  Widget _buildDrinkSelectionStep() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'What did you drink?',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Select from common drinks or enter a custom amount',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.grey.shade600,
-            ),
-          ),
-          const SizedBox(height: 24),
-          
-          // Time selection
-          TimeOfDaySelectorWidget(
-            selectedTimeOfDay: _selectedTimeOfDay,
-            onTimeOfDaySelected: (timeOfDay) {
-              setState(() {
-                _selectedTimeOfDay = timeOfDay;
-              });
-            },
-          ),
-          const SizedBox(height: 24),
-          
-          // Drink selection and display
-          if (_isInitializing) 
-            const Center(
-              child: Column(
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Loading drink information...'),
-                ],
-              ),
-            )
-          else
-            DrinkSelectionWidget(
-              selectedDrink: _selectedDrink,
-              onDrinkSelected: (DrinkInfo drink) {
-                setState(() {
-                  _selectedDrink = drink;
-                });
-              },
-            ),
-        ],
-      ),
+  void _showDatePicker() async {
+    final selectedDate = _selectedDate ?? DateTime.now();
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime.now().subtract(const Duration(days: 365)), // Last year
+      lastDate: DateTime.now(), // No future dates
+      helpText: 'Select date for drink entry',
     );
-  }
-
-  Widget _buildContextStep() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Context & Setting',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Help us understand the situation (optional)',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.grey.shade600,
-            ),
-          ),
-          const SizedBox(height: 24),
-          
-          _buildLocationSelector(),
-          const SizedBox(height: 16),
-          _buildSocialContextSelector(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLocationSelector() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Where are you?',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: TriggerConstants.locations.map((location) {
-                final isSelected = _location == location;
-                return FilterChip(
-                  label: Text(location),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    setState(() {
-                      _location = selected ? location : null;
-                    });
-                  },
-                );
-              }).toList(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSocialContextSelector() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Who are you with?',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: TriggerConstants.socialContexts.map((context) {
-                final isSelected = _socialContext == context;
-                return FilterChip(
-                  label: Text(context),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    setState(() {
-                      _socialContext = selected ? context : null;
-                    });
-                  },
-                );
-              }).toList(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmotionalCheckInStep() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'How are you feeling?',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Check in with yourself (optional but helpful)',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.grey.shade600,
-            ),
-          ),
-          const SizedBox(height: 24),
-          
-          _buildMoodSelector(),
-          const SizedBox(height: 16),
-          _buildTriggerSelector(),
-          const SizedBox(height: 16),
-          _buildTriggerDescription(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMoodSelector() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Mood (1-10)',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: List.generate(10, (index) {
-                final mood = index + 1;
-                final isSelected = _moodBefore == mood;
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _moodBefore = mood;
-                    });
-                  },
-                  child: Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isSelected 
-                          ? Theme.of(context).primaryColor 
-                          : Colors.grey.shade200,
-                    ),
-                    child: Center(
-                      child: Text(
-                        mood.toString(),
-                        style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.black87,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              }),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('😢 Low', style: Theme.of(context).textTheme.bodySmall),
-                Text('😊 High', style: Theme.of(context).textTheme.bodySmall),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTriggerSelector() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'What led to this drink?',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 12),
-            ...TriggerConstants.triggersByCategory.entries.map((category) {
-              return ExpansionTile(
-                title: Text(category.key),
-                children: [
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: category.value.map((trigger) {
-                      final isSelected = _triggers.contains(trigger);
-                      return FilterChip(
-                        label: Text(trigger),
-                        selected: isSelected,
-                        onSelected: (selected) {
-                          setState(() {
-                            if (selected) {
-                              _triggers.add(trigger);
-                            } else {
-                              _triggers.remove(trigger);
-                            }
-                          });
-                        },
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 8),
-                ],
-              );
-            }),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTriggerDescription() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Tell us more (optional)',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
-              initialValue: _triggerDescription,
-              decoration: const InputDecoration(
-                hintText: 'What led to this moment? How are you feeling?',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 3,
-              onChanged: (value) {
-                setState(() {
-                  _triggerDescription = value.isNotEmpty ? value : null;
-                });
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTherapeuticReflectionStep() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Reflection & Intention',
-            style: Theme.of(context).textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Mindful questions for deeper awareness',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.grey.shade600,
-            ),
-          ),
-          const SizedBox(height: 24),
-          
-          _buildIntentionInput(),
-          const SizedBox(height: 16),
-          _buildUrgeIntensitySelector(),
-          const SizedBox(height: 16),
-          _buildAlternativesSection(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildIntentionInput() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'What\'s your plan for this session?',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
-              initialValue: _intention,
-              decoration: const InputDecoration(
-                hintText: 'e.g., "Just this one drink with dinner"',
-                border: OutlineInputBorder(),
-              ),
-              onChanged: (value) {
-                setState(() {
-                  _intention = value.isNotEmpty ? value : null;
-                });
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildUrgeIntensitySelector() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'How strong was the urge? (1-10)',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 12),
-            Slider(
-              value: (_urgeIntensity ?? 5).toDouble(),
-              min: 1,
-              max: 10,
-              divisions: 9,
-              label: _urgeIntensity?.toString() ?? '5',
-              onChanged: (value) {
-                setState(() {
-                  _urgeIntensity = value.round();
-                });
-              },
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Mild', style: Theme.of(context).textTheme.bodySmall),
-                Text('Intense', style: Theme.of(context).textTheme.bodySmall),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAlternativesSection() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Did you consider alternatives?',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: RadioListTile<bool>(
-                    title: const Text('Yes'),
-                    value: true,
-                    groupValue: _consideredAlternatives,
-                    onChanged: (value) {
-                      setState(() {
-                        _consideredAlternatives = value;
-                      });
-                    },
-                  ),
-                ),
-                Expanded(
-                  child: RadioListTile<bool>(
-                    title: const Text('No'),
-                    value: false,
-                    groupValue: _consideredAlternatives,
-                    onChanged: (value) {
-                      setState(() {
-                        _consideredAlternatives = value;
-                      });
-                    },
-                  ),
-                ),
-              ],
-            ),
-            
-            if (_consideredAlternatives == true) ...[
-              const SizedBox(height: 12),
-              TextFormField(
-                initialValue: _alternatives,
-                decoration: const InputDecoration(
-                  hintText: 'What alternatives did you consider?',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 2,
-                onChanged: (value) {
-                  setState(() {
-                    _alternatives = value.isNotEmpty ? value : null;
-                  });
-                },
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
+    
+    if (pickedDate != null) {
+      setState(() {
+        _selectedDate = pickedDate;
+      });
+    }
   }
 
   Widget _buildNavigationButtons(DrinkLoggingState state) {
@@ -716,83 +360,89 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
 
   void _saveEntry() async {
     if (_selectedDrink == null || _selectedTimeOfDay == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a drink and time of day'),
-          backgroundColor: Colors.orange,
-        ),
+      AppSnackBar.showWarning(context, 'Please select a drink and time of day');
+      return;
+    }
+
+    // For new entries, check intervention requirements using the utility
+    if (widget.editingEntry == null) {
+      final databaseService = HiveDatabaseService.instance;
+      final selectedDate = _selectedDate ?? DateTime.now();
+      final isRetroactive = !_isSameDay(selectedDate, DateTime.now());
+      
+      // Check intervention requirements
+      final interventionResult = DrinkInterventionUtils.checkInterventionRequired(
+        date: selectedDate,
+        proposedStandardDrinks: _selectedDrink!.standardDrinks,
+        databaseService: databaseService,
+        isRetroactive: isRetroactive,
       );
-      return;
+      
+      // Handle intervention requirements
+      if (interventionResult.decision == DrinkInterventionUtils.cannotLog) {
+        AppSnackBar.showError(context, interventionResult.userMessage);
+        return;
+      }
+      
+      // For any intervention (alcohol-free day, limit exceeded, approaching limit, etc)
+      if (interventionResult.requiresIntervention) {
+        final shouldProceed = await _showTherapeuticIntervention(interventionResult);
+        if (shouldProceed) {
+          await _proceedWithSave();
+        }
+        return;
+      }
+      
+      // For approaching limit or retroactive, continue to save (therapeutic info collected)
+      // but show informational message
+      if (interventionResult.isApproachingLimit || interventionResult.isRetroactive) {
+        AppSnackBar.showWarning(context, interventionResult.userMessage);
+      }
     }
-
-    // Check if adding this drink would exceed the daily limit
-    if (widget.editingEntry == null) { // Only check for new entries, not edits
-      await _checkLimitAndProceed();
-    } else {
-      await _proceedWithSave();
-    }
+    
+    // Proceed with save
+    await _proceedWithSave();
   }
 
-  /// Check if user has exceeded their limit and show warning if needed
-  Future<void> _checkLimitAndProceed() async {
-    final databaseService = HiveDatabaseService.instance;
-    final selectedDate = _selectedDate ?? DateTime.now();
-    final currentDrinks = databaseService.getTotalDrinksForDate(selectedDate);
-    
-    // Get user data to check their limit
-    final userData = databaseService.getUserData();
-    if (userData == null) {
-      await _proceedWithSave();
-      return;
-    }
-    
-    final dailyLimit = userData['drinkLimit'] as int? ?? 2;
-    final proposedTotal = currentDrinks + (_selectedDrink?.standardDrinks ?? 0);
-    
-    // If they would exceed their limit, show warning
-    if (proposedTotal > dailyLimit && currentDrinks >= dailyLimit) {
-      await _showLimitExceededWarning(currentDrinks, dailyLimit);
-    } else {
-      await _proceedWithSave();
-    }
-  }
-
-  /// Show the therapeutic warning screen
-  Future<void> _showLimitExceededWarning(double currentDrinks, int dailyLimit) async {
+  /// Show the unified therapeutic intervention screen
+  Future<bool> _showTherapeuticIntervention(DrinkInterventionResult interventionResult) async {
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (context) => LimitExceededWarningScreen(
-          currentDrinks: currentDrinks,
-          dailyLimit: dailyLimit,
+        builder: (context) => TherapeuticInterventionScreen(
+          interventionResult: interventionResult,
           onProceed: () {
             Navigator.of(context).pop(true);
           },
           onCancel: () {
-            // User chose to stick to their goal - clear state and go back to home
+            // User chose to stick to their goal - clear state and go back
             _clearFormState();
             Navigator.of(context).pop(false);
             // Navigate back to home, clearing the drink logging screen
             if (mounted) {
               Navigator.of(context).popUntil((route) => route.isFirst);
-              // Show positive reinforcement
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Great choice! You\'re staying on track with your goals.'),
-                  backgroundColor: Colors.green,
-                  duration: const Duration(seconds: 3),
-                ),
-              );
+              // Show positive reinforcement based on intervention type
+              final message = _getPositiveReinforcementMessage(interventionResult);
+              AppSnackBar.showSuccess(context, message);
             }
           },
         ),
       ),
     );
     
-    // If user chose to proceed, continue with save
-    if (result == true) {
-      await _proceedWithSave();
+    return result ?? false;
+  }
+
+  /// Get appropriate positive reinforcement message based on intervention type
+  String _getPositiveReinforcementMessage(DrinkInterventionResult interventionResult) {
+    if (interventionResult.isScheduleViolation) {
+      return 'Great choice! You\'re honoring your alcohol-free day commitment.';
+    } else if (interventionResult.isLimitExceeded) {
+      return 'Excellent decision! You\'re staying within your daily limits.';
+    } else if (interventionResult.isApproachingLimit) {
+      return 'Wise choice! You\'re staying in control of your drinking.';
+    } else {
+      return 'Great choice! You\'re staying on track with your goals.';
     }
-    // If result is false or null, user cancelled - already handled in onCancel
   }
 
   /// Actually save the drink entry
@@ -845,12 +495,7 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
     } catch (e) {
       print('DrinkLoggingScreen - Error: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save drink: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        AppSnackBar.showError(context, 'Failed to save drink: $e');
       }
     }
   }

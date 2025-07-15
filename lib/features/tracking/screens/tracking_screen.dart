@@ -4,12 +4,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/models/drink_entry.dart';
 import '../../../core/services/hive_database_service.dart';
 import '../../../core/utils/drink_calculator.dart';
+import '../../../core/utils/drink_intervention_utils.dart';
 import '../widgets/drink_item_view_modal.dart';
 import '../widgets/tracking_date_header.dart';
 import '../widgets/daily_status_card.dart';
 import '../widgets/drink_entries_list.dart';
 import '../widgets/week_overview_widget.dart';
 import '../widgets/quick_actions_widget.dart';
+import '../widgets/drinking_calendar.dart';
 import 'drink_logging_screen.dart';
 import 'drink_logging_cubit.dart';
 
@@ -90,11 +92,15 @@ class _TrackingScreenState extends State<TrackingScreen> {
           return _buildDayView(date);
         },
       ),
-      floatingActionButton: _canLogToday() 
+      floatingActionButton: _canLogForDate(_currentDate) 
           ? FloatingActionButton(
               onPressed: _openDrinkLogging,
-              tooltip: 'Log a drink',
-              child: const Icon(Icons.add),
+              tooltip: _isSameDay(_currentDate, DateTime.now()) 
+                  ? 'Log a drink' 
+                  : 'Add past drink',
+              child: Icon(_isSameDay(_currentDate, DateTime.now()) 
+                  ? Icons.add 
+                  : Icons.history),
             )
           : null,
     );
@@ -118,7 +124,13 @@ class _TrackingScreenState extends State<TrackingScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Date header with navigation hints
-            TrackingDateHeader(date: date, isToday: isToday),
+            TrackingDateHeader(
+              date: date, 
+              isToday: isToday,
+              onPreviousDay: _goToPreviousDay,
+              onNextDay: _goToNextDay,
+              onCalendarTap: _showCalendar,
+            ),
             const SizedBox(height: 16),
             
             // Daily status card
@@ -131,11 +143,13 @@ class _TrackingScreenState extends State<TrackingScreen> {
             ),
             const SizedBox(height: 16),
             
-            // Quick actions (only for today)
-            if (isToday) ...[
+            // Quick actions (for today and past dates)
+            if (!date.isAfter(DateTime.now())) ...[
               QuickActionsWidget(
                 onOpenDrinkLogging: _openDrinkLogging,
                 onShowQuickLogSheet: _showQuickLogSheet,
+                isRetroactive: !isToday,
+                date: date,
               ),
               const SizedBox(height: 16),
             ],
@@ -202,9 +216,14 @@ class _TrackingScreenState extends State<TrackingScreen> {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
-  bool _canLogToday() {
-    return _isSameDay(_currentDate, DateTime.now()) && 
-           _databaseService.canAddDrinkToday();
+  bool _canLogForDate(DateTime date) {
+    // Don't allow logging for future dates
+    if (date.isAfter(DateTime.now())) {
+      return false;
+    }
+    
+    // Allow logging for today and past dates
+    return _databaseService.canAddDrinkToday(date: date);
   }
 
   void _onPageChanged(int index) {
@@ -266,6 +285,15 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
   Widget _buildQuickLogSheet() {
     final commonDrinks = DrinkCalculator.getCommonDrinks().take(6).toList();
+    final warning = DrinkInterventionUtils.getQuickLogSheetWarning(
+      date: _currentDate,
+      databaseService: _databaseService,
+    );
+    final shouldShowQuickLog = DrinkInterventionUtils.shouldShowQuickLog(
+      date: _currentDate,
+      databaseService: _databaseService,
+      isRetroactive: !_isSameDay(_currentDate, DateTime.now()),
+    );
     
     return Container(
       padding: const EdgeInsets.all(16),
@@ -286,45 +314,158 @@ class _TrackingScreenState extends State<TrackingScreen> {
               color: Colors.grey.shade600,
             ),
           ),
-          const SizedBox(height: 16),
-          GridView.builder(
-            shrinkWrap: true,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 3,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-            ),
-            itemCount: commonDrinks.length,
-            itemBuilder: (context, index) {
-              final drink = commonDrinks[index];
-              return Card(
-                child: InkWell(
-                  onTap: () => _quickLogDrink(drink),
-                  borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          drink.name,
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${drink.standardDrinks.toStringAsFixed(1)} drinks',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey.shade600,
+          
+          // Warning message if present
+          if (warning != null) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: warning.severity == QuickLogWarningSeverity.error 
+                    ? Colors.red.shade50 
+                    : Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: warning.severity == QuickLogWarningSeverity.error 
+                      ? Colors.red.shade200 
+                      : Colors.orange.shade200
+                ),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        warning.severity == QuickLogWarningSeverity.error 
+                            ? Icons.block 
+                            : Icons.warning_amber, 
+                        color: warning.severity == QuickLogWarningSeverity.error 
+                            ? Colors.red.shade600 
+                            : Colors.orange.shade600, 
+                        size: 20
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          warning.title,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: warning.severity == QuickLogWarningSeverity.error 
+                                ? Colors.red.shade700 
+                                : Colors.orange.shade700,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                      ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    warning.message,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: warning.severity == QuickLogWarningSeverity.error 
+                          ? Colors.red.shade600 
+                          : Colors.orange.shade600,
                     ),
                   ),
-                ),
-              );
-            },
-          ),
+                  if (warning.severity == QuickLogWarningSeverity.error) ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _openDrinkLogging();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red.shade600,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: Text('Use Full Logging'),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+          
+          // Only show drinks if quick log is allowed
+          if (shouldShowQuickLog) ...[
+            GridView.builder(
+              shrinkWrap: true,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 3,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+              ),
+              itemCount: commonDrinks.length,
+              itemBuilder: (context, index) {
+                final drink = commonDrinks[index];
+                return Card(
+                  child: InkWell(
+                    onTap: () => _quickLogDrink(drink),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            drink.name,
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${drink.standardDrinks.toStringAsFixed(1)} drinks',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ] else ...[
+            // Show message when quick log is not available
+            Container(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: Colors.grey.shade400,
+                    size: 32,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Quick Log Not Available',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Please use the "Log Drink" button for therapeutic support.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          
           const SizedBox(height: 16),
         ],
       ),
@@ -334,15 +475,48 @@ class _TrackingScreenState extends State<TrackingScreen> {
   void _quickLogDrink(DrinkSuggestion drink) async {
     Navigator.of(context).pop(); // Close bottom sheet
     
+    // Check intervention requirements using utility
+    final interventionResult = DrinkInterventionUtils.checkInterventionRequired(
+      date: _currentDate,
+      proposedStandardDrinks: drink.standardDrinks,
+      databaseService: _databaseService,
+      isRetroactive: !_isSameDay(_currentDate, DateTime.now()),
+    );
+    
+    // If intervention is required, show appropriate message and redirect
+    if (interventionResult.requiresIntervention || interventionResult.decision == DrinkInterventionUtils.cannotLog) {
+      final color = interventionResult.severity == DrinkInterventionSeverity.error 
+          ? Colors.red 
+          : Colors.orange;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(interventionResult.userMessage),
+          backgroundColor: color,
+          duration: Duration(seconds: 3),
+          action: interventionResult.decision != DrinkInterventionUtils.cannotLog 
+              ? SnackBarAction(
+                  label: 'Log Drink',
+                  onPressed: _openDrinkLogging,
+                )
+              : null,
+        ),
+      );
+      return;
+    }
+    
+    // Only allow quick log for drinking days when well under the limit
     try {
-      final now = DateTime.now();
       final drinkEntry = DrinkEntry(
-        timestamp: now,
-        timeOfDay: _getTimeOfDayFromHour(now.hour),
+        timestamp: _currentDate.copyWith(
+          hour: DateTime.now().hour,
+          minute: DateTime.now().minute,
+        ),
+        timeOfDay: _getTimeOfDayFromHour(DateTime.now().hour),
         drinkId: drink.name,
         drinkName: drink.name,
         standardDrinks: drink.standardDrinks,
-        intention: 'Quick logged',
+        intention: 'Quick logged on drinking day',
         isWithinLimit: true, // Will be recalculated in cubit
         isScheduleCompliant: true, // Will be recalculated in cubit
       );
@@ -467,6 +641,59 @@ class _TrackingScreenState extends State<TrackingScreen> {
     } else {
       return 'Night';
     }
+  }
+
+  void _goToPreviousDay() {
+    final targetPage = _pageController.page!.round() - 1;
+    _pageController.animateToPage(
+      targetPage,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  void _goToNextDay() {
+    final currentPage = _pageController.page!.round();
+    final targetDate = _baseDate.add(Duration(days: currentPage - 1000 + 1));
+    
+    // Don't allow navigation to future dates beyond today
+    if (targetDate.isAfter(DateTime.now())) {
+      return;
+    }
+    
+    final targetPage = currentPage + 1;
+    _pageController.animateToPage(
+      targetPage,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  void _showCalendar() {
+    showDialog(
+      context: context,
+      builder: (context) => DrinkingCalendar(
+        selectedDate: _currentDate,
+        onDateSelected: _goToDate,
+        userSchedule: _userData,
+      ),
+    );
+  }
+
+  void _goToDate(DateTime date) {
+    // Don't allow navigation to future dates beyond today
+    if (date.isAfter(DateTime.now())) {
+      return;
+    }
+    
+    final daysDifference = date.difference(_baseDate).inDays;
+    final targetPage = 1000 + daysDifference;
+    
+    _pageController.animateToPage(
+      targetPage,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
   }
 
   @override

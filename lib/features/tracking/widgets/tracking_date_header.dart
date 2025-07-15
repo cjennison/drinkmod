@@ -5,11 +5,17 @@ import 'package:intl/intl.dart';
 class TrackingDateHeader extends StatelessWidget {
   final DateTime date;
   final bool isToday;
+  final VoidCallback? onPreviousDay;
+  final VoidCallback? onNextDay;
+  final VoidCallback? onCalendarTap;
 
   const TrackingDateHeader({
     super.key,
     required this.date,
     required this.isToday,
+    this.onPreviousDay,
+    this.onNextDay,
+    this.onCalendarTap,
   });
 
   @override
@@ -25,45 +31,95 @@ class TrackingDateHeader extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    dayName,
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: isToday ? Theme.of(context).primaryColor : Colors.grey.shade700,
-                    ),
+              // Navigation back button
+              IconButton(
+                onPressed: onPreviousDay,
+                icon: const Icon(Icons.chevron_left),
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.grey.shade100,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    dateString,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Colors.grey.shade600,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
+                ),
+                tooltip: 'Previous day',
               ),
-              if (isToday)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
+              
+              // Date display with calendar access
+              Expanded(
+                child: GestureDetector(
+                  onTap: onCalendarTap,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    margin: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade200),
                     ),
-                  ),
-                  child: Text(
-                    'Today',
-                    style: TextStyle(
-                      color: Theme.of(context).primaryColor,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              dayName,
+                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: isToday ? Theme.of(context).primaryColor : Colors.grey.shade700,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Icon(
+                              Icons.calendar_month,
+                              size: 20,
+                              color: Colors.grey.shade600,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          dateString,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.grey.shade600,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        if (isToday) ...[
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              'Today',
+                              style: TextStyle(
+                                color: Theme.of(context).primaryColor,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ),
+              ),
+              
+              // Navigation forward button
+              IconButton(
+                onPressed: onNextDay,
+                icon: const Icon(Icons.chevron_right),
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.grey.shade100,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                tooltip: 'Next day',
+              ),
             ],
           ),
           const SizedBox(height: 16),
