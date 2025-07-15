@@ -31,7 +31,7 @@ class DrinkInterventionUtils {
     if (!isDrinkingDay) {
       return DrinkInterventionResult(
         decision: interventionRequired,
-        reason: 'This is a scheduled alcohol-free day. Therapeutic support recommended.',
+        reason: 'This is a scheduled alcohol-free day.',
         requiresIntervention: true,
         isScheduleViolation: true,
       );
@@ -66,7 +66,7 @@ class DrinkInterventionUtils {
     if (proposedTotal > dailyLimit) {
       return DrinkInterventionResult(
         decision: interventionRequired,
-        reason: 'Daily limit would be exceeded (${proposedTotal.toStringAsFixed(1)}/${dailyLimit}). Therapeutic support required.',
+        reason: 'Daily limit would be exceeded (${proposedTotal.toStringAsFixed(1)}/${dailyLimit}).',
         requiresIntervention: true,
         isLimitExceeded: true,
         currentDrinks: currentDrinks,
@@ -80,7 +80,7 @@ class DrinkInterventionUtils {
     if (currentDrinks >= warningThreshold) {
       return DrinkInterventionResult(
         decision: interventionRequired,
-        reason: 'Approaching daily limit (${currentDrinks.toStringAsFixed(1)}/${dailyLimit}). Mindful logging recommended.',
+        reason: 'Approaching daily limit (${currentDrinks.toStringAsFixed(1)}/${dailyLimit}).',
         requiresIntervention: true,
         isApproachingLimit: true,
         currentDrinks: currentDrinks,

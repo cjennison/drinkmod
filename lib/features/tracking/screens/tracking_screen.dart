@@ -291,7 +291,63 @@ class _TrackingScreenState extends State<TrackingScreen> {
   }
 
   Widget _buildQuickLogSheet() {
-    final commonDrinks = DrinkCalculator.getCommonDrinks().take(6).toList();
+    final allCommonDrinks = DrinkCalculator.getCommonDrinks();
+    
+    // Get favorite drinks from user data, not from separate favorite drinks box
+    final userData = _databaseService.getUserData();
+    final favoriteDrinksData = userData?['favoriteDrinks'];
+    List<String> favoriteDrinkNames = [];
+    
+    if (favoriteDrinksData != null && favoriteDrinksData is List) {
+      favoriteDrinkNames = favoriteDrinksData.cast<String>();
+    }
+    
+    // Build prioritized drink list: favorites first, then remaining common drinks
+    final List<DrinkSuggestion> prioritizedDrinks = [];
+    
+    // Add favorite drinks first
+    for (String favoriteName in favoriteDrinkNames) {
+      // Try exact match first
+      var matchingDrink = allCommonDrinks.firstWhere(
+        (drink) => drink.name.toLowerCase() == favoriteName.toLowerCase(),
+        orElse: () => DrinkSuggestion('', '', 0), // Placeholder
+      );
+      
+      // If no exact match, try partial matching or create custom drink
+      if (matchingDrink.name.isEmpty) {
+        // Try partial matching (e.g., "Whiskey" matches "Shot (1.5 oz)" for spirits)
+        if (favoriteName.toLowerCase().contains('whiskey') || 
+            favoriteName.toLowerCase().contains('gin') || 
+            favoriteName.toLowerCase().contains('rum') ||
+            favoriteName.toLowerCase().contains('vodka') ||
+            favoriteName.toLowerCase().contains('tequila')) {
+          // Create a spirit drink suggestion
+          matchingDrink = DrinkSuggestion('$favoriteName (1.5 oz)', 'spirits', 1.0);
+        } else if (favoriteName.toLowerCase().contains('beer')) {
+          matchingDrink = DrinkSuggestion('$favoriteName (12 oz)', 'beer', 1.0);
+        } else if (favoriteName.toLowerCase().contains('wine')) {
+          matchingDrink = DrinkSuggestion('$favoriteName (5 oz)', 'wine', 1.0);
+        } else {
+          // Default custom drink
+          matchingDrink = DrinkSuggestion(favoriteName, 'custom', 1.0);
+        }
+      }
+      prioritizedDrinks.add(matchingDrink);
+    }
+    
+    // Add remaining common drinks (excluding those already added as favorites)
+    final remainingDrinks = allCommonDrinks.where((drink) {
+      // Check if this drink type is already represented in favorites
+      return !favoriteDrinkNames.any((favorite) => 
+        drink.name.toLowerCase().contains(favorite.toLowerCase()) ||
+        favorite.toLowerCase().contains(drink.name.toLowerCase())
+      );
+    }).toList();
+    prioritizedDrinks.addAll(remainingDrinks);
+    
+    // Take only 6 drinks total for the grid
+    final displayDrinks = prioritizedDrinks.take(6).toList();
+    
     final warning = DrinkInterventionUtils.getQuickLogSheetWarning(
       date: _currentDate,
       databaseService: _databaseService,
@@ -403,36 +459,79 @@ class _TrackingScreenState extends State<TrackingScreen> {
           if (shouldShowQuickLog) ...[
             GridView.builder(
               shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                childAspectRatio: 3,
+                childAspectRatio: 2.5,
                 crossAxisSpacing: 8,
                 mainAxisSpacing: 8,
               ),
-              itemCount: commonDrinks.length,
+              itemCount: displayDrinks.length,
               itemBuilder: (context, index) {
-                final drink = commonDrinks[index];
+                final drink = displayDrinks[index];
+                // Check if this drink is a favorite (either exact match or created from favorite)
+                final isFavorite = index < favoriteDrinkNames.length ||
+                    favoriteDrinkNames.any((favorite) => 
+                      drink.name.toLowerCase().contains(favorite.toLowerCase()) ||
+                      favorite.toLowerCase().contains(drink.name.toLowerCase())
+                    );
                 return Card(
+                  elevation: isFavorite ? 3 : 1,
                   child: InkWell(
                     onTap: () => _quickLogDrink(drink),
                     borderRadius: BorderRadius.circular(8),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            drink.name,
-                            style: Theme.of(context).textTheme.titleSmall,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${drink.standardDrinks.toStringAsFixed(1)} drinks',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.grey.shade600,
+                    child: Container(
+                      decoration: isFavorite ? BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
+                          width: 1,
+                        ),
+                      ) : null,
+                      child: Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Row(
+                              children: [
+                                if (isFavorite) ...[
+                                  Icon(
+                                    Icons.star,
+                                    size: 14,
+                                    color: Theme.of(context).primaryColor,
+                                  ),
+                                  const SizedBox(width: 4),
+                                ],
+                                Expanded(
+                                  child: Text(
+                                    drink.name,
+                                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                      color: isFavorite ? Theme.of(context).primaryColor : null,
+                                      fontWeight: isFavorite ? FontWeight.w600 : null,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 2),
+                            Flexible(
+                              child: Text(
+                                '${drink.standardDrinks.toStringAsFixed(1)} drinks',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: isFavorite 
+                                      ? Theme.of(context).primaryColor.withValues(alpha: 0.7)
+                                      : Colors.grey.shade600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
