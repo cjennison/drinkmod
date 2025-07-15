@@ -120,64 +120,72 @@ class _TrackingScreenState extends State<TrackingScreen> {
       onRefresh: () async {
         await _loadData();
       },
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Date header with navigation hints
-            TrackingDateHeader(
+      child: CustomScrollView(
+        slivers: [
+          // Fixed header
+          SliverAppBar(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            automaticallyImplyLeading: false,
+            pinned: true,
+            expandedHeight: 0,
+            toolbarHeight: 140,
+            flexibleSpace: TrackingDateHeader(
               date: date, 
               isToday: isToday,
               onPreviousDay: _goToPreviousDay,
               onNextDay: _goToNextDay,
               onCalendarTap: _showCalendar,
             ),
-            const SizedBox(height: 16),
-            
-            // Daily status card
-            DailyStatusCard(
-              date: date,
-              totalDrinks: totalDrinks,
-              dailyLimit: dailyLimit,
-              isDrinkingDay: isDrinkingDay,
-              isToday: isToday,
+          ),
+          // Scrollable content
+          SliverPadding(
+            padding: const EdgeInsets.all(16),
+            sliver: SliverList(
+              delegate: SliverChildListDelegate([
+                // Daily status card
+                DailyStatusCard(
+                  date: date,
+                  totalDrinks: totalDrinks,
+                  dailyLimit: dailyLimit,
+                  isDrinkingDay: isDrinkingDay,
+                  isToday: isToday,
+                ),
+                const SizedBox(height: 16),
+                
+                // Quick actions (for today and past dates)
+                if (!date.isAfter(DateTime.now())) ...[
+                  QuickActionsWidget(
+                    onOpenDrinkLogging: _openDrinkLogging,
+                    onShowQuickLogSheet: _showQuickLogSheet,
+                    isRetroactive: !isToday,
+                    date: date,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                
+                // Drink entries
+                DrinkEntriesList(
+                  entries: entries,
+                  date: date,
+                  onViewDetails: _viewDrinkDetails,
+                  onEdit: _editDrink,
+                  onDelete: _deleteDrink,
+                ),
+                
+                // Week overview
+                const SizedBox(height: 24),
+                WeekOverviewWidget(
+                  date: date,
+                  databaseService: _databaseService,
+                  onDateSelected: _goToDate,
+                ),
+                
+                // Bottom spacing for FAB
+                const SizedBox(height: 80),
+              ]),
             ),
-            const SizedBox(height: 16),
-            
-            // Quick actions (for today and past dates)
-            if (!date.isAfter(DateTime.now())) ...[
-              QuickActionsWidget(
-                onOpenDrinkLogging: _openDrinkLogging,
-                onShowQuickLogSheet: _showQuickLogSheet,
-                isRetroactive: !isToday,
-                date: date,
-              ),
-              const SizedBox(height: 16),
-            ],
-            
-            // Drink entries
-            DrinkEntriesList(
-              entries: entries,
-              date: date,
-              onViewDetails: _viewDrinkDetails,
-              onEdit: _editDrink,
-              onDelete: _deleteDrink,
-            ),
-            
-            // Week overview
-            const SizedBox(height: 24),
-            WeekOverviewWidget(
-              date: date,
-              databaseService: _databaseService,
-              onDateSelected: _goToDate,
-            ),
-            
-            // Bottom spacing for FAB
-            const SizedBox(height: 80),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

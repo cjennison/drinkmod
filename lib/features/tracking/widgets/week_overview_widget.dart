@@ -107,17 +107,17 @@ class WeekOverviewWidget extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Container(
             width: 4,
-            height: 20,
+            height: 16,
             decoration: BoxDecoration(
               color: Colors.grey.shade200,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 4),
-          const SizedBox(height: 12), // Space for drink count
+          const SizedBox(height: 2),
+          const SizedBox(height: 10), // Space for drink count
         ],
       );
     }
@@ -186,26 +186,26 @@ class WeekOverviewWidget extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Container(
             width: 4,
-            height: 20,
+            height: 16,
             decoration: BoxDecoration(
               color: dayColor,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           // Drink count display
-          Container(
-            height: 12,
+          SizedBox(
+            height: 10,
             child: totalDrinks > 0
                 ? Text(
                     totalDrinks == totalDrinks.toInt() 
                         ? '${totalDrinks.toInt()}'
                         : totalDrinks.toStringAsFixed(1),
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 9,
                       fontWeight: FontWeight.w600,
                       color: Colors.grey.shade600,
                     ),
