@@ -105,7 +105,7 @@ class _DrinkSelectorWidgetState extends State<DrinkSelectorWidget> {
   Widget _buildDrinkCard(DrinkInfo drink, {bool isSelected = false}) {
     return Card(
       elevation: isSelected ? 4 : 1,
-      color: isSelected ? Theme.of(context).primaryColor.withOpacity(0.1) : null,
+      color: isSelected ? Theme.of(context).primaryColor.withValues(alpha: 0.1) : null,
       child: InkWell(
         onTap: () => _selectDrink(drink),
         borderRadius: BorderRadius.circular(8),
@@ -148,7 +148,7 @@ class _DrinkSelectorWidgetState extends State<DrinkSelectorWidget> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor.withOpacity(0.1),
+                      color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -288,7 +288,7 @@ class _DrinkSelectorWidgetState extends State<DrinkSelectorWidget> {
             ..._searchResults.map((drink) => _buildDrinkCard(
               drink, 
               isSelected: _selectedDrink?.id == drink.id,
-            )).toList(),
+            )),
         ] else ...[
           // Favorites section
           if (_favoriteDrinks.isNotEmpty) ...[
@@ -296,7 +296,7 @@ class _DrinkSelectorWidgetState extends State<DrinkSelectorWidget> {
             ..._favoriteDrinks.map((drink) => _buildDrinkCard(
               drink, 
               isSelected: _selectedDrink?.id == drink.id,
-            )).toList(),
+            )),
           ],
           
           // Basic drinks section
@@ -304,7 +304,7 @@ class _DrinkSelectorWidgetState extends State<DrinkSelectorWidget> {
           ..._basicDrinks.map((drink) => _buildDrinkCard(
             drink, 
             isSelected: _selectedDrink?.id == drink.id,
-          )).toList(),
+          )),
           
           const SizedBox(height: 16),
           
@@ -313,9 +313,9 @@ class _DrinkSelectorWidgetState extends State<DrinkSelectorWidget> {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.1),
+              color: Colors.blue.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.blue.withOpacity(0.3)),
+              border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [

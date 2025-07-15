@@ -459,7 +459,7 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
                   const SizedBox(height: 8),
                 ],
               );
-            }).toList(),
+            }),
           ],
         ),
       ),

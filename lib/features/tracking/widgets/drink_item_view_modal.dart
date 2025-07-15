@@ -69,8 +69,8 @@ class DrinkItemViewModal extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Theme.of(context).primaryColor.withOpacity(0.1),
-            Theme.of(context).primaryColor.withOpacity(0.05),
+            Theme.of(context).primaryColor.withValues(alpha: 0.1),
+            Theme.of(context).primaryColor.withValues(alpha: 0.05),
           ],
         ),
         borderRadius: const BorderRadius.only(
@@ -83,7 +83,7 @@ class DrinkItemViewModal extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor.withOpacity(0.15),
+              color: Theme.of(context).primaryColor.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
@@ -118,7 +118,7 @@ class DrinkItemViewModal extends StatelessWidget {
             onPressed: () => Navigator.of(context).pop(),
             icon: Icon(Icons.close, color: Colors.grey.shade600),
             style: IconButton.styleFrom(
-              backgroundColor: Colors.white.withOpacity(0.8),
+              backgroundColor: Colors.white.withValues(alpha: 0.8),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),

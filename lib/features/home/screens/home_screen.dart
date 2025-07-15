@@ -4,11 +4,19 @@ import '../../../core/services/onboarding_service.dart';
 import '../../../core/services/hive_database_service.dart';
 import '../../tracking/screens/drink_logging_screen.dart';
 import '../../tracking/screens/drink_logging_cubit.dart';
+import '../../tracking/screens/tracking_screen.dart';
 import '../widgets/dashboard_stats_card.dart';
+import '../widgets/today_status_card.dart';
+import '../widgets/home_quick_actions.dart';
 
 /// Home screen - main dashboard after onboarding completion
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final VoidCallback? onNavigateToTracking;
+  
+  const HomeScreen({
+    super.key,
+    this.onNavigateToTracking,
+  });
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -149,7 +157,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
     
-    if (result == true) {
+    if (result == true && mounted) {
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -163,195 +171,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
   
   /// Build today's status card (matching Track page design)
-  Widget _buildTodayStatusCard(DateTime date, double totalDrinks, int dailyLimit, bool isDrinkingDay) {
-    Color statusColor;
-    String statusText;
-    IconData statusIcon;
-    
-    if (!isDrinkingDay) {
-      statusColor = Colors.blue;
-      statusText = 'Non-drinking day';
-      statusIcon = Icons.schedule;
-    } else if (totalDrinks == 0) {
-      statusColor = Colors.green;
-      statusText = 'No drinks logged';
-      statusIcon = Icons.check_circle;
-    } else if (totalDrinks <= dailyLimit) {
-      statusColor = Colors.green;
-      statusText = 'Within limit';
-      statusIcon = Icons.check_circle;
-    } else {
-      statusColor = Colors.orange;
-      statusText = 'Over limit';
-      statusIcon = Icons.warning;
-    }
-
-    return Card(
-      color: statusColor.withOpacity(0.1),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Icon(statusIcon, color: statusColor),
-                const SizedBox(width: 8),
-                Text(
-                  statusText,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: statusColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const Spacer(),
-                if (isDrinkingDay)
-                  Text(
-                    '${totalDrinks.toStringAsFixed(1)}/$dailyLimit drinks',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-              ],
-            ),
-            
-            if (isDrinkingDay) ...[
-              const SizedBox(height: 12),
-              _buildDrinkVisualizer(totalDrinks, dailyLimit),
-            ],
-            
-            if (isDrinkingDay) ...[
-              const SizedBox(height: 12),
-              Text(
-                _getRemainingDrinksMessage(totalDrinks, dailyLimit),
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey.shade600,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-            
-            if (!isDrinkingDay) ...[
-              const SizedBox(height: 8),
-              Text(
-                'You\'re doing great staying on track!',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey.shade600,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
   /// Build drink visualizer (matching Track page)
-  Widget _buildDrinkVisualizer(double totalDrinks, int dailyLimit) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(dailyLimit, (index) {
-        final drinkNumber = index + 1;
-        final isFilled = totalDrinks >= drinkNumber;
-        final isPartial = totalDrinks > index && totalDrinks < drinkNumber;
-        
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: Theme.of(context).primaryColor,
-              width: 2,
-            ),
-            color: isFilled 
-                ? Theme.of(context).primaryColor
-                : isPartial 
-                    ? Theme.of(context).primaryColor.withOpacity(0.5)
-                    : Colors.transparent,
-          ),
-          child: Center(
-            child: Icon(
-              Icons.local_drink,
-              size: 16,
-              color: isFilled || isPartial ? Colors.white : Theme.of(context).primaryColor,
-            ),
-          ),
-        );
-      }),
-    );
-  }
-
   /// Build quick actions section
-  Widget _buildQuickActions(double totalDrinks, int dailyLimit, bool isDrinkingDay) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Quick Actions',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-            
-            // Non-drinking day message
-            if (!isDrinkingDay) ...[
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.schedule, color: Colors.blue),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Not a drinking day',
-                      style: TextStyle(color: Colors.blue, fontWeight: FontWeight.w500),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-            ],
-            
-            // Single Detailed Entry Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _handleDetailedLog,
-                icon: const Icon(Icons.add),
-                label: const Text('Log Drink'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   /// Get remaining drinks message (matching Track page)
-  String _getRemainingDrinksMessage(double totalDrinks, int dailyLimit) {
-    final remaining = dailyLimit - totalDrinks;
-    if (remaining <= 0) {
-      return 'You\'ve reached your daily limit.';
-    } else if (remaining == 1) {
-      return 'You have 1 drink remaining today';
-    } else {
-      return 'You have ${remaining.toStringAsFixed(0)} drinks remaining today';
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
@@ -414,12 +236,27 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 16),
               
               // Today's Status Banner (matching Track page)
-              _buildTodayStatusCard(today, totalDrinks, dailyLimit, isDrinkingDay),
+              TodayStatusCard(
+                date: today,
+                totalDrinks: totalDrinks,
+                dailyLimit: dailyLimit,
+                isDrinkingDay: isDrinkingDay,
+              ),
               
               const SizedBox(height: 16),
               
               // Quick Actions
-              _buildQuickActions(totalDrinks, dailyLimit, isDrinkingDay),
+              HomeQuickActions(
+                onLogDrink: _handleDetailedLog,
+                onViewTracking: widget.onNavigateToTracking ?? () {
+                  // Fallback navigation if callback not provided
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const TrackingScreen(),
+                    ),
+                  );
+                },
+              ),
               
               const SizedBox(height: 100), // Bottom padding
             ],
