@@ -706,15 +706,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
       await cubit.logDrinkEntry(drinkEntry);
       
       _loadData();
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${drink.name} logged successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
+    
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -776,15 +768,6 @@ class _TrackingScreenState extends State<TrackingScreen> {
       try {
         await _databaseService.deleteDrinkEntry(entry['id']);
         _loadData();
-        
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Drink deleted'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
