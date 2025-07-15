@@ -69,10 +69,13 @@ class _TrackingScreenState extends State<TrackingScreen> {
         title: const Text('Track'),
         automaticallyImplyLeading: false,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.today),
-            onPressed: _goToToday,
-            tooltip: 'Go to today',
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: IconButton(
+              icon: const Icon(Icons.today),
+              onPressed: _goToToday,
+              tooltip: 'Go to today',
+            ),
           ),
         ],
       ),
@@ -261,12 +264,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
     );
     
     if (result == true && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Drink logged successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+     
       _loadData();
     }
   }

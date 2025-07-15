@@ -158,13 +158,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     
     if (result == true && mounted) {
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Drink logged successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      
       // Refresh dashboard after logging
       await _loadDashboardData();
     }

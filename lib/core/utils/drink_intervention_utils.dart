@@ -45,12 +45,12 @@ class DrinkInterventionUtils {
       );
     }
 
-    // For retroactive entries, always require intervention
+    // For retroactive entries, show informational warning but don't require intervention
     if (isRetroactive) {
       return DrinkInterventionResult(
-        decision: interventionRequired,
-        reason: 'Retroactive entries require mindful logging.',
-        requiresIntervention: true,
+        decision: quickLogAllowed,
+        reason: 'Retroactive entry - try to log drinks before consuming for better tracking.',
+        requiresIntervention: false,
         isRetroactive: true,
       );
     }

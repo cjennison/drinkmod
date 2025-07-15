@@ -393,9 +393,13 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
         return;
       }
       
-      // For approaching limit or retroactive, continue to save (therapeutic info collected)
-      // but show informational message
-      if (interventionResult.isApproachingLimit || interventionResult.isRetroactive) {
+      // For approaching limit, show informational message but continue
+      if (interventionResult.isApproachingLimit) {
+        AppSnackBar.showWarning(context, interventionResult.userMessage);
+      }
+      
+      // For retroactive entries, show informational message but continue
+      if (interventionResult.isRetroactive) {
         AppSnackBar.showWarning(context, interventionResult.userMessage);
       }
     }
