@@ -171,6 +171,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
             WeekOverviewWidget(
               date: date,
               databaseService: _databaseService,
+              onDateSelected: _goToDate,
             ),
             
             // Bottom spacing for FAB

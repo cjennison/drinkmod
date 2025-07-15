@@ -22,7 +22,12 @@ class TodayStatusCard extends StatelessWidget {
     String statusText;
     IconData statusIcon;
     
-    if (!isDrinkingDay) {
+    // Check if it's an alcohol-free day but user has logged drinks
+    if (!isDrinkingDay && totalDrinks > 0) {
+      cardColor = Colors.red;
+      statusText = 'Plan deviation';
+      statusIcon = Icons.error_outline;
+    } else if (!isDrinkingDay) {
       cardColor = Colors.blue;
       statusText = 'Non-drinking day';
       statusIcon = Icons.schedule;
@@ -97,7 +102,8 @@ class TodayStatusCard extends StatelessWidget {
                   ],
                 ),
               ),
-              if (isDrinkingDay)
+              // Show drink count for alcohol-free day deviation or regular drinking day
+              if (isDrinkingDay || (!isDrinkingDay && totalDrinks > 0))
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
@@ -109,7 +115,7 @@ class TodayStatusCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'of $dailyLimit drinks',
+                      isDrinkingDay ? 'of $dailyLimit drinks' : 'drink${totalDrinks != 1 ? 's' : ''} logged',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey.shade600,
@@ -119,6 +125,38 @@ class TodayStatusCard extends StatelessWidget {
                 ),
             ],
           ),
+          // Show additional context for alcohol-free day deviation
+          if (!isDrinkingDay && totalDrinks > 0) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: Colors.red.shade700,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'You\'ve logged drinks on your planned alcohol-free day. That\'s okay - tomorrow is a fresh start.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.red.shade700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          // Show drink visualizer for regular drinking days
           if (isDrinkingDay) ...[
             const SizedBox(height: 20),
             HomeDrinkVisualizer(

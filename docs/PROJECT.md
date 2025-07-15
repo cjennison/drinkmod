@@ -913,22 +913,6 @@ The previous intervention system was fragmented:
 - **Clear Guidance**: Users understand what's required to proceed regardless of scenario
 - **Positive Messaging**: Reinforcement messages tailored to specific intervention context
 
-#### ✅ **Acceptance Criteria**:
-- ✅ All intervention types use the unified TherapeuticInterventionScreen
-- ✅ Header content dynamically adapts to intervention reason (alcohol-free day, limits, etc.)
-- ✅ Therapeutic check-in includes mood assessment, trigger identification, and reflection
-- ✅ Action buttons provide context-appropriate text ("Honor my alcohol-free day" vs "Continue anyway")
-- ✅ Positive reinforcement messages match the intervention type when users choose to stay on track
-- ✅ Old inconsistent intervention approaches (modals, limit warning screen) removed
-- ✅ Consistent therapeutic data collection across all intervention scenarios
-
-#### 🎯 **Key Benefits Delivered**:
-- **Therapeutic Consistency**: Same supportive experience regardless of intervention trigger
-- **Enhanced User Experience**: Familiar, predictable intervention process
-- **Better Data Collection**: Comprehensive therapeutic information for all intervention types
-- **Simplified Codebase**: Single intervention system replacing multiple approaches
-- **Improved Maintainability**: Centralized intervention logic and UI components
-
 ---
 
 ### Stage 4.3: Retroactive Logging UX Improvements ✅ COMPLETED
@@ -961,17 +945,237 @@ Retroactive logging was triggering full therapeutic intervention modals, which c
 - **Educational Value**: Banner text encourages better future logging habits
 - **Consistent Data Collection**: All therapeutic data still collected through regular logging flow
 
-#### ✅ **Acceptance Criteria**:
-- ✅ Retroactive entries no longer trigger therapeutic intervention modals
-- ✅ Retroactive entries still show warning messages via snackbar
-- ✅ Enhanced retroactive banner includes educational tip about logging before consumption
-- ✅ Therapeutic intervention screen no longer called for retroactive scenarios
-- ✅ All other intervention types (alcohol-free days, limits) maintain full therapeutic experience
+---
 
-#### 🎯 **Key Benefits Delivered**:
-- **Streamlined Retroactive Experience**: Faster completion of historical data entry
-- **Maintained Educational Value**: Users still receive guidance on optimal logging practices
-- **Better User Adoption**: Reduced friction encourages more complete historical tracking
-- **Preserved Therapeutic Integrity**: Real-time interventions remain fully therapeutic
+### Stage 4.4: Alcohol-Free Day Deviation UX ✅ COMPLETED
+
+**Objective**: Acknowledge and provide therapeutic support when users deviate from their planned alcohol-free days by logging drinks anyway.
+
+#### 🎯 Problem Addressed:
+When users logged drinks on their planned alcohol-free days, the app continued to show the standard "Non-drinking day" status without acknowledging the plan deviation. This missed an important therapeutic moment to provide appropriate support and reframe setbacks constructively.
+
+#### ✅ Solution Implemented:
+
+##### 🔄 **Enhanced Status Display Logic**
+- **Plan Deviation Detection**: Both home and tracking screens now detect when drinks are logged on alcohol-free days
+- **Visual Acknowledgment**: Status changes from "Non-drinking day" to "Plan deviation" with appropriate red coloring
+- **Therapeutic Messaging**: Supportive messages that normalize setbacks as part of the recovery journey
+
+##### 📱 **Home Screen Updates (TodayStatusCard)**
+- **Status Text**: Shows "Plan deviation" instead of "Non-drinking day" when drinks logged
+- **Drink Count Display**: Shows actual drinks logged even on alcohol-free days
+- **Supportive Message**: "You've logged drinks on your planned alcohol-free day. That's okay - tomorrow is a fresh start."
+- **Visual Consistency**: Red color scheme to indicate deviation while maintaining supportive tone
+
+##### 📊 **Track Screen Updates (DailyStatusCard)**
+- **Progress Display**: Shows "Plan deviation" status with error icon
+- **Detailed Context**: "X drinks logged on alcohol-free day. Remember, setbacks are part of the journey."
+- **Icon Update**: Error outline icon (instead of check) to visually indicate deviation
+- **Information Panel**: Contextual message panel explaining the situation therapeutically
+
+#### 🧠 **Therapeutic Approach**:
+- **Non-Judgmental Language**: Uses "plan deviation" rather than "failure" or "broken"
+- **Normalizing Setbacks**: Messages that frame lapses as normal parts of the journey
+- **Future-Focused**: Emphasizes tomorrow as a fresh start opportunity
+- **Maintained Support**: Continues to provide full app functionality without restrictions
+
+#### 🛠️ **Technical Implementation**:
+- **TodayStatusCard**: Added detection logic for `!isDrinkingDay && totalDrinks > 0`
+- **DailyStatusCard**: Updated status icon and messaging logic with new parameter
+- **Conditional Display**: Shows appropriate drink counts and messages based on plan adherence
+- **Color Coding**: Consistent red theme for deviations while maintaining supportive messaging
+
+#### 📊 **User Experience Improvements**:
+- **Honest Acknowledgment**: App recognizes when plans aren't followed
+- **Therapeutic Support**: Provides appropriate guidance for setback situations
+- **Visual Clarity**: Clear distinction between successful alcohol-free days and deviations
+- **Continued Engagement**: Maintains user engagement rather than creating shame
+
+---
+
+### Stage 4.5: Weekly Overview Adherence Visualization ✅ COMPLETED
+
+**Objective**: Update the "This Week" component to provide clear visual feedback about daily adherence using color coding - green for good days (following the plan) and red for bad days (deviating from the plan).
+
+#### 🎯 Problem Addressed:
+The weekly overview component showed basic drink information but didn't clearly indicate whether each day represented adherence to or deviation from the user's drinking plan. Users couldn't quickly see at a glance which days they successfully followed their goals.
+
+#### ✅ Solution Implemented:
+
+##### 🔄 **Day Adherence Utility Function**
+- **Comprehensive Status Detection**: New `getDayAdherenceStatus()` function that evaluates all aspects of daily adherence
+- **Multiple Status Types**: Distinguishes between alcohol-free day success/violation, drinking day within/over limits, unused drinking days, and future dates
+- **Reusable Logic**: Centralized adherence determination that can be used across the app
+- **Color Mapping**: Consistent color scheme based on adherence status
+
+##### 📊 **Enhanced Weekly Visualization**
+- **Green Days**: Successful alcohol-free days and drinking days within limits
+- **Red Days**: Alcohol-free day violations and drinking days over limits  
+- **Grey Days**: Unused drinking days (no drinks on planned drinking days) and future dates
+- **Clear Visual Hierarchy**: Immediate understanding of weekly adherence patterns
+
+##### 🎨 **Status-Based Color System**
+- **Alcohol-Free Day Success**: Green (no drinks on planned alcohol-free day)
+- **Alcohol-Free Day Violation**: Red (drinks logged on planned alcohol-free day)
+- **Drinking Day Within Limit**: Green (drinks logged within daily limit)
+- **Drinking Day Exceeded**: Red (drinks logged over daily limit)
+- **Drinking Day Unused**: Grey (no drinks on planned drinking day)
+- **Future Date**: Light grey (not yet evaluated)
+
+#### 🛠️ **Technical Implementation**:
+- **DrinkInterventionUtils**: Added `DayAdherenceStatus` enum and related utility functions
+- **Status Detection**: Comprehensive evaluation of drinking day compliance and limit adherence
+- **WeekOverviewWidget**: Updated to use status-based coloring instead of simple drink count logic
+- **Centralized Logic**: Single source of truth for adherence determination across the app
+
+#### 📊 **User Experience Improvements**:
+- **At-a-Glance Understanding**: Users can immediately see their weekly adherence pattern
+- **Clear Success Indicators**: Green days clearly show successful plan adherence
+- **Honest Failure Recognition**: Red days acknowledge plan deviations without shame
+- **Pattern Recognition**: Visual patterns help users identify trends and triggers
+- **Motivational Feedback**: Success visualization encourages continued adherence
+
+#### ✅ Acceptance Criteria:
+- ✅ Green indicators for days that followed the drinking plan (alcohol-free days with no drinks, drinking days within limits)
+- ✅ Red indicators for days that deviated from the plan (drinks on alcohol-free days, over daily limits)
+- ✅ Grey indicators for neutral situations (unused drinking days, future dates)
+- ✅ Consistent color scheme across the entire weekly overview
+- ✅ Reusable utility functions that can be applied to other components
+- ✅ Real-time updates based on current drink logging data
+
+#### 🎯 Key Benefits Delivered:
+- **Visual Motivation**: Clear success indicators encourage continued adherence
+- **Pattern Recognition**: Weekly view helps users identify successful and challenging periods
+- **Honest Assessment**: Realistic view of adherence without hiding deviations
+- **Consistent Logic**: Centralized adherence determination ensures app-wide consistency
+- **Future Scalability**: Status-based system can be extended to other time periods and visualizations
+
+---
+
+### Stage 4.6: Enhanced Weekly Overview with Navigation & Drink Counts ✅ COMPLETED
+
+**Objective**: Enhance the weekly overview widget to display drink counts for each day and enable clickable navigation to specific days.
+
+#### 🎯 Problem Addressed:
+The weekly overview showed visual adherence patterns but lacked specific drink count information and navigation capabilities. Users couldn't see exact drink amounts at a glance or quickly navigate to specific days from the week view.
+
+#### ✅ Solution Implemented:
+
+##### 📊 **Drink Count Display**
+- **Visible Numbers**: Each day now shows the total number of drinks consumed below the color indicator
+- **Smart Formatting**: Whole numbers display without decimals (e.g., "2"), fractional amounts show one decimal place (e.g., "1.5")
+- **Positioned Clearly**: Drink counts appear below the adherence color bar for easy scanning
+- **Empty Day Handling**: Days with no drinks show no number, keeping the display clean
+
+##### 🖱️ **Interactive Day Navigation**
+- **Clickable Circles**: Each day's date circle is now clickable/tappable
+- **Instant Navigation**: Tapping a day immediately navigates to that specific date in the tracking view
+- **Seamless Integration**: Uses the same navigation system as the calendar picker
+- **Visual Feedback**: Days are clearly interactive with appropriate touch targets
+
+##### 🎨 **Enhanced Visual Design**
+- **Consistent Layout**: Drink counts integrate seamlessly with existing color-coded system
+- **Clear Hierarchy**: Visual elements are properly spaced and prioritized
+- **Future Day Handling**: Future dates maintain appropriate spacing even without drink counts
+- **Today Indication**: Current day remains visually distinct with primary color highlights
+
+#### 🛠️ **Technical Implementation**:
+- **WeekOverviewWidget Enhancement**: Added `onDateSelected` callback parameter for navigation
+- **Drink Count Integration**: Uses existing `getTotalDrinksForDate()` method for accurate data
+- **GestureDetector Wrapping**: Entire day column becomes tappable for better UX
+- **TrackingScreen Integration**: Passes existing `_goToDate` method to enable navigation
+
+#### 📱 **User Experience Improvements**:
+- **Quick Reference**: Users can see exact drink counts without navigating to individual days
+- **Rapid Navigation**: One-tap access to any day in the current week
+- **Information Density**: More useful information packed into the same visual space
+- **Consistent Interaction**: Navigation behavior matches calendar and other date pickers
+- **Visual Clarity**: Numbers are subtle but readable, maintaining clean design
+
+#### ✅ Acceptance Criteria:
+- ✅ Drink counts display for each day with smart number formatting
+- ✅ Days with zero drinks show no number (clean display)
+- ✅ Whole numbers display without decimals, fractional amounts show one decimal
+- ✅ Each day's circle is clickable and navigates to that specific date
+- ✅ Navigation integrates seamlessly with existing date selection system
+- ✅ Future days maintain consistent layout without functionality
+- ✅ Today indicator remains visually distinct
+- ✅ Touch targets are appropriately sized for easy interaction
+
+#### 🎯 Key Benefits Delivered:
+- **Information Rich**: Users can see both adherence patterns and specific drink amounts at a glance
+- **Navigation Efficiency**: Quick access to any day without using calendar or swiping
+- **Better Weekly Context**: Drink counts help users understand their weekly patterns more clearly
+- **Improved Workflow**: Faster navigation between days for editing or reviewing entries
+- **Visual Consistency**: Enhanced functionality without disrupting existing design language
+
+---
+
+### Stage 4.7: Distinguished Selected Day vs Today Highlighting ✅ COMPLETED
+
+**Objective**: Improve the weekly overview to clearly distinguish between "today" (current date) and the "selected day" (currently viewed date) with different visual treatments.
+
+#### 🎯 Problem Addressed:
+The weekly overview only highlighted "today" but didn't show which day the user was currently viewing in the tracking screen. When users navigated to different dates, they couldn't see which day was selected in the weekly view, making it confusing to understand their current context.
+
+#### ✅ Solution Implemented:
+
+##### 🎨 **Dual Highlighting System**
+- **Selected Day**: Prominent highlight with stronger primary color background (15% opacity) and solid 2px border
+- **Today**: Subtle highlight with lighter primary color background (5% opacity) and translucent 1px border
+- **Clear Visual Hierarchy**: Selected day is more prominent than today, making current navigation context obvious
+
+##### 📅 **Visual Distinction Levels**
+- **Selected Day (Current View)**: 
+  - Strong primary color background (15% alpha)
+  - Solid 2px primary color border
+  - Full primary color text
+  - Most prominent visual treatment
+  
+- **Today (Current Date)**:
+  - Light primary color background (5% alpha)
+  - Translucent 1px primary color border (30% alpha)
+  - Slightly faded primary color text (80% alpha)
+  - Subtle but recognizable highlight
+  
+- **Regular Days**:
+  - Light grey background
+  - No border
+  - Standard grey text
+  - Clean, unobtrusive appearance
+
+##### 🎯 **Smart State Management**
+- **Independent States**: A day can be selected, today, both, or neither
+- **Priority Handling**: When a day is both selected and today, selected state takes precedence
+- **Consistent Logic**: Same highlighting system works across all navigation scenarios
+
+#### 🛠️ **Technical Implementation**:
+- **Parameter Addition**: Added `isSelected` parameter to `_buildDayColumn()` method
+- **Date Comparison**: Uses widget's `date` parameter to determine selected day
+- **Conditional Styling**: Dynamic background color, border, and text color based on state
+- **Preserved Functionality**: All existing features (drink counts, navigation, adherence colors) remain intact
+
+#### 📱 **User Experience Improvements**:
+- **Clear Navigation Context**: Users always know which day they're viewing
+- **Today Awareness**: Subtle indication of current date without overwhelming the interface
+- **Visual Feedback**: Immediate understanding of where they are in the week
+- **Consistent Interaction**: Selected day highlighting matches other date picker patterns
+- **Reduced Confusion**: No more uncertainty about which day is currently displayed
+
+#### ✅ Acceptance Criteria:
+- ✅ Selected day (currently viewed) has prominent primary color highlighting
+- ✅ Today has subtle primary color highlighting that's clearly different from selected
+- ✅ When selected day and today are the same, selected state takes visual precedence
+- ✅ Regular days maintain clean, unobtrusive appearance
+- ✅ All existing functionality (drink counts, adherence colors, navigation) preserved
+- ✅ Visual hierarchy makes current context immediately clear
+- ✅ Highlighting system works across all date navigation scenarios
+
+#### 🎯 Key Benefits Delivered:
+- **Navigation Clarity**: Users always understand their current viewing context
+- **Date Awareness**: Quick visual reference to both current date and selected date
+- **Improved Orientation**: Easier to understand position within the week
+- **Visual Consistency**: Highlighting system aligns with app's design language
+- **Enhanced Usability**: Reduced cognitive load when navigating between dates
 
 ---

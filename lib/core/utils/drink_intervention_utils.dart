@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import '../services/hive_database_service.dart';
 
 /// Utility class for determining when therapeutic intervention is required for drink logging
@@ -181,6 +182,69 @@ class DrinkInterventionUtils {
     return null;
   }
 
+  /// Determine the adherence status for a day
+  static DayAdherenceStatus getDayAdherenceStatus({
+    required DateTime date,
+    required HiveDatabaseService databaseService,
+  }) {
+    // Don't evaluate future dates
+    if (date.isAfter(DateTime.now())) {
+      return DayAdherenceStatus.future;
+    }
+
+    final isDrinkingDay = databaseService.isDrinkingDay(date: date);
+    final totalDrinks = databaseService.getTotalDrinksForDate(date);
+    final userData = databaseService.getUserData();
+    final dailyLimit = userData?['drinkLimit'] ?? 2;
+
+    if (!isDrinkingDay) {
+      if (totalDrinks == 0) {
+        return DayAdherenceStatus.alcoholFreeDaySuccess;
+      } else {
+        return DayAdherenceStatus.alcoholFreeDayViolation;
+      }
+    } else {
+      if (totalDrinks == 0) {
+        return DayAdherenceStatus.drinkingDayUnused;
+      } else if (totalDrinks <= dailyLimit) {
+        return DayAdherenceStatus.drinkingDayWithinLimit;
+      } else {
+        return DayAdherenceStatus.drinkingDayExceeded;
+      }
+    }
+  }
+
+  /// Determine if a day was adherent to the user's drinking plan
+  /// Returns true if the day was "good" (followed the plan), false if "bad" (deviated)
+  static bool isDayAdherent({
+    required DateTime date,
+    required HiveDatabaseService databaseService,
+  }) {
+    final status = getDayAdherenceStatus(date: date, databaseService: databaseService);
+    return status == DayAdherenceStatus.alcoholFreeDaySuccess ||
+           status == DayAdherenceStatus.drinkingDayWithinLimit ||
+           status == DayAdherenceStatus.drinkingDayUnused ||
+           status == DayAdherenceStatus.future;
+  }
+
+  /// Get appropriate color for a day based on adherence status
+  static Color getDayAdherenceColor(DayAdherenceStatus status) {
+    switch (status) {
+      case DayAdherenceStatus.alcoholFreeDaySuccess:
+        return Colors.green.shade400;
+      case DayAdherenceStatus.alcoholFreeDayViolation:
+        return Colors.red.shade400;
+      case DayAdherenceStatus.drinkingDayWithinLimit:
+        return Colors.green.shade400;
+      case DayAdherenceStatus.drinkingDayExceeded:
+        return Colors.red.shade400;
+      case DayAdherenceStatus.drinkingDayUnused:
+        return Colors.grey.shade300;
+      case DayAdherenceStatus.future:
+        return Colors.grey.shade200;
+    }
+  }
+
 }
 
 /// Result of intervention check
@@ -257,4 +321,14 @@ enum DrinkInterventionSeverity {
   error,
   warning,
   info,
+}
+
+/// Day adherence status options
+enum DayAdherenceStatus {
+  alcoholFreeDaySuccess,    // Alcohol-free day with no drinks
+  alcoholFreeDayViolation,  // Alcohol-free day with drinks logged
+  drinkingDayWithinLimit,   // Drinking day within daily limit
+  drinkingDayExceeded,      // Drinking day over daily limit
+  drinkingDayUnused,        // Drinking day with no drinks logged
+  future,                   // Future date (not yet evaluated)
 }

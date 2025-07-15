@@ -21,6 +21,7 @@ class DailyStatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isOverLimit = totalDrinks > dailyLimit && isDrinkingDay;
     final isAtGoal = totalDrinks <= dailyLimit && isDrinkingDay;
+    final isAlcoholFreeDayDeviation = !isDrinkingDay && totalDrinks > 0;
     
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -51,7 +52,15 @@ class DailyStatusCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  if (!isDrinkingDay)
+                  if (isAlcoholFreeDayDeviation)
+                    Text(
+                      'Plan deviation',
+                      style: TextStyle(
+                        color: Colors.red.shade600,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    )
+                  else if (!isDrinkingDay)
                     Text(
                       'Alcohol-free day',
                       style: TextStyle(
@@ -69,9 +78,41 @@ class DailyStatusCard extends StatelessWidget {
                     ),
                 ],
               ),
-              _buildStatusIcon(isDrinkingDay, isOverLimit, isAtGoal),
+              _buildStatusIcon(isDrinkingDay, isOverLimit, isAtGoal, isAlcoholFreeDayDeviation),
             ],
           ),
+          // Show additional context for alcohol-free day deviation
+          if (isAlcoholFreeDayDeviation) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: Colors.red.shade700,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${totalDrinks.toStringAsFixed(1)} drink${totalDrinks != 1 ? 's' : ''} logged on alcohol-free day. Remember, setbacks are part of the journey.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.red.shade700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          // Show drink visualizer for regular drinking days
           if (isDrinkingDay) ...[
             const SizedBox(height: 16),
             DrinkVisualizer(
@@ -84,7 +125,22 @@ class DailyStatusCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusIcon(bool isDrinkingDay, bool isOverLimit, bool isAtGoal) {
+  Widget _buildStatusIcon(bool isDrinkingDay, bool isOverLimit, bool isAtGoal, bool isAlcoholFreeDayDeviation) {
+    if (isAlcoholFreeDayDeviation) {
+      return Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.red.shade100,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          Icons.error_outline,
+          color: Colors.red.shade600,
+          size: 20,
+        ),
+      );
+    }
+    
     if (!isDrinkingDay) {
       return Container(
         padding: const EdgeInsets.all(8),
