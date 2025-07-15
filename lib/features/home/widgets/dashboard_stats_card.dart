@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 
-/// Stats cards showing key metrics like streak and weekly progress
+/// Clean stats cards showing key metrics without trendlines 
 class DashboardStatsCard extends StatelessWidget {
   final int streak;
   final double weeklyAdherence;
+  final String? patternDescription;
   final String motivationalMessage;
   
   const DashboardStatsCard({
     super.key,
     required this.streak,
     required this.weeklyAdherence,
+    this.patternDescription,
     required this.motivationalMessage,
   });
 
@@ -20,20 +22,22 @@ class DashboardStatsCard extends StatelessWidget {
         Expanded(
           child: _buildStatCard(
             context,
-            icon: Icons.local_fire_department,
-            value: streak.toString(),
-            label: 'Day Streak',
-            color: Theme.of(context).colorScheme.secondary,
+            icon: Icons.calendar_month,
+            value: '${(weeklyAdherence * 100).round()}%',
+            label: 'Weekly Success',
+            subtitle: 'Goals met this week',
+            color: _getAdherenceColor(weeklyAdherence),
           ),
         ),
         const SizedBox(width: 16),
         Expanded(
           child: _buildStatCard(
             context,
-            icon: Icons.trending_up,
-            value: '${(weeklyAdherence * 100).round()}%',
-            label: 'This Week',
-            color: Theme.of(context).colorScheme.tertiary,
+            icon: Icons.analytics,
+            value: patternDescription ?? _getWeeklyPattern(),
+            label: 'Pattern',
+            subtitle: 'This week\'s trend',
+            color: Theme.of(context).colorScheme.primary,
           ),
         ),
       ],
@@ -45,6 +49,7 @@ class DashboardStatsCard extends StatelessWidget {
     required IconData icon,
     required String value,
     required String label,
+    required String subtitle,
     required Color color,
   }) {
     final theme = Theme.of(context);
@@ -54,30 +59,56 @@ class DashboardStatsCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              icon,
-              color: color,
-              size: 32,
+            Row(
+              children: [
+                Icon(
+                  icon,
+                  color: color,
+                  size: 20,
+                ),
+                const Spacer(),
+                Text(
+                  value,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             Text(
-              value,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: color,
+              label,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onSurface,
               ),
             ),
+            const SizedBox(height: 2),
             Text(
-              label,
+              subtitle,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
-              textAlign: TextAlign.center,
             ),
           ],
         ),
       ),
     );
+  }
+  
+  Color _getAdherenceColor(double adherence) {
+    if (adherence >= 0.8) return Colors.green;
+    if (adherence >= 0.6) return Colors.orange;
+    return Colors.red;
+  }
+  
+  String _getWeeklyPattern() {
+    if (weeklyAdherence >= 0.9) return 'Excellent';
+    if (weeklyAdherence >= 0.7) return 'Good';
+    if (weeklyAdherence >= 0.5) return 'Fair';
+    return 'Improving';
   }
 }

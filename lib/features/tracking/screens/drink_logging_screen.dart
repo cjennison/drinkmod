@@ -56,6 +56,24 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
   void initState() {
     super.initState();
     _selectedDate = widget.selectedDate ?? DateTime.now();
+    
+    // Check if the selected date is before account creation
+    final databaseService = HiveDatabaseService.instance;
+    if (databaseService.isDateBeforeAccountCreation(_selectedDate!)) {
+      // If trying to log for a date before account creation, close the screen
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Cannot add drinks before your journey started on ${databaseService.getFormattedAccountCreationDate()}'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+          Navigator.of(context).pop();
+        }
+      });
+      return;
+    }
     _selectedTimeOfDay = 'Afternoon'; // Default time of day
     
     // If editing, populate form with existing data
@@ -285,10 +303,13 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
 
   void _showDatePicker() async {
     final selectedDate = _selectedDate ?? DateTime.now();
+    final databaseService = HiveDatabaseService.instance;
+    final accountCreatedDate = databaseService.getAccountCreatedDate();
+    
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: selectedDate,
-      firstDate: DateTime.now().subtract(const Duration(days: 365)), // Last year
+      firstDate: accountCreatedDate ?? DateTime.now().subtract(const Duration(days: 365)), // Account creation date or last year
       lastDate: DateTime.now(), // No future dates
       helpText: 'Select date for drink entry',
     );

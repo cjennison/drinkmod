@@ -134,10 +134,57 @@ class HiveDatabaseService {
   /// Mark onboarding as completed
   Future<void> completeOnboarding(Map<String, dynamic> userData) async {
     userData['onboardingCompleted'] = true;
+    
+    // Add account creation date if not already present (Remove after 7/16)
+    if (!userData.containsKey('accountCreatedDate')) {
+      userData['accountCreatedDate'] = DateTime.now().millisecondsSinceEpoch;
+      developer.log('Account created date set: ${DateTime.now()}', name: 'HiveDatabaseService');
+    }
+    
     await saveUserData(userData);
     developer.log('Onboarding completed', name: 'HiveDatabaseService');
   }
   
+  /// Get account creation date
+  DateTime? getAccountCreatedDate() {
+    final userData = getUserData();
+    if (userData == null) return null;
+    
+    final timestamp = userData['accountCreatedDate'];
+    if (timestamp is int) {
+      return DateTime.fromMillisecondsSinceEpoch(timestamp);
+    }
+    
+    // Fallback: if no creation date stored, assume account is new (today)
+    return DateTime.now();
+  }
+
+  /// Check if a date is before account creation (prevents logging drinks in the past)
+  bool isDateBeforeAccountCreation(DateTime date) {
+    final accountCreatedDate = getAccountCreatedDate();
+    if (accountCreatedDate == null) return false;
+    
+    // Compare only the date parts (ignore time)
+    final checkDate = DateTime(date.year, date.month, date.day);
+    final creationDate = DateTime(accountCreatedDate.year, accountCreatedDate.month, accountCreatedDate.day);
+    
+    return checkDate.isBefore(creationDate);
+  }
+
+  /// Get formatted account creation date for display
+  String getFormattedAccountCreationDate() {
+    final accountCreatedDate = getAccountCreatedDate();
+    if (accountCreatedDate == null) return 'recently';
+    
+    // Format as "July 15, 2025"
+    final months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    
+    return '${months[accountCreatedDate.month - 1]} ${accountCreatedDate.day}, ${accountCreatedDate.year}';
+  }
+
   // =============================================================================
   // DRINK ENTRIES OPERATIONS
   // =============================================================================

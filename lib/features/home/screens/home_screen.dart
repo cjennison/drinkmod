@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/services/onboarding_service.dart';
 import '../../../core/services/hive_database_service.dart';
+import '../../../core/utils/progress_metrics_service.dart';
 import '../../tracking/screens/drink_logging_screen.dart';
 import '../../tracking/screens/drink_logging_cubit.dart';
 import '../../tracking/screens/tracking_screen.dart';
+import '../../tracking/widgets/week_overview_widget.dart';
+import '../widgets/dashboard_header.dart';
 import '../widgets/dashboard_stats_card.dart';
 import '../widgets/today_status_card.dart';
 import '../widgets/home_quick_actions.dart';
@@ -30,10 +33,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Map<String, dynamic>? currentUser;
   
   final HiveDatabaseService _databaseService = HiveDatabaseService.instance;
+  late final ProgressMetricsService _metricsService;
 
   @override
   void initState() {
     super.initState();
+    _metricsService = ProgressMetricsService(_databaseService);
     _initializeServices();
   }
 
@@ -183,11 +188,13 @@ class _HomeScreenState extends State<HomeScreen> {
     final dailyLimit = currentUser?['drinkLimit'] ?? 2;
     final isDrinkingDay = _databaseService.isDrinkingDay();
     
+    // Calculate real metrics using progress service
+    final currentStreak = _metricsService.calculateCurrentStreak();
+    final weeklyAdherence = _metricsService.calculateWeeklyAdherence();
+    final patternAssessment = _metricsService.analyzeWeeklyPattern();
+    final motivationalMessage = patternAssessment.recommendation;
+    
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Drinkmod'),
-        elevation: 0,
-      ),
       body: RefreshIndicator(
         onRefresh: _loadDashboardData,
         child: SingleChildScrollView(
@@ -196,40 +203,39 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Dashboard Stats (Streak & Weekly)
-              if (dashboardStats != null && userName != null)
-                DashboardStatsCard(
-                  streak: 5, // TODO: Calculate actual streak
-                  weeklyAdherence: 0.8, // TODO: Calculate actual weekly adherence
-                  motivationalMessage: 'Keep up the great work!',
-                ),
-              
-              const SizedBox(height: 16),
-              
-              // Welcome Message
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Welcome back${userName != null ? ', $userName' : ''}!',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Track your drinks and stay on top of your goals.',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ],
-                  ),
-                ),
+              // Enhanced Dashboard Header with streak
+              DashboardHeader(
+                userName: userName,
+                currentStreak: currentStreak,
+                motivationalMessage: motivationalMessage,
+                isDrinkingDay: isDrinkingDay,
+                todaysDrinks: totalDrinks,
+                dailyLimit: dailyLimit,
               ),
               
+              const SizedBox(height: 20),
+              
+              // Week Overview Widget (no date selection for dashboard)
+              WeekOverviewWidget(
+                date: today,
+                databaseService: _databaseService,
+                onDateSelected: null, // Disabled for dashboard view
+              ),
+              
+              const SizedBox(height: 20),
+              
+              // Dashboard Stats (without trendlines)
+              if (dashboardStats != null && userName != null)
+                DashboardStatsCard(
+                  streak: currentStreak,
+                  weeklyAdherence: weeklyAdherence,
+                  patternDescription: patternAssessment.description,
+                  motivationalMessage: '', // Message is now in header
+                ),
+              
               const SizedBox(height: 16),
               
-              // Today's Status Banner (matching Track page)
+              // Today's Status Banner
               TodayStatusCard(
                 date: today,
                 totalDrinks: totalDrinks,

@@ -57,6 +57,45 @@ class _TherapeuticInterventionScreenState extends State<TherapeuticInterventionS
             const SizedBox(height: 24),
             
             // Universal therapeutic check-in
+            Card(
+              elevation: 2,
+              color: Colors.amber.shade50,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.assignment_turned_in,
+                          color: Colors.amber.shade700,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Required Check-In',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: Colors.amber.shade700,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'All fields below are required to continue. This therapeutic check-in helps you make mindful decisions and understand your patterns.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.amber.shade800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 20),
+            
             Text(
               'Let\'s take a moment to check in',
               style: Theme.of(context).textTheme.headlineSmall,
@@ -156,14 +195,6 @@ class _TherapeuticInterventionScreenState extends State<TherapeuticInterventionS
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 12),
-          Text(
-            'This therapeutic information will help you understand your patterns and make mindful choices.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.grey.shade600,
-            ),
-            textAlign: TextAlign.center,
-          ),
         ],
       ),
     );
@@ -176,9 +207,28 @@ class _TherapeuticInterventionScreenState extends State<TherapeuticInterventionS
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'How are you feeling right now?',
-              style: Theme.of(context).textTheme.titleMedium,
+            Row(
+              children: [
+                Text(
+                  'How are you feeling right now?',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Required',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: Colors.red.shade700,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             Row(
@@ -245,9 +295,24 @@ class _TherapeuticInterventionScreenState extends State<TherapeuticInterventionS
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'What\'s driving this decision?',
-              style: Theme.of(context).textTheme.titleMedium,
+            Row(
+              children: [
+               
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Required',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: Colors.red.shade700,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             Wrap(
@@ -279,10 +344,30 @@ class _TherapeuticInterventionScreenState extends State<TherapeuticInterventionS
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Take a moment to pause',
-              style: Theme.of(context).textTheme.titleMedium,
+            Row(
+              children: [
+                Text(
+                  'Take a moment to pause',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Required',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: Colors.red.shade700,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ),
+           
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(16),
@@ -341,6 +426,98 @@ class _TherapeuticInterventionScreenState extends State<TherapeuticInterventionS
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Completion status indicator
+        if (!canProceed) ...[
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.red.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.red.shade200),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      color: Colors.red.shade600,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Complete all sections to continue',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: Colors.red.shade700,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Icon(
+                            _currentMood != null ? Icons.check_circle : Icons.radio_button_unchecked,
+                            color: _currentMood != null ? Colors.green : Colors.red.shade400,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Mood selection',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: _currentMood != null ? Colors.green : Colors.red.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Icon(
+                            _selectedReason != null ? Icons.check_circle : Icons.radio_button_unchecked,
+                            color: _selectedReason != null ? Colors.green : Colors.red.shade400,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Reason selection',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: _selectedReason != null ? Colors.green : Colors.red.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(
+                      _hasReflected ? Icons.check_circle : Icons.radio_button_unchecked,
+                      color: _hasReflected ? Colors.green : Colors.red.shade400,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Reflection confirmation',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: _hasReflected ? Colors.green : Colors.red.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+        
         // Primary action - stay on track
         ElevatedButton.icon(
           onPressed: widget.onCancel,
@@ -358,25 +535,16 @@ class _TherapeuticInterventionScreenState extends State<TherapeuticInterventionS
         // Secondary action - proceed anyway
         OutlinedButton.icon(
           onPressed: canProceed ? widget.onProceed : null,
-          icon: const Icon(Icons.check_circle_outline),
-          label: Text(_getProceedButtonText()),
+          icon: Icon(canProceed ? Icons.check_circle_outline : Icons.lock_outline),
+          label: Text(canProceed ? _getProceedButtonText() : 'Complete check-in to proceed'),
           style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.orange.shade700,
-            side: BorderSide(color: Colors.orange.shade300),
+            foregroundColor: canProceed ? Colors.orange.shade700 : Colors.grey.shade500,
+            side: BorderSide(
+              color: canProceed ? Colors.orange.shade300 : Colors.grey.shade300,
+            ),
             padding: const EdgeInsets.symmetric(vertical: 16),
           ),
         ),
-        
-        if (!canProceed) ...[
-          const SizedBox(height: 8),
-          Text(
-            'Please complete the check-in above to continue',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Colors.grey.shade600,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
       ],
     );
   }

@@ -112,6 +112,9 @@ class DrinkInterventionUtils {
     // Never show quick log for future dates
     if (date.isAfter(DateTime.now())) return false;
 
+    // Never show quick log for dates before account creation
+    if (databaseService.isDateBeforeAccountCreation(date)) return false;
+
     // Never show quick log for non-drinking days
     final isDrinkingDay = databaseService.isDrinkingDay(date: date);
     if (!isDrinkingDay) return false;

@@ -5,6 +5,7 @@ import '../../../core/models/drink_entry.dart';
 import '../../../core/services/hive_database_service.dart';
 import '../../../core/utils/drink_calculator.dart';
 import '../../../core/utils/drink_intervention_utils.dart';
+import '../../../shared/widgets/before_journey_banner.dart';
 import '../widgets/drink_item_view_modal.dart';
 import '../widgets/tracking_date_header.dart';
 import '../widgets/daily_status_card.dart';
@@ -111,6 +112,12 @@ class _TrackingScreenState extends State<TrackingScreen> {
 
   Widget _buildDayView(DateTime date) {
     final isToday = _isSameDay(date, DateTime.now());
+    
+    // Check if date is before account creation
+    if (_databaseService.isDateBeforeAccountCreation(date)) {
+      return _buildBeforeJourneyView(date);
+    }
+    
     final entries = _databaseService.getDrinkEntriesForDate(date);
     final totalDrinks = entries.fold<double>(0, (sum, e) => sum + (e['standardDrinks'] as double));
     final dailyLimit = _userData?['drinkLimit'] ?? 2;
@@ -223,6 +230,37 @@ class _TrackingScreenState extends State<TrackingScreen> {
     );
   }
 
+  Widget _buildBeforeJourneyView(DateTime date) {
+    return CustomScrollView(
+      slivers: [
+        // Fixed header
+        SliverAppBar(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          automaticallyImplyLeading: false,
+          pinned: true,
+          expandedHeight: 0,
+          toolbarHeight: 140,
+          flexibleSpace: TrackingDateHeader(
+            date: date, 
+            isToday: false,
+            onPreviousDay: _goToPreviousDay,
+            onNextDay: _goToNextDay,
+            onCalendarTap: _showCalendar,
+          ),
+        ),
+        // Banner content
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Center(
+            child: BeforeJourneyBanner(
+              accountCreationDate: _databaseService.getFormattedAccountCreationDate(),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   // Helper methods
   bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
@@ -234,7 +272,12 @@ class _TrackingScreenState extends State<TrackingScreen> {
       return false;
     }
     
-    // Allow logging for today and past dates
+    // Don't allow logging for dates before account creation
+    if (_databaseService.isDateBeforeAccountCreation(date)) {
+      return false;
+    }
+    
+    // Allow logging for today and past dates (after account creation)
     return _databaseService.canAddDrinkToday(date: date);
   }
 
@@ -475,16 +518,31 @@ class _TrackingScreenState extends State<TrackingScreen> {
                       drink.name.toLowerCase().contains(favorite.toLowerCase()) ||
                       favorite.toLowerCase().contains(drink.name.toLowerCase())
                     );
+                
+                // Check if adding this drink would exceed limits
+                final interventionResult = DrinkInterventionUtils.checkInterventionRequired(
+                  date: _currentDate,
+                  proposedStandardDrinks: drink.standardDrinks,
+                  databaseService: _databaseService,
+                  isRetroactive: !_isSameDay(_currentDate, DateTime.now()),
+                );
+                
+                final wouldExceedLimit = interventionResult.requiresIntervention || 
+                    interventionResult.decision == DrinkInterventionUtils.cannotLog;
+                final isDisabled = wouldExceedLimit;
+                
                 return Card(
                   elevation: isFavorite ? 3 : 1,
                   child: InkWell(
-                    onTap: () => _quickLogDrink(drink),
+                    onTap: isDisabled ? null : () => _quickLogDrink(drink),
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
                       decoration: isFavorite ? BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
+                          color: isDisabled 
+                              ? Colors.grey.withValues(alpha: 0.3)
+                              : Theme.of(context).primaryColor.withValues(alpha: 0.3),
                           width: 1,
                         ),
                       ) : null,
@@ -496,7 +554,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                           children: [
                             Row(
                               children: [
-                                if (isFavorite) ...[
+                                if (isFavorite && !isDisabled) ...[
                                   Icon(
                                     Icons.star,
                                     size: 14,
@@ -504,12 +562,24 @@ class _TrackingScreenState extends State<TrackingScreen> {
                                   ),
                                   const SizedBox(width: 4),
                                 ],
+                                if (isDisabled) ...[
+                                  Icon(
+                                    Icons.warning_amber,
+                                    size: 14,
+                                    color: Colors.orange.shade600,
+                                  ),
+                                  const SizedBox(width: 4),
+                                ],
                                 Expanded(
                                   child: Text(
                                     drink.name,
                                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                      color: isFavorite ? Theme.of(context).primaryColor : null,
-                                      fontWeight: isFavorite ? FontWeight.w600 : null,
+                                      color: isDisabled 
+                                          ? Colors.grey.shade500 
+                                          : isFavorite 
+                                              ? Theme.of(context).primaryColor 
+                                              : null,
+                                      fontWeight: isFavorite && !isDisabled ? FontWeight.w600 : null,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -520,11 +590,15 @@ class _TrackingScreenState extends State<TrackingScreen> {
                             const SizedBox(height: 2),
                             Flexible(
                               child: Text(
-                                '${drink.standardDrinks.toStringAsFixed(1)} drinks',
+                                isDisabled 
+                                    ? 'Would exceed limit'
+                                    : '${drink.standardDrinks.toStringAsFixed(1)} drinks',
                                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: isFavorite 
-                                      ? Theme.of(context).primaryColor.withValues(alpha: 0.7)
-                                      : Colors.grey.shade600,
+                                  color: isDisabled 
+                                      ? Colors.orange.shade600
+                                      : isFavorite 
+                                          ? Theme.of(context).primaryColor.withValues(alpha: 0.7)
+                                          : Colors.grey.shade600,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -622,7 +696,6 @@ class _TrackingScreenState extends State<TrackingScreen> {
         drinkId: drink.name,
         drinkName: drink.name,
         standardDrinks: drink.standardDrinks,
-        intention: 'Quick logged on drinking day',
         isWithinLimit: true, // Will be recalculated in cubit
         isScheduleCompliant: true, // Will be recalculated in cubit
       );
