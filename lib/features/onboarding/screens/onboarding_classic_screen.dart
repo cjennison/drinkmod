@@ -22,6 +22,7 @@ class _OnboardingClassicScreenState extends State<OnboardingClassicScreen> {
   int _selectedWeeklyLimit = 4; // For open schedules
   List<int> _customWeeklyPattern = []; // For custom weekly patterns
   String? _selectedMotivation;
+  String? _selectedStrictness = OnboardingConstants.defaultStrictnessLevel;
   String? _selectedFrequency;
   String? _selectedAmount;
   final List<String> _selectedDrinks = [];
@@ -29,6 +30,7 @@ class _OnboardingClassicScreenState extends State<OnboardingClassicScreen> {
   final List<String> _genderOptions = OnboardingConstants.genderOptions;
   final List<String> _scheduleOptions = OnboardingConstants.scheduleOptions;
   final List<String> _motivationOptions = OnboardingConstants.motivationOptions;
+  final List<String> _strictnessOptions = OnboardingConstants.strictnessOptions;
   final List<String> _frequencyOptions = OnboardingConstants.frequencyOptions;
   final List<String> _amountOptions = OnboardingConstants.amountOptions;
   final List<String> _drinkOptions = OnboardingConstants.drinkOptions;
@@ -65,6 +67,32 @@ class _OnboardingClassicScreenState extends State<OnboardingClassicScreen> {
 
   String _formatLabel(String value) {
     return OnboardingConstants.getDisplayText(value);
+  }
+
+  String _formatStrictnessLabel(String strictness) {
+    switch (strictness) {
+      case OnboardingConstants.strictnessHigh:
+        return 'High Strictness';
+      case OnboardingConstants.strictnessMedium:
+        return 'Medium Strictness';
+      case OnboardingConstants.strictnessLow:
+        return 'Low Strictness';
+      default:
+        return strictness;
+    }
+  }
+
+  String _getStrictnessDescription(String strictness) {
+    switch (strictness) {
+      case OnboardingConstants.strictnessHigh:
+        return 'No tolerance - limits are firm boundaries';
+      case OnboardingConstants.strictnessMedium:
+        return 'Some flexibility - 50% tolerance over limit';
+      case OnboardingConstants.strictnessLow:
+        return 'Flexible approach - 100% tolerance over limit';
+      default:
+        return '';
+    }
   }
 
   void _saveAndContinue() async {
@@ -121,6 +149,9 @@ class _OnboardingClassicScreenState extends State<OnboardingClassicScreen> {
     }
     if (_selectedMotivation != null) {
       userData['motivation'] = _selectedMotivation!;
+    }
+    if (_selectedStrictness != null) {
+      userData['strictnessLevel'] = _selectedStrictness!;
     }
     if (_selectedDrinks.isNotEmpty) {
       userData['favoriteDrinks'] = _selectedDrinks;
@@ -442,6 +473,30 @@ class _OnboardingClassicScreenState extends State<OnboardingClassicScreen> {
                   );
                 }).toList(),
                 onChanged: (value) => setState(() => _selectedMotivation = value!),
+              ),
+              const SizedBox(height: 24),
+
+              // Limit Strictness Level
+              const Text('Limit Strictness', style: TextStyle(fontWeight: FontWeight.w500)),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: _selectedStrictness,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  hintText: 'How strict should limits be?',
+                ),
+                items: _strictnessOptions.map((strictness) {
+                  return DropdownMenuItem(
+                    value: strictness,
+                    child: Text(_formatStrictnessLabel(strictness)),
+                  );
+                }).toList(),
+                onChanged: (value) => setState(() => _selectedStrictness = value!),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _getStrictnessDescription(_selectedStrictness ?? _strictnessOptions.first),
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
               const SizedBox(height: 24),
 

@@ -3,6 +3,7 @@ import 'package:hive/hive.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import '../constants/onboarding_constants.dart';
+import '../utils/drink_intervention_utils.dart';
 import 'schedule_service.dart';
 
 /// Central Hive-based storage service for all app data
@@ -581,9 +582,14 @@ class HiveDatabaseService {
     
     for (int i = 0; i < 365; i++) {
       final checkDate = today.subtract(Duration(days: i));
-      final totalDrinks = getTotalDrinksForDate(checkDate);
       
-      if (totalDrinks <= dailyLimit) {
+      // Use the centralized adherence logic that considers tolerance
+      final isAdherent = DrinkInterventionUtils.isDayAdherent(
+        date: checkDate, 
+        databaseService: this
+      );
+      
+      if (isAdherent) {
         streak++;
       } else {
         break;
@@ -601,9 +607,14 @@ class HiveDatabaseService {
     int adherentDays = 0;
     for (int i = 0; i < 7; i++) {
       final checkDate = weekStart.add(Duration(days: i));
-      final totalDrinks = getTotalDrinksForDate(checkDate);
       
-      if (totalDrinks <= dailyLimit) {
+      // Use the centralized adherence logic that considers tolerance
+      final isAdherent = DrinkInterventionUtils.isDayAdherent(
+        date: checkDate, 
+        databaseService: this
+      );
+      
+      if (isAdherent) {
         adherentDays++;
       }
     }

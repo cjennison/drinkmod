@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../core/utils/drink_status_utils.dart';
+import '../../../core/services/hive_database_service.dart';
 
 /// Today's status card showing current progress and daily goal
 class TodayStatusCard extends StatelessWidget {
@@ -7,6 +9,7 @@ class TodayStatusCard extends StatelessWidget {
   final double totalDrinks;
   final int dailyLimit;
   final bool isDrinkingDay;
+  final HiveDatabaseService databaseService;
 
   const TodayStatusCard({
     super.key,
@@ -14,36 +17,20 @@ class TodayStatusCard extends StatelessWidget {
     required this.totalDrinks,
     required this.dailyLimit,
     required this.isDrinkingDay,
+    required this.databaseService,
   });
 
   @override
   Widget build(BuildContext context) {
-    Color cardColor;
-    String statusText;
-    IconData statusIcon;
+    // Use centralized day result state calculation
+    final dayResultState = DrinkDayResultUtils.calculateDayResultState(
+      date: date,
+      databaseService: databaseService,
+    );
     
-    // Check if it's an alcohol-free day but user has logged drinks
-    if (!isDrinkingDay && totalDrinks > 0) {
-      cardColor = Colors.red;
-      statusText = 'Plan deviation';
-      statusIcon = Icons.error_outline;
-    } else if (!isDrinkingDay) {
-      cardColor = Colors.blue;
-      statusText = 'Non-drinking day';
-      statusIcon = Icons.schedule;
-    } else if (totalDrinks == 0) {
-      cardColor = Colors.green;
-      statusText = 'Ready for the day';
-      statusIcon = Icons.check_circle;
-    } else if (totalDrinks <= dailyLimit) {
-      cardColor = Colors.green;
-      statusText = 'On track';
-      statusIcon = Icons.trending_up;
-    } else {
-      cardColor = Colors.orange;
-      statusText = 'Over limit';
-      statusIcon = Icons.warning;
-    }
+    final cardColor = DrinkDayResultUtils.getStateColor(dayResultState);
+    final statusText = DrinkDayResultUtils.getStateText(dayResultState);
+    final statusIcon = DrinkDayResultUtils.getStateIcon(dayResultState);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),

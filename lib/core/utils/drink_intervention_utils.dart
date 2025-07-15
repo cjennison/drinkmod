@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/hive_database_service.dart';
+import '../constants/onboarding_constants.dart';
 
 /// Utility class for determining when therapeutic intervention is required for drink logging
 class DrinkInterventionUtils {
@@ -38,13 +39,9 @@ class DrinkInterventionUtils {
     }
 
     // Check if we can log for this date (after checking drinking day status)
-    if (!databaseService.canAddDrinkToday(date: date)) {
-      return DrinkInterventionResult(
-        decision: cannotLog,
-        reason: 'Cannot log drinks for this date',
-        requiresIntervention: false,
-      );
-    }
+    // Note: We removed the strict blocking here to allow therapeutic logging even after limits
+    // The only hard blocks should be: future dates, account creation dates, and potentially other edge cases
+    // Daily/weekly limits should trigger intervention, not complete blocking
 
     // For retroactive entries, show informational warning but don't require intervention
     if (isRetroactive) {
@@ -56,19 +53,65 @@ class DrinkInterventionUtils {
       );
     }
 
-    // Check current consumption and limits
+    // Check current consumption and limits with strictness consideration
     final currentDrinks = databaseService.getTotalDrinksForDate(date);
     final userData = databaseService.getUserData();
     final dailyLimit = userData?['drinkLimit'] ?? 2;
+    final strictnessLevel = userData?['strictnessLevel'] as String? ?? OnboardingConstants.defaultStrictnessLevel;
+    final tolerance = OnboardingConstants.strictnessToleranceMap[strictnessLevel] ?? 0.5;
+    final toleranceLimit = dailyLimit * (1 + tolerance);
     final proposedTotal = currentDrinks + proposedStandardDrinks;
 
-    // If they would exceed their limit, require intervention
-    if (proposedTotal > dailyLimit) {
+    // If they have already exceeded their tolerance limit, require intervention with failure messaging
+    if (currentDrinks > toleranceLimit) {
       return DrinkInterventionResult(
         decision: interventionRequired,
-        reason: 'Daily limit would be exceeded (${proposedTotal.toStringAsFixed(1)}/${dailyLimit}).',
+        reason: 'Daily limit significantly exceeded (${currentDrinks.toStringAsFixed(1)}/${dailyLimit}). Logging for tracking.',
         requiresIntervention: true,
         isLimitExceeded: true,
+        isToleranceExceeded: true,
+        currentDrinks: currentDrinks,
+        dailyLimit: dailyLimit,
+        proposedTotal: proposedTotal,
+      );
+    }
+
+    // If they would exceed their tolerance limit with this drink, require intervention with failure messaging
+    if (proposedTotal > toleranceLimit) {
+      return DrinkInterventionResult(
+        decision: interventionRequired,
+        reason: 'Daily limit would be significantly exceeded (${proposedTotal.toStringAsFixed(1)}/${dailyLimit}).',
+        requiresIntervention: true,
+        isLimitExceeded: true,
+        isToleranceExceeded: true,
+        currentDrinks: currentDrinks,
+        dailyLimit: dailyLimit,
+        proposedTotal: proposedTotal,
+      );
+    }
+
+    // If they have exceeded their basic limit but are within tolerance, allow quick log
+    if (currentDrinks >= dailyLimit) {
+      return DrinkInterventionResult(
+        decision: quickLogAllowed,
+        reason: 'Within tolerance limit (${currentDrinks.toStringAsFixed(1)}/${dailyLimit}).',
+        requiresIntervention: false,
+        isLimitExceeded: true,
+        isWithinTolerance: true,
+        currentDrinks: currentDrinks,
+        dailyLimit: dailyLimit,
+        proposedTotal: proposedTotal,
+      );
+    }
+
+    // If they would exceed their basic limit but stay within tolerance, allow quick log
+    if (proposedTotal > dailyLimit) {
+      return DrinkInterventionResult(
+        decision: quickLogAllowed,
+        reason: 'Within tolerance limit (${proposedTotal.toStringAsFixed(1)}/${dailyLimit}).',
+        requiresIntervention: false,
+        isLimitExceeded: true,
+        isWithinTolerance: true,
         currentDrinks: currentDrinks,
         dailyLimit: dailyLimit,
         proposedTotal: proposedTotal,
@@ -122,14 +165,20 @@ class DrinkInterventionUtils {
     // Check if we can log for this date
     if (!databaseService.canAddDrinkToday(date: date)) return false;
 
-    // Check if approaching limit
+    // Check current consumption and tolerance
     final currentDrinks = databaseService.getTotalDrinksForDate(date);
     final userData = databaseService.getUserData();
     final dailyLimit = userData?['drinkLimit'] ?? 2;
+    final strictnessLevel = userData?['strictnessLevel'] as String? ?? OnboardingConstants.defaultStrictnessLevel;
+    final tolerance = OnboardingConstants.strictnessToleranceMap[strictnessLevel] ?? 0.5;
+    final toleranceLimit = dailyLimit * (1 + tolerance);
     final warningThreshold = dailyLimit * 0.7;
 
-    // Don't show quick log if approaching limit
+    // Don't show quick log if approaching limit (70% threshold)
     if (currentDrinks >= warningThreshold) return false;
+
+    // Don't show quick log if already at or over tolerance limit
+    if (currentDrinks >= toleranceLimit) return false;
 
     return true;
   }
@@ -199,6 +248,9 @@ class DrinkInterventionUtils {
     final totalDrinks = databaseService.getTotalDrinksForDate(date);
     final userData = databaseService.getUserData();
     final dailyLimit = userData?['drinkLimit'] ?? 2;
+    final strictnessLevel = userData?['strictnessLevel'] as String? ?? OnboardingConstants.defaultStrictnessLevel;
+    final tolerance = OnboardingConstants.strictnessToleranceMap[strictnessLevel] ?? 0.5;
+    final toleranceLimit = dailyLimit * (1 + tolerance);
 
     if (!isDrinkingDay) {
       if (totalDrinks == 0) {
@@ -211,6 +263,8 @@ class DrinkInterventionUtils {
         return DayAdherenceStatus.drinkingDayUnused;
       } else if (totalDrinks <= dailyLimit) {
         return DayAdherenceStatus.drinkingDayWithinLimit;
+      } else if (totalDrinks <= toleranceLimit) {
+        return DayAdherenceStatus.drinkingDayWithinTolerance;
       } else {
         return DayAdherenceStatus.drinkingDayExceeded;
       }
@@ -219,6 +273,7 @@ class DrinkInterventionUtils {
 
   /// Determine if a day was adherent to the user's drinking plan
   /// Returns true if the day was "good" (followed the plan), false if "bad" (deviated)
+  /// Considers tolerance as adherent since it's within acceptable bounds
   static bool isDayAdherent({
     required DateTime date,
     required HiveDatabaseService databaseService,
@@ -226,6 +281,7 @@ class DrinkInterventionUtils {
     final status = getDayAdherenceStatus(date: date, databaseService: databaseService);
     return status == DayAdherenceStatus.alcoholFreeDaySuccess ||
            status == DayAdherenceStatus.drinkingDayWithinLimit ||
+           status == DayAdherenceStatus.drinkingDayWithinTolerance ||
            status == DayAdherenceStatus.drinkingDayUnused ||
            status == DayAdherenceStatus.future;
   }
@@ -239,6 +295,8 @@ class DrinkInterventionUtils {
         return Colors.red.shade400;
       case DayAdherenceStatus.drinkingDayWithinLimit:
         return Colors.green.shade400;
+      case DayAdherenceStatus.drinkingDayWithinTolerance:
+        return Colors.orange.shade400;
       case DayAdherenceStatus.drinkingDayExceeded:
         return Colors.red.shade400;
       case DayAdherenceStatus.drinkingDayUnused:
@@ -259,6 +317,8 @@ class DrinkInterventionResult {
   final bool isLimitExceeded;
   final bool isApproachingLimit;
   final bool isRetroactive;
+  final bool isWithinTolerance;
+  final bool isToleranceExceeded;
   final double? currentDrinks;
   final int? dailyLimit;
   final double? proposedTotal;
@@ -271,6 +331,8 @@ class DrinkInterventionResult {
     this.isLimitExceeded = false,
     this.isApproachingLimit = false,
     this.isRetroactive = false,
+    this.isWithinTolerance = false,
+    this.isToleranceExceeded = false,
     this.currentDrinks,
     this.dailyLimit,
     this.proposedTotal,
@@ -281,10 +343,13 @@ class DrinkInterventionResult {
 
   /// Get severity level for UI styling
   DrinkInterventionSeverity get severity {
-    if (isScheduleViolation || isLimitExceeded) {
+    if (isScheduleViolation || isToleranceExceeded) {
       return DrinkInterventionSeverity.error;
     }
-    if (isApproachingLimit || isRetroactive) {
+    if (isLimitExceeded && isWithinTolerance) {
+      return DrinkInterventionSeverity.warning;
+    }
+    if (isLimitExceeded || isApproachingLimit || isRetroactive) {
       return DrinkInterventionSeverity.warning;
     }
     return DrinkInterventionSeverity.info;
@@ -331,7 +396,8 @@ enum DayAdherenceStatus {
   alcoholFreeDaySuccess,    // Alcohol-free day with no drinks
   alcoholFreeDayViolation,  // Alcohol-free day with drinks logged
   drinkingDayWithinLimit,   // Drinking day within daily limit
-  drinkingDayExceeded,      // Drinking day over daily limit
+  drinkingDayWithinTolerance, // Drinking day over limit but within tolerance
+  drinkingDayExceeded,      // Drinking day over tolerance limit
   drinkingDayUnused,        // Drinking day with no drinks logged
   future,                   // Future date (not yet evaluated)
 }

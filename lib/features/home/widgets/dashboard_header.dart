@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../core/utils/drink_status_utils.dart';
+import '../../../core/services/hive_database_service.dart';
 
 /// Enhanced dashboard header with streak, welcome message, and motivation
 class DashboardHeader extends StatelessWidget {
@@ -9,6 +11,7 @@ class DashboardHeader extends StatelessWidget {
   final bool isDrinkingDay;
   final double todaysDrinks;
   final int dailyLimit;
+  final HiveDatabaseService databaseService;
 
   const DashboardHeader({
     super.key,
@@ -18,6 +21,7 @@ class DashboardHeader extends StatelessWidget {
     required this.isDrinkingDay,
     required this.todaysDrinks,
     required this.dailyLimit,
+    required this.databaseService,
   });
 
   @override
@@ -108,10 +112,10 @@ class DashboardHeader extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: _getStatusColor(theme).withValues(alpha: 0.1),
+              color: _getStatusColor().withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: _getStatusColor(theme).withValues(alpha: 0.3),
+                color: _getStatusColor().withValues(alpha: 0.3),
                 width: 1,
               ),
             ),
@@ -122,7 +126,7 @@ class DashboardHeader extends StatelessWidget {
                   children: [
                     Icon(
                       _getStatusIcon(),
-                      color: _getStatusColor(theme),
+                      color: _getStatusColor(),
                       size: 18,
                     ),
                     const SizedBox(width: 8),
@@ -131,7 +135,7 @@ class DashboardHeader extends StatelessWidget {
                         _getStatusMessage(),
                         style: theme.textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w500,
-                          color: _getStatusColor(theme),
+                          color: _getStatusColor(),
                         ),
                       ),
                     ),
@@ -163,50 +167,52 @@ class DashboardHeader extends StatelessWidget {
   }
 
   String _getStatusMessage() {
-    if (!isDrinkingDay) {
-      return 'Alcohol-free day today';
-    }
+    final drinkStatus = DrinkStatusUtils.calculateDrinkStatus(
+      date: DateTime.now(),
+      databaseService: databaseService,
+    );
     
-    final remaining = dailyLimit - todaysDrinks;
-    if (remaining <= 0) {
-      return 'Daily limit reached';
-    } else if (remaining == dailyLimit) {
-      return 'Ready to track your drinks';
-    } else {
-      final remainingText = remaining == remaining.toInt() 
-          ? '${remaining.toInt()}'
-          : remaining.toStringAsFixed(1);
-      return '$remainingText drinks remaining today';
+    switch (drinkStatus) {
+      case DrinkStatus.alcoholFreeSuccess:
+        return 'Alcohol-free day success';
+      case DrinkStatus.alcoholFreeViolation:
+        return 'Alcohol-free day - drinks logged';
+      case DrinkStatus.withinLimit:
+        final remaining = dailyLimit - todaysDrinks;
+        if (remaining == dailyLimit) {
+          return 'Ready to track your drinks';
+        } else {
+          final remainingText = remaining == remaining.toInt() 
+              ? '${remaining.toInt()}'
+              : remaining.toStringAsFixed(1);
+          return '$remainingText drinks remaining today';
+        }
+      case DrinkStatus.overButWithinTolerance:
+        return 'Over limit but within tolerance';
+      case DrinkStatus.exceeded:
+        return 'Daily limit significantly exceeded';
+      case DrinkStatus.unused:
+        return 'No drinks logged today';
+      case DrinkStatus.future:
+        return 'Future date';
     }
   }
 
   IconData _getStatusIcon() {
-    if (!isDrinkingDay) {
-      return Icons.spa;
-    }
+    final drinkStatus = DrinkStatusUtils.calculateDrinkStatus(
+      date: DateTime.now(),
+      databaseService: databaseService,
+    );
     
-    final remaining = dailyLimit - todaysDrinks;
-    if (remaining <= 0) {
-      return Icons.check_circle;
-    } else if (remaining == dailyLimit) {
-      return Icons.play_circle;
-    } else {
-      return Icons.trending_up;
-    }
+    return DrinkStatusUtils.getStatusIcon(drinkStatus);
   }
 
-  Color _getStatusColor(ThemeData theme) {
-    if (!isDrinkingDay) {
-      return Colors.green;
-    }
+  Color _getStatusColor() {
+    final drinkStatus = DrinkStatusUtils.calculateDrinkStatus(
+      date: DateTime.now(),
+      databaseService: databaseService,
+    );
     
-    final remaining = dailyLimit - todaysDrinks;
-    if (remaining <= 0) {
-      return theme.primaryColor;
-    } else if (remaining == dailyLimit) {
-      return Colors.blue;
-    } else {
-      return Colors.orange;
-    }
+    return DrinkStatusUtils.getStatusColor(drinkStatus);
   }
 }

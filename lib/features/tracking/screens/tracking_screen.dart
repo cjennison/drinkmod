@@ -156,6 +156,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                   dailyLimit: dailyLimit,
                   isDrinkingDay: isDrinkingDay,
                   isToday: isToday,
+                  databaseService: _databaseService,
                 ),
                 const SizedBox(height: 16),
                 

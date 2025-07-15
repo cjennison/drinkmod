@@ -84,7 +84,7 @@ class _TherapeuticInterventionScreenState extends State<TherapeuticInterventionS
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'All fields below are required to continue. This therapeutic check-in helps you make mindful decisions and understand your patterns.',
+                      'All fields below are required to continue. This check-in helps you make mindful decisions and understand your patterns.',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.amber.shade800,
                       ),
@@ -144,9 +144,29 @@ class _TherapeuticInterventionScreenState extends State<TherapeuticInterventionS
       headerIcon = Icons.calendar_today;
       headerTitle = 'Alcohol-Free Day';
     } else if (widget.interventionResult.isLimitExceeded) {
-      headerColor = Colors.red.shade600;
-      headerIcon = Icons.warning;
-      headerTitle = 'Daily Limit Reached';
+      // Check if this is a tolerance vs hard failure state
+      if (widget.interventionResult.isToleranceExceeded) {
+        headerColor = Colors.red.shade600;
+        headerIcon = Icons.cancel;
+        headerTitle = 'Will be over limit';
+      } else if (widget.interventionResult.isWithinTolerance) {
+        headerColor = Colors.orange.shade600;
+        headerIcon = Icons.warning;
+        headerTitle = 'Over Limit - Within Tolerance';
+      } else {
+        // Check if already exceeded vs about to exceed
+        final currentDrinks = widget.interventionResult.currentDrinks ?? 0;
+        final dailyLimit = widget.interventionResult.dailyLimit ?? 2;
+        if (currentDrinks >= dailyLimit) {
+          headerColor = Colors.orange.shade600;
+          headerIcon = Icons.warning;
+          headerTitle = 'Tracking Additional Drink';
+        } else {
+          headerColor = Colors.red.shade600;
+          headerIcon = Icons.warning;
+          headerTitle = 'Daily Limit Reached';
+        }
+      }
     } else if (widget.interventionResult.isApproachingLimit) {
       headerColor = Colors.orange.shade600;
       headerIcon = Icons.warning_amber;
@@ -553,7 +573,20 @@ class _TherapeuticInterventionScreenState extends State<TherapeuticInterventionS
     if (widget.interventionResult.isScheduleViolation) {
       return 'Honor my alcohol-free day';
     } else if (widget.interventionResult.isLimitExceeded) {
-      return 'I\'ll stick to my goal';
+      if (widget.interventionResult.isToleranceExceeded) {
+        return 'I need to stop now';
+      } else if (widget.interventionResult.isWithinTolerance) {
+        return 'I\'ll stay in tolerance zone';
+      } else {
+        // Check if already exceeded vs about to exceed
+        final currentDrinks = widget.interventionResult.currentDrinks ?? 0;
+        final dailyLimit = widget.interventionResult.dailyLimit ?? 2;
+        if (currentDrinks >= dailyLimit) {
+          return 'I\'ll pause here';
+        } else {
+          return 'I\'ll stick to my goal';
+        }
+      }
     } else if (widget.interventionResult.isApproachingLimit) {
       return 'Stop here for today';
     } else {
@@ -565,7 +598,20 @@ class _TherapeuticInterventionScreenState extends State<TherapeuticInterventionS
     if (widget.interventionResult.isScheduleViolation) {
       return 'Continue logging';
     } else if (widget.interventionResult.isLimitExceeded || widget.interventionResult.isApproachingLimit) {
-      return 'Continue anyway';
+      if (widget.interventionResult.isToleranceExceeded) {
+        return 'Log drink anyway';
+      } else if (widget.interventionResult.isWithinTolerance) {
+        return 'Continue in tolerance';
+      } else {
+        // Check if already exceeded vs about to exceed
+        final currentDrinks = widget.interventionResult.currentDrinks ?? 0;
+        final dailyLimit = widget.interventionResult.dailyLimit ?? 2;
+        if (currentDrinks >= dailyLimit) {
+          return 'Log this drink';
+        } else {
+          return 'Continue anyway';
+        }
+      }
     } else {
       return 'Proceed mindfully';
     }

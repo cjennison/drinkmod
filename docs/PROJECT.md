@@ -885,6 +885,22 @@ class DayReflection {
 - ✅ **Progress Indicators**: Real-time feedback on intervention completion status
 - ✅ **Therapeutic Tone**: Supportive, non-judgmental language throughout intervention flow
 
+##### 🚀 Post-Limit Therapeutic Logging - IMPLEMENTED
+- ✅ **No Hard Blocking**: Users can log drinks even after exceeding daily limits
+- ✅ **Therapeutic Intervention**: Required check-in for all over-limit logging
+- ✅ **Appropriate Messaging**: Different headers and button text for already-exceeded vs about-to-exceed scenarios
+- ✅ **Tracking Priority**: Emphasizes logging for tracking purposes rather than blocking entirely
+- ✅ **Mindful Reflection**: Maintains therapeutic value while allowing honest tracking
+
+##### 🎯 Strictness Levels & Tolerance System - IMPLEMENTED
+- ✅ **Configurable Strictness**: High (0%), Medium (50%), Low (100%) tolerance over limits
+- ✅ **Onboarding Integration**: Strictness level selection added to classic onboarding flow
+- ✅ **Profile Management**: Users can adjust strictness level in profile settings
+- ✅ **Smart Status Calculation**: New drink status system with tolerance-aware color coding
+- ✅ **Orange Tolerance Zone**: New intermediate state for over-limit but within tolerance
+- ✅ **Enhanced Interventions**: Different messaging for tolerance vs hard failure states
+- ✅ **Dashboard Integration**: Enhanced dashboard header with tolerance-aware status display
+
 #### 🎯 Key Benefits Delivered:
 - **Complete Historical Tracking**: Users can fill in missed days without losing therapeutic value
 - **Maintained Therapeutic Integrity**: Retroactive logging still requires thoughtful engagement
@@ -1256,22 +1272,6 @@ The tracking screen's date header scrolled with content, making navigation less 
 - **Maintained Functionality**: All existing features (swiping, tapping, calendar) work as before
 - **Better Touch Ergonomics**: Date controls stay in easily reachable top area
 
-#### ✅ **Acceptance Criteria**:
-- ✅ Date header remains fixed at top of screen during scrolling
-- ✅ Content below header scrolls independently
-- ✅ Horizontal padding significantly reduced while maintaining usability
-- ✅ All date navigation functionality preserved (left/right arrows, calendar access)
-- ✅ PageView horizontal swiping continues to work
-- ✅ Visual separation between fixed header and scrollable content
-- ✅ Proper touch targets maintained for all interactive elements
-
-#### 🎯 **Key Benefits Delivered**:
-- **Improved Navigation Accessibility**: Date controls always available without scrolling
-- **Better Space Efficiency**: More content visible with reduced padding waste
-- **Enhanced User Flow**: Easier to navigate between dates while reviewing content
-- **Professional Layout**: Fixed header pattern common in well-designed mobile apps
-- **Maintained User Expectations**: All existing gestures and interactions preserved
-
 ---
 
 ### Stage 3.5: Enhanced Dashboard System ✅ COMPLETED
@@ -1317,6 +1317,7 @@ class DashboardHeader extends StatelessWidget {
   final bool isDrinkingDay;
   final double todaysDrinks;
   final int dailyLimit;
+  final bool isAlcoholFreeDay;
 }
 
 // Updated DashboardStatsCard without trendlines
@@ -1339,5 +1340,101 @@ class DashboardStatsCard extends StatelessWidget {
 - **Pattern Awareness**: Weekly overview helps users recognize drinking patterns
 - **Status Clarity**: Smart messaging eliminates confusion about drinking permissions
 - **Progress Focus**: Metrics emphasize improvement and positive choices
+
+---
+
+### Stage 5.1: Centralized Day Result State Utility System ✅ COMPLETED
+**Objective**: Eliminate duplicate tolerance calculation logic across UI components by creating centralized DrinkDayResultUtils with enum-based state management
+**Duration**: 2 days
+**Status**: Complete - All Dashboard Components Use Centralized Utilities
+**Prerequisites**: Strictness Levels & Tolerance System Complete ✅
+
+#### ✅ IMPLEMENTATION COMPLETED:
+
+##### 🎯 **Problem Addressed**
+- **Logic Duplication**: Multiple UI components had identical tolerance calculation logic
+- **Inconsistent States**: Different components showed different results for same drinking day
+- **Maintenance Burden**: Updates required changing logic in multiple files
+- **Color Inconsistency**: Orange tolerance zone implementation varied across components
+
+#### ✅ **Solution Implemented**:
+
+##### 🔧 **DrinkDayResultState Enum System**
+- ✅ **Six Distinct States**: readyForDay, onTrack, overLimit, limitExceeded, nonDrinkingDay, planDeviation
+- ✅ **Comprehensive Coverage**: Handles all possible user scenarios including tolerance zones
+- ✅ **Type Safety**: Enum-based approach prevents invalid state combinations
+- ✅ **Clear Semantics**: Each state has specific meaning for UI components
+
+##### 🛠️ **DrinkDayResultUtils Central Hub**
+- ✅ **Single Source of Truth**: `calculateDayResultState()` method handles all logic
+- ✅ **Tolerance Integration**: Uses strictness levels for accurate tolerance calculations
+- ✅ **UI Helpers**: `getStateColor()`, `getStateIcon()`, `getStateText()` methods
+- ✅ **Consistent Orange Zone**: Proper tolerance zone visualization across all components
+
+##### 📱 **Updated UI Components**
+- ✅ **TodayStatusCard**: Replaced hardcoded logic with centralized state calculation
+- ✅ **DailyStatusCard**: Track screen progress indicator using tolerance-aware colors
+- ✅ **Intervention System**: Uses centralized utilities for consistent state determination
+- ✅ **All Orange States**: Tolerance zone properly displayed across dashboard
+
+#### 🏗️ **Architecture Implementation**:
+```dart
+// Centralized enum-based state system
+enum DrinkDayResultState {
+  readyForDay,      // No drinks yet on drinking day
+  onTrack,          // Within daily limits
+  overLimit,        // In tolerance zone (orange)
+  limitExceeded,    // Failed daily limit (red)
+  nonDrinkingDay,   // Alcohol-free day
+  planDeviation,    // Drinks on non-drinking day
+}
+
+// Central utility hub
+class DrinkDayResultUtils {
+  static DrinkDayResultState calculateDayResultState({
+    required DateTime date,
+    required HiveDatabaseService databaseService,
+  });
+  
+  static Color getStateColor(DrinkDayResultState state);
+  static IconData getStateIcon(DrinkDayResultState state);
+  static String getStateText(DrinkDayResultState state);
+}
+```
+
+#### ✅ **Components Updated**:
+- **lib/features/home/widgets/today_status_card.dart**: Complete refactor to use DrinkDayResultUtils
+- **lib/features/tracking/widgets/daily_status_card.dart**: Updated for tolerance-aware colors
+- **lib/core/utils/drink_status_utils.dart**: Enhanced with DrinkDayResultState system
+- **lib/features/home/screens/home_screen.dart**: Updated to pass databaseService parameter
+
+#### 🎯 **Key Benefits Achieved**:
+- **Logic Consistency**: All components now show identical results for same day state
+- **Maintenance Efficiency**: Single file contains all day result state logic
+- **Orange Zone Accuracy**: Tolerance zone properly displayed across all UI components
+- **Type Safety**: Enum-based approach prevents UI state errors
+- **Performance**: Centralized calculation reduces redundant database queries
+
+#### 📱 **User Experience Improvements**:
+- **Visual Consistency**: All dashboard elements show same color for same state
+- **Tolerance Clarity**: Orange zone consistently indicates tolerance level across app
+- **State Accuracy**: Proper distinction between on-track, tolerance, and failed states
+- **Predictable Interface**: Users see consistent feedback regardless of screen location
+
+#### ✅ **Acceptance Criteria**:
+- ✅ All UI components use DrinkDayResultUtils for state calculation
+- ✅ Orange tolerance zone appears consistently across dashboard
+- ✅ No duplicate tolerance calculation logic remains in codebase
+- ✅ TodayStatusCard and DailyStatusCard show identical results for same day
+- ✅ Enum-based system prevents invalid state combinations
+- ✅ Central utility functions provide consistent colors, icons, and text
+- ✅ Performance optimized with single source of truth calculation
+
+#### 🔄 **Development Impact**:
+- **Reduced Code Duplication**: Eliminated ~150 lines of duplicate logic
+- **Enhanced Maintainability**: Single file updates affect all UI components
+- **Improved Testing**: Centralized logic easier to unit test comprehensively
+- **Future Extensibility**: New UI components can easily adopt same state system
+- **Bug Prevention**: Single implementation reduces chance of calculation inconsistencies
 
 ---

@@ -211,6 +211,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 isDrinkingDay: isDrinkingDay,
                 todaysDrinks: totalDrinks,
                 dailyLimit: dailyLimit,
+                databaseService: _databaseService,
               ),
               
               const SizedBox(height: 20),
@@ -241,6 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 totalDrinks: totalDrinks,
                 dailyLimit: dailyLimit,
                 isDrinkingDay: isDrinkingDay,
+                databaseService: _databaseService,
               ),
               
               const SizedBox(height: 16),

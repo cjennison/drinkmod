@@ -1,6 +1,6 @@
 import 'dart:developer' as developer;
 import '../services/hive_database_service.dart';
-import '../services/schedule_service.dart';
+import 'drink_intervention_utils.dart';
 
 /// Service for calculating user progress metrics, streaks, and patterns
 class ProgressMetricsService {
@@ -256,26 +256,13 @@ class ProgressMetricsService {
   
   /// Evaluate adherence for a specific day
   DayAdherence _evaluateDayAdherence(DateTime date, Map<String, dynamic> userData) {
-    // Check if it's a scheduled drinking day
-    final isDrinkingDay = ScheduleService.isDrinkingDay(userData, date: date);
+    // Use the centralized adherence logic that considers tolerance
+    final isAdherent = DrinkInterventionUtils.isDayAdherent(
+      date: date, 
+      databaseService: _databaseService
+    );
     
-    if (!isDrinkingDay) {
-      // On non-drinking days, check if user drank anyway
-      final totalDrinks = _databaseService.getTotalDrinksForDate(date);
-      return totalDrinks == 0 ? DayAdherence.adherent : DayAdherence.violation;
-    }
-    
-    // On drinking days, check if within limit
-    final totalDrinks = _databaseService.getTotalDrinksForDate(date);
-    final dailyLimit = userData['drinkLimit'] ?? 2;
-    
-    if (totalDrinks == 0) {
-      return DayAdherence.adherent; // Abstaining on drinking day is adherent
-    } else if (totalDrinks <= dailyLimit) {
-      return DayAdherence.adherent; // Within limit
-    } else {
-      return DayAdherence.violation; // Over limit
-    }
+    return isAdherent ? DayAdherence.adherent : DayAdherence.violation;
   }
   
   /// Get the start of the week (Monday) for a given date

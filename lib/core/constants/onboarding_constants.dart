@@ -58,6 +58,27 @@ class OnboardingConstants {
   // Maximum drinks per day for open schedules
   static const int maxDrinksPerDayOpen = 2;
 
+  // Limit strictness levels
+  static const String strictnessHigh = 'high';
+  static const String strictnessMedium = 'medium';
+  static const String strictnessLow = 'low';
+  
+  static const List<String> strictnessOptions = [
+    strictnessHigh,
+    strictnessMedium,
+    strictnessLow,
+  ];
+
+  // Strictness tolerance percentages (how much over limit is allowed before showing red/failure state)
+  static const Map<String, double> strictnessToleranceMap = {
+    strictnessHigh: 0.0,    // 0% - strict, no tolerance
+    strictnessMedium: 0.5,  // 50% - medium tolerance  
+    strictnessLow: 1.0,     // 100% - flexible, double limit before failure
+  };
+
+  // Default strictness level
+  static const String defaultStrictnessLevel = strictnessMedium;
+
   // Motivations
   static const String motivationHealth = 'health';
   static const String motivationWeightLoss = 'weight_loss';

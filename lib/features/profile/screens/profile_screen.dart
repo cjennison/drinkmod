@@ -4,6 +4,7 @@ import '../../../core/services/onboarding_service.dart';
 import '../../../core/constants/onboarding_constants.dart';
 import '../widgets/name_editor_dialog.dart';
 import '../widgets/motivation_editor_dialog.dart';
+import '../widgets/strictness_level_editor_dialog.dart';
 import '../widgets/favorite_drinks_editor_dialog.dart';
 import '../widgets/drinking_patterns_editor_dialog.dart';
 
@@ -104,6 +105,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Future<void> _editStrictnessLevel() async {
+    await showDialog(
+      context: context,
+      builder: (context) => StrictnessLevelEditorDialog(
+        currentStrictnessLevel: userData?['strictnessLevel'],
+        onStrictnessLevelChanged: (strictnessLevel) {
+          setState(() {
+            userData?['strictnessLevel'] = strictnessLevel;
+          });
+        },
+      ),
+    );
+  }
+
   Future<void> _editSchedule() async {
     if (mounted) {
       context.push('/profile/schedule-editor', extra: {
@@ -156,6 +171,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _formatMotivation(String? motivation) {
     if (motivation == null) return 'Not set';
     return OnboardingConstants.getDisplayText(motivation);
+  }
+
+  String _formatStrictnessLevel(String? strictness) {
+    if (strictness == null) return 'Not set';
+    switch (strictness) {
+      case OnboardingConstants.strictnessHigh:
+        return 'High Strictness (No tolerance)';
+      case OnboardingConstants.strictnessMedium:
+        return 'Medium Strictness (50% tolerance)';
+      case OnboardingConstants.strictnessLow:
+        return 'Low Strictness (100% tolerance)';
+      default:
+        return strictness;
+    }
   }
 
   String _formatGender(String? gender) {
@@ -309,6 +338,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 : 'Not set', 
               _editNameAndGender),
             _buildEditableInfoCard('Motivation', _formatMotivation(userData?['motivation']), _editMotivation),
+            _buildEditableInfoCard('Limit Strictness', _formatStrictnessLevel(userData?['strictnessLevel']), _editStrictnessLevel),
             _buildEditableInfoCard('Old Drinking Patterns', 
               _formatDrinkingPatterns(userData), 
               _editDrinkingPatterns),
