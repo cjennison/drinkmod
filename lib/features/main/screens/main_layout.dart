@@ -19,7 +19,10 @@ class _MainLayoutState extends State<MainLayout> {
 
   // Main app screens following M3 navigation guidelines (3-5 destinations max)
   List<Widget> get _screens => [
-    HomeScreen(onNavigateToTracking: () => _onDestinationSelected(1)),
+    HomeScreen(
+      onNavigateToTracking: () => _onDestinationSelected(1),
+      onNavigateToProgress: () => _onDestinationSelected(2),
+    ),
     const TrackingScreen(),
     const ProgressScreen(),
     const ProfileScreen(),

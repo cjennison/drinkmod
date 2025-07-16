@@ -2,23 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/services/onboarding_service.dart';
 import '../../../core/services/hive_database_service.dart';
+import '../../../core/services/goal_management_service.dart';
 import '../../../core/utils/progress_metrics_service.dart';
 import '../../tracking/screens/drink_logging_screen.dart';
 import '../../tracking/screens/drink_logging_cubit.dart';
 import '../../tracking/screens/tracking_screen.dart';
 import '../../tracking/widgets/week_overview_widget.dart';
 import '../widgets/dashboard_header.dart';
-import '../widgets/dashboard_stats_card.dart';
 import '../widgets/today_status_card.dart';
 import '../widgets/home_quick_actions.dart';
+import '../widgets/mini_goal_card.dart';
 
 /// Home screen - main dashboard after onboarding completion
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onNavigateToTracking;
+  final VoidCallback? onNavigateToProgress;
   
   const HomeScreen({
     super.key,
     this.onNavigateToTracking,
+    this.onNavigateToProgress,
   });
 
   @override
@@ -31,8 +34,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Map<String, dynamic>? dashboardStats;
   List<String> favoriteDrinks = [];
   Map<String, dynamic>? currentUser;
+  bool hasActiveGoal = false;
   
   final HiveDatabaseService _databaseService = HiveDatabaseService.instance;
+  final GoalManagementService _goalService = GoalManagementService.instance;
   late final ProgressMetricsService _metricsService;
 
   @override
@@ -58,6 +63,10 @@ class _HomeScreenState extends State<HomeScreen> {
         await _loadDashboardData();
         print('Dashboard data loaded');
       }
+      
+      // Check for active goal
+      await _checkActiveGoal();
+      print('Active goal check completed');
     } catch (e) {
       debugPrint('Error initializing services: $e');
       // Show error message to user
@@ -150,6 +159,20 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
   
+  Future<void> _checkActiveGoal() async {
+    try {
+      final activeGoal = await _goalService.getActiveGoal();
+      setState(() {
+        hasActiveGoal = activeGoal != null;
+      });
+    } catch (e) {
+      debugPrint('Error checking active goal: $e');
+      setState(() {
+        hasActiveGoal = false;
+      });
+    }
+  }
+  
   void _handleDetailedLog() async {
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
@@ -167,6 +190,11 @@ class _HomeScreenState extends State<HomeScreen> {
       // Refresh dashboard after logging
       await _loadDashboardData();
     }
+  }
+  
+  Future<void> _refreshHomeData() async {
+    await _loadDashboardData();
+    await _checkActiveGoal();
   }
   
   /// Build today's status card (matching Track page design)
@@ -190,13 +218,12 @@ class _HomeScreenState extends State<HomeScreen> {
     
     // Calculate real metrics using progress service
     final currentStreak = _metricsService.calculateCurrentStreak();
-    final weeklyAdherence = _metricsService.calculateWeeklyAdherence();
     final patternAssessment = _metricsService.analyzeWeeklyPattern();
     final motivationalMessage = patternAssessment.recommendation;
     
     return Scaffold(
       body: RefreshIndicator(
-        onRefresh: _loadDashboardData,
+        onRefresh: _refreshHomeData,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(16.0),
@@ -225,14 +252,13 @@ class _HomeScreenState extends State<HomeScreen> {
               
               const SizedBox(height: 20),
               
-              // Dashboard Stats (without trendlines)
-              if (dashboardStats != null && userName != null)
-                DashboardStatsCard(
-                  streak: currentStreak,
-                  weeklyAdherence: weeklyAdherence,
-                  patternDescription: patternAssessment.description,
-                  motivationalMessage: '', // Message is now in header
-                ),
+              // Always show Mini Goal Card (shows CTA if no goal exists)
+              MiniGoalCard(
+                onTap: () {
+                  // Navigate to progress tab instead of pushing new route
+                  widget.onNavigateToProgress?.call();
+                },
+              ),
               
               const SizedBox(height: 16),
               
