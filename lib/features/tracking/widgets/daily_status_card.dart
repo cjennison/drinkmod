@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/utils/drink_status_utils.dart';
 import '../../../core/services/hive_database_service.dart';
+import '../../../core/constants/onboarding_constants.dart';
 
 /// Daily status card showing progress, goal, and drinking day status
 class DailyStatusCard extends StatelessWidget {
@@ -241,7 +242,7 @@ class DailyStatusCard extends StatelessWidget {
   }
 }
 
-/// Visual drink progress indicator
+/// Visual drink progress indicator with tolerance-aware display
 class DrinkVisualizer extends StatelessWidget {
   final double totalDrinks;
   final int dailyLimit;
@@ -258,16 +259,46 @@ class DrinkVisualizer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final progress = dailyLimit > 0 ? (totalDrinks / dailyLimit).clamp(0.0, 1.0) : 0.0;
-    
-    // Use tolerance-aware status calculation
+    // Get tolerance-aware status 
     final drinkStatus = DrinkStatusUtils.calculateDrinkStatus(
       date: date,
       databaseService: databaseService,
     );
     
-    // Get appropriate color based on status
-    final statusColor = DrinkStatusUtils.getStatusColor(drinkStatus);
+    // Use the centralized status color instead of custom logic
+    final progressColor = DrinkStatusUtils.getStatusColor(drinkStatus);
+    
+    // Calculate progress display
+    double progress;
+    String progressText;
+    String limitText;
+    
+    if (totalDrinks <= dailyLimit) {
+      // Within normal limit 
+      progress = dailyLimit > 0 ? (totalDrinks / dailyLimit).clamp(0.0, 1.0) : 0.0;
+      progressText = '${(progress * 100).toInt()}%';
+      limitText = '$dailyLimit drinks (goal)';
+    } else {
+      // Over limit - show percentage over goal
+      progress = (totalDrinks / dailyLimit).clamp(0.0, 2.0);
+      progressText = '${(totalDrinks / dailyLimit * 100).toInt()}%';
+      
+      // Get limit text based on status
+      switch (drinkStatus) {
+        case DrinkStatus.overButWithinTolerance:
+          final userData = databaseService.getUserData();
+          final strictnessLevel = userData?['strictnessLevel'] as String? ?? OnboardingConstants.defaultStrictnessLevel;
+          final tolerance = OnboardingConstants.strictnessToleranceMap[strictnessLevel] ?? 0.5;
+          final toleranceLimit = dailyLimit * (1 + tolerance);
+          limitText = '${toleranceLimit.toStringAsFixed(1)} drinks (tolerance)';
+          break;
+        case DrinkStatus.exceeded:
+          limitText = 'Limit exceeded';
+          break;
+        default:
+          limitText = '$dailyLimit drinks (goal)';
+      }
+    }
     
     return Column(
       children: [
@@ -280,24 +311,29 @@ class DrinkVisualizer extends StatelessWidget {
                   color: Colors.grey.shade200,
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: FractionallySizedBox(
-                  alignment: Alignment.centerLeft,
-                  widthFactor: progress,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: statusColor,
-                      borderRadius: BorderRadius.circular(4),
+                child: Stack(
+                  children: [
+                    // Base progress bar
+                    FractionallySizedBox(
+                      alignment: Alignment.centerLeft,
+                      widthFactor: (progress * 0.5).clamp(0.0, 1.0), // Scale down for display
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: progressColor,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
             const SizedBox(width: 12),
             Text(
-              '${(progress * 100).toInt()}%',
+              progressText,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: statusColor,
+                color: progressColor,
               ),
             ),
           ],
@@ -314,14 +350,35 @@ class DrinkVisualizer extends StatelessWidget {
               ),
             ),
             Text(
-              '$dailyLimit drinks (goal)',
+              limitText,
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.grey.shade500,
+                color: progressColor,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],
         ),
+        // Show status message
+        if (totalDrinks > 0) ...[
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: progressColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: progressColor.withValues(alpha: 0.2)),
+            ),
+            child: Text(
+              DrinkStatusUtils.getStatusMessage(drinkStatus),
+              style: TextStyle(
+                fontSize: 12,
+                color: progressColor,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
