@@ -140,7 +140,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
               date: date, 
               isToday: isToday,
               onPreviousDay: _goToPreviousDay,
-              onNextDay: _goToNextDay,
+              onNextDay: isToday ? null : _goToNextDay, // Disable next when at today
               onCalendarTap: _showCalendar,
             ),
           ),
@@ -245,7 +245,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
             date: date, 
             isToday: false,
             onPreviousDay: _goToPreviousDay,
-            onNextDay: _goToNextDay,
+            onNextDay: date.isBefore(DateTime.now()) ? _goToNextDay : null, // Disable next if at or after today
             onCalendarTap: _showCalendar,
           ),
         ),
@@ -285,6 +285,18 @@ class _TrackingScreenState extends State<TrackingScreen> {
   void _onPageChanged(int index) {
     final offset = index - 1000;
     final newDate = _baseDate.add(Duration(days: offset));
+    
+    // Prevent navigation to future dates
+    if (newDate.isAfter(DateTime.now().add(const Duration(days: 0)))) {
+      // Navigate back to today (or current valid date) without triggering another page change
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final todayIndex = 1000; // Today is at index 1000
+        if (_pageController.hasClients) {
+          _pageController.jumpToPage(todayIndex);
+        }
+      });
+      return; // Don't update state for future dates
+    }
     
     setState(() {
       _currentDate = newDate;
@@ -819,8 +831,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
     final currentPage = _pageController.page!.round();
     final targetDate = _baseDate.add(Duration(days: currentPage - 1000 + 1));
     
-    // Don't allow navigation to future dates beyond today
-    if (targetDate.isAfter(DateTime.now())) {
+    // Don't allow navigation to future dates (today or later)
+    if (targetDate.isAfter(DateTime.now()) || _isSameDay(targetDate, DateTime.now())) {
       return;
     }
     
