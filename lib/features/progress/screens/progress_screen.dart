@@ -384,9 +384,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => Scaffold(
-          appBar: AppBar(
-            title: const Text('New Goal'),
-          ),
+          
           body: GoalSetupWizard(
             onGoalCreated: () {
               Navigator.of(context).pop();

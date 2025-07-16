@@ -60,8 +60,11 @@ class _GoalParametersStepState extends State<GoalParametersStep> {
     try {
       // Get user's current drinking baseline
       final analytics = DrinkTrackingService.instance;
-      final weeklyAverage = analytics.getWeeklyDrinks(DateTime.now());
       final averageDaily = analytics.calculateAverageDrinksPerDay();
+      
+      // Calculate proper weekly average based on daily average and drinking frequency
+      // This gives a more accurate representation than just the current week
+      final weeklyAverage = _calculateHistoricalWeeklyAverage(analytics);
       
       setState(() {
         _currentBaseline = {
@@ -79,6 +82,30 @@ class _GoalParametersStepState extends State<GoalParametersStep> {
         _isLoading = false;
       });
     }
+  }
+
+  /// Calculate weekly average based on historical data
+  double _calculateHistoricalWeeklyAverage(DrinkTrackingService analytics) {
+    final allEntries = analytics.getAllDrinkEntries();
+    if (allEntries.isEmpty) return 0.0;
+
+    // Group entries by week
+    final weeklyTotals = <String, double>{};
+    
+    for (final entry in allEntries) {
+      final date = DateTime.parse(entry['drinkDate']);
+      // Get Monday of that week as the week key
+      final monday = date.subtract(Duration(days: date.weekday - 1));
+      final weekKey = '${monday.year}-${monday.month}-${monday.day}';
+      
+      weeklyTotals[weekKey] = (weeklyTotals[weekKey] ?? 0.0) + (entry['standardDrinks'] as double);
+    }
+    
+    if (weeklyTotals.isEmpty) return 0.0;
+    
+    // Calculate average across all weeks with data
+    final totalDrinks = weeklyTotals.values.fold<double>(0.0, (sum, drinks) => sum + drinks);
+    return totalDrinks / weeklyTotals.length;
   }
   
   void _setDefaultValues() {
