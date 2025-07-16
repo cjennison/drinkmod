@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/services/goal_management_service.dart';
 import '../widgets/goal_card.dart';
+import '../widgets/goal_history_modal.dart';
 import 'goal_setup_wizard.dart';
 
 /// Progress screen for analytics and streak tracking
@@ -15,6 +16,7 @@ class ProgressScreen extends StatefulWidget {
 class _ProgressScreenState extends State<ProgressScreen> {
   bool _isLoading = true;
   bool _hasActiveGoals = false;
+  bool _hasGoalHistory = false;
   Map<String, dynamic>? _activeGoalData;
 
   @override
@@ -26,14 +28,17 @@ class _ProgressScreenState extends State<ProgressScreen> {
   Future<void> _checkUserGoals() async {
     try {
       final activeGoal = await Future.microtask(() => GoalManagementService.instance.getActiveGoal());
+      final goalHistory = GoalManagementService.instance.getGoalHistory();
       setState(() {
         _hasActiveGoals = activeGoal != null;
+        _hasGoalHistory = goalHistory.isNotEmpty;
         _activeGoalData = activeGoal;
         _isLoading = false;
       });
     } catch (e) {
       setState(() {
         _hasActiveGoals = false;
+        _hasGoalHistory = false;
         _activeGoalData = null;
         _isLoading = false;
       });
@@ -47,70 +52,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
   }
 
   void _showGoalHistory() {
-    final goalHistory = GoalManagementService.instance.getGoalHistory();
-    
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Goal History (${goalHistory.length})'),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: goalHistory.isEmpty
-                ? [
-                    const Text(
-                      'No completed goals yet. Keep working on your current goal!',
-                      style: TextStyle(
-                        fontStyle: FontStyle.italic,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ]
-                : goalHistory.map((goal) {
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              goal['title'] ?? 'Completed Goal',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Type: ${goal['goalType'] ?? 'Unknown'}',
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                            if (goal['updatedAt'] != null) ...[
-                              Text(
-                                'Completed: ${DateTime.parse(goal['updatedAt']).toLocal().toString().split(' ')[0]}',
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.green,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    );
-                  }).toList(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
+      builder: (context) => const GoalHistoryModal(),
     );
   }
   @override
@@ -127,17 +71,39 @@ class _ProgressScreenState extends State<ProgressScreen> {
       );
     }
 
-    // Show wizard for first-time users
-    if (!_hasActiveGoals) {
+    // Show wizard for first-time users (no goals and no history)
+    if (!_hasActiveGoals && !_hasGoalHistory) {
       return Scaffold(
        
         body: GoalSetupWizard(
           onGoalCreated: _onGoalCreated,
+          onSkipped: () {
+            // For first-time users, we still show them the wizard or empty state
+            // This shouldn't normally happen for first-time users
+          },
           onShowHistory: () {
             _showGoalHistory();
           },
           canPop: false, // First-time users can't pop because there's no navigation stack
         ),
+      );
+    }
+
+    // Show progress screen with CTA for returning users (no active goals but has history)
+    if (!_hasActiveGoals && _hasGoalHistory) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Progress'),
+          automaticallyImplyLeading: false,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.history),
+              onPressed: _showGoalHistory,
+              tooltip: 'Goal History',
+            ),
+          ],
+        ),
+        body: _buildNoActiveGoalContent(),
       );
     }
 
@@ -156,17 +122,21 @@ class _ProgressScreenState extends State<ProgressScreen> {
                     appBar: AppBar(
                       title: const Text('Change Goal'),
                     ),
-                    body: GoalSetupWizard(
-                      onGoalCreated: () {
-                        Navigator.of(context).pop();
-                        _checkUserGoals();
-                      },
-                      onShowHistory: () {
-                        Future.delayed(const Duration(milliseconds: 300), () {
-                          _showGoalHistory();
-                        });
-                      },
-                    ),
+          body: GoalSetupWizard(
+            onGoalCreated: () {
+              Navigator.of(context).pop();
+              _checkUserGoals();
+            },
+            onSkipped: () {
+              Navigator.of(context).pop();
+              _checkUserGoals(); // This will refresh and show the CTA screen
+            },
+            onShowHistory: () {
+              Future.delayed(const Duration(milliseconds: 300), () {
+                _showGoalHistory();
+              });
+            },
+          ),
                   ),
                 ),
               );
@@ -239,6 +209,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
             goalData: _activeGoalData!,
             onTap: () {
               _showGoalDetails();
+            },
+            onGoalCompleted: () {
+              // Refresh the goal status to show the wizard
+              _checkUserGoals();
             },
           ),
           
@@ -331,6 +305,104 @@ class _ProgressScreenState extends State<ProgressScreen> {
             child: const Text('Close'),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildNoActiveGoalContent() {
+    return Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.flag_outlined,
+            size: 100,
+            color: Colors.grey.shade400,
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'Ready for Your Next Goal?',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'You\'ve made great progress before.\nLet\'s set up a new goal to continue your journey!',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey.shade600,
+              height: 1.5,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 40),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _startNewGoalSetup,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue.shade600,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 2,
+              ),
+              child: const Text(
+                'Create New Goal',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextButton(
+            onPressed: _showGoalHistory,
+            child: Text(
+              'View Previous Goals',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.blue.shade600,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _startNewGoalSetup() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          appBar: AppBar(
+            title: const Text('New Goal'),
+          ),
+          body: GoalSetupWizard(
+            onGoalCreated: () {
+              Navigator.of(context).pop();
+              _checkUserGoals();
+            },
+            onSkipped: () {
+              Navigator.of(context).pop();
+              _checkUserGoals(); // This will refresh and show the CTA screen
+            },
+            onShowHistory: () {
+              Future.delayed(const Duration(milliseconds: 300), () {
+                _showGoalHistory();
+              });
+            },
+          ),
+        ),
       ),
     );
   }

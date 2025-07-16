@@ -46,7 +46,10 @@ class _GoalSetupWizardState extends State<GoalSetupWizard> {
   @override
   void initState() {
     super.initState();
-    _checkForExistingGoal();
+    // Check for existing goal after the first frame is rendered
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkForExistingGoal();
+    });
   }
 
   Future<void> _checkForExistingGoal() async {

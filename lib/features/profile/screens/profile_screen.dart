@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/services/onboarding_service.dart';
 import '../../../core/services/goal_management_service.dart';
+import '../../../core/services/persona_data_service.dart';
 import '../../../core/constants/onboarding_constants.dart';
 import '../widgets/name_editor_dialog.dart';
 import '../widgets/motivation_editor_dialog.dart';
@@ -397,6 +398,112 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _showPersonaSelector() async {
+    final personas = PersonaDataService.availablePersonas;
+    
+    final selectedPersona = await showDialog<PersonaDefinition>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Test Persona'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: personas.length,
+            itemBuilder: (context, index) {
+              final persona = personas[index];
+              return Card(
+                child: ListTile(
+                  title: Text(persona.name),
+                  subtitle: Text(persona.description),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => Navigator.of(context).pop(persona),
+                ),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+
+    if (selectedPersona != null) {
+      await _loadPersonaData(selectedPersona);
+    }
+  }
+
+  Future<void> _loadPersonaData(PersonaDefinition persona) async {
+    final shouldLoad = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Load ${persona.name}?'),
+        content: Text(
+          'This will:\n'
+          '• Clear all existing data\n'
+          '• Generate ${persona.days} days of test drink data\n'
+          '• Create a ${persona.goalType.name} goal\n'
+          '• Set up realistic test scenario\n\n'
+          'Are you sure?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.purple,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Load Persona'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldLoad == true) {
+      try {
+        // Show loading indicator
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Loading ${persona.name} data...'),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+        
+        // Generate the persona data
+        await PersonaDataService.generatePersonaData(persona);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${persona.name} data loaded successfully!'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error loading persona: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   String _formatMotivation(String? motivation) {
     if (motivation == null) return 'Not set';
     return OnboardingConstants.getDisplayText(motivation);
@@ -647,6 +754,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 subtitle: const Text('View your completed goals'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: _showGoalHistory,
+              ),
+            ),
+            
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.science, color: Colors.purple),
+                title: const Text('Generate Test Persona Data'),
+                subtitle: const Text('Load personas for testing goals'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: _showPersonaSelector,
               ),
             ),
             

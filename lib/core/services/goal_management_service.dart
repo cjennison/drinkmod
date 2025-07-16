@@ -19,10 +19,16 @@ class GoalManagementService {
     required Map<String, dynamic> parameters,
     required ChartType associatedChart,
     int priorityLevel = 1,
+    DateTime? customStartDate,
+    DateTime? customCreatedAt,
   }) async {
     await _hiveCore.ensureInitialized();
     
-    final goalId = 'goal_${DateTime.now().millisecondsSinceEpoch}';
+    final now = DateTime.now();
+    final startDate = customStartDate ?? now;
+    final createdAt = customCreatedAt ?? now;
+    
+    final goalId = 'goal_${createdAt.millisecondsSinceEpoch}';
     
     final goal = {
       'id': goalId,
@@ -30,18 +36,18 @@ class GoalManagementService {
       'description': description,
       'goalType': goalType.toString(),
       'status': GoalStatus.active.toString(),
-      'startDate': DateTime.now().toIso8601String(),
+      'startDate': startDate.toIso8601String(),
       'endDate': null,
       'parameters': parameters,
       'associatedChart': associatedChart.toString(),
       'priorityLevel': priorityLevel,
-      'createdAt': DateTime.now().toIso8601String(),
-      'updatedAt': DateTime.now().toIso8601String(),
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': createdAt.toIso8601String(),
       'metrics': {
         'currentProgress': 0.0,
         'targetValue': parameters['targetValue'] ?? 0.0,
         'currentValue': 0.0,
-        'lastUpdated': DateTime.now().toIso8601String(),
+        'lastUpdated': createdAt.toIso8601String(),
         'milestones': [],
         'metadata': <String, dynamic>{},
       },

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/services/user_data_service.dart';
 import '../../../../core/services/analytics_service.dart';
+import '../../../../core/services/goal_management_service.dart';
 
 /// Welcome step that introduces the goal system with personalized motivation
 class WelcomeStep extends StatelessWidget {
@@ -13,7 +14,7 @@ class WelcomeStep extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -28,12 +29,17 @@ class WelcomeStep extends StatelessWidget {
           // Progress summary to show current status
           _buildProgressSummary(),
           
-          const SizedBox(height: 40),
+          const SizedBox(height: 24),
+          
+          // Goal history for returning users
+          _buildGoalHistorySummary(),
+          
+          const SizedBox(height: 32),
           
           // Goal benefits explanation
           _buildGoalBenefits(),
           
-          const Spacer(),
+          const SizedBox(height: 40),
           
           // Continue button
           _buildContinueButton(context),
@@ -45,11 +51,16 @@ class WelcomeStep extends StatelessWidget {
   }
   
   Widget _buildWelcomeHeader() {
-    return FutureBuilder<Map<String, dynamic>?>(
-      future: _getUserData(),
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _getWelcomeData(),
       builder: (context, snapshot) {
-        final userData = snapshot.data;
-        final userName = userData?['name'] as String? ?? 'there';
+        if (!snapshot.hasData) {
+          return const SizedBox.shrink();
+        }
+        
+        final data = snapshot.data!;
+        final userName = data['userName'] as String;
+        final hasCompletedGoals = data['hasCompletedGoals'] as bool;
         
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,9 +74,11 @@ class WelcomeStep extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Ready to take your progress to the next level?',
-              style: TextStyle(
+            Text(
+              hasCompletedGoals 
+                ? 'Ready to set your next goal?'
+                : 'Ready to take your progress to the next level?',
+              style: const TextStyle(
                 fontSize: 18,
                 color: Colors.black54,
                 height: 1.3,
@@ -174,40 +187,131 @@ class WelcomeStep extends StatelessWidget {
     );
   }
   
-  Widget _buildGoalBenefits() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Goals help you:',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
+  Widget _buildGoalHistorySummary() {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: _getGoalHistory(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        
+        final completedGoals = snapshot.data!;
+        final goalCount = completedGoals.length;
+        final mostRecentGoal = completedGoals.first;
+        
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.green.shade50,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.green.shade100),
           ),
-        ),
-        const SizedBox(height: 20),
-        _buildBenefitItem(
-          icon: Icons.trending_up_outlined,
-          title: 'Track meaningful progress',
-          description: 'See how your efforts translate into real improvements',
-          color: Colors.green,
-        ),
-        const SizedBox(height: 16),
-        _buildBenefitItem(
-          icon: Icons.psychology_outlined,
-          title: 'Stay motivated',
-          description: 'Celebrate milestones and maintain momentum',
-          color: Colors.purple,
-        ),
-        const SizedBox(height: 16),
-        _buildBenefitItem(
-          icon: Icons.insights_outlined,
-          title: 'Gain deeper insights',
-          description: 'Understand patterns and make informed decisions',
-          color: Colors.orange,
-        ),
-      ],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.emoji_events_outlined,
+                    color: Colors.green.shade600,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Your Achievements',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildSummaryItem(
+                      'Goals Completed',
+                      goalCount.toString(),
+                      Icons.check_circle_outline,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildSummaryItem(
+                      'Latest Goal',
+                      mostRecentGoal['title'] ?? 'Goal',
+                      Icons.flag_outlined,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Great job on your progress! Let\'s continue building on your success.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.green.shade700,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+  
+  Widget _buildGoalBenefits() {
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _getWelcomeData(),
+      builder: (context, snapshot) {
+        final hasCompletedGoals = snapshot.data?['hasCompletedGoals'] as bool? ?? false;
+        
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              hasCompletedGoals 
+                ? 'Why continue with goals?'
+                : 'Goals help you:',
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 20),
+            _buildBenefitItem(
+              icon: Icons.trending_up_outlined,
+              title: hasCompletedGoals ? 'Build on your momentum' : 'Track meaningful progress',
+              description: hasCompletedGoals 
+                ? 'Keep the positive changes going with new challenges'
+                : 'See how your efforts translate into real improvements',
+              color: Colors.green,
+            ),
+            const SizedBox(height: 16),
+            _buildBenefitItem(
+              icon: Icons.psychology_outlined,
+              title: hasCompletedGoals ? 'Maintain your success' : 'Stay motivated',
+              description: hasCompletedGoals
+                ? 'Continue celebrating milestones and achievements'
+                : 'Celebrate milestones and maintain momentum',
+              color: Colors.purple,
+            ),
+            const SizedBox(height: 16),
+            _buildBenefitItem(
+              icon: Icons.insights_outlined,
+              title: hasCompletedGoals ? 'Explore new approaches' : 'Gain deeper insights',
+              description: hasCompletedGoals
+                ? 'Try different goal types and discover new patterns'
+                : 'Understand patterns and make informed decisions',
+              color: Colors.orange,
+            ),
+          ],
+        );
+      },
     );
   }
   
@@ -262,32 +366,51 @@ class WelcomeStep extends StatelessWidget {
   }
   
   Widget _buildContinueButton(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: onNext,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue.shade600,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _getWelcomeData(),
+      builder: (context, snapshot) {
+        final hasCompletedGoals = snapshot.data?['hasCompletedGoals'] as bool? ?? false;
+        
+        return SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: onNext,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue.shade600,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 2,
+            ),
+            child: Text(
+              hasCompletedGoals 
+                ? 'Let\'s Set Up Your Next Goal'
+                : 'Let\'s Set Up Your First Goal',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
-          elevation: 2,
-        ),
-        child: const Text(
-          'Let\'s Set Up Your First Goal',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
+        );
+      },
     );
   }
   
-  Future<Map<String, dynamic>?> _getUserData() async {
-    return UserDataService.instance.getUserData();
+  Future<Map<String, dynamic>> _getWelcomeData() async {
+    final userData = await UserDataService.instance.getUserData();
+    final userName = userData?['name'] as String? ?? 'there';
+    
+    // Check if user has completed goals before
+    final completedGoals = GoalManagementService.instance.getGoalHistory();
+    final hasCompletedGoals = completedGoals.isNotEmpty;
+    
+    return {
+      'userName': userName,
+      'hasCompletedGoals': hasCompletedGoals,
+    };
   }
   
   Future<Map<String, dynamic>> _getProgressSummary() async {
@@ -305,5 +428,9 @@ class WelcomeStep extends StatelessWidget {
       'daysTracking': daysTracking,
       'totalEntries': stats['totalDays'] ?? 0,
     };
+  }
+  
+  Future<List<Map<String, dynamic>>> _getGoalHistory() async {
+    return GoalManagementService.instance.getGoalHistory();
   }
 }

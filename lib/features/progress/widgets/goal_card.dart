@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import '../../../core/services/goal_progress_service.dart';
+import '../../../core/services/goal_management_service.dart';
+import '../../../core/services/achievements_service.dart';
 
 /// Motivational goal progress card that shows achievement and recent actions
 /// Designed to maximize dopamine and positive reinforcement
 class GoalCard extends StatefulWidget {
   final Map<String, dynamic> goalData;
   final VoidCallback? onTap;
+  final VoidCallback? onGoalCompleted;
   
   const GoalCard({
     super.key,
     required this.goalData,
     this.onTap,
+    this.onGoalCompleted,
   });
 
   @override
@@ -112,8 +116,14 @@ class _GoalCardState extends State<GoalCard> {
               const SizedBox(height: 16),
               _buildProgressSection(goalTypeInfo, progressData),
               const SizedBox(height: 16),
-              _buildTimeRemaining(progressData),
-              const SizedBox(height: 12),
+              // Show completion button if goal period is over
+              if (_shouldShowCompletionButton(progressData)) ...[
+                _buildCompletionButton(context, goalTypeInfo, progressData),
+                const SizedBox(height: 16),
+              ] else ...[
+                _buildTimeRemaining(progressData),
+                const SizedBox(height: 12),
+              ],
               _buildRecentActions(progressData),
             ],
           ),
@@ -499,6 +509,326 @@ class _GoalCardState extends State<GoalCard> {
         return Colors.purple;
       default:
         return Colors.grey;
+    }
+  }
+
+  /// Check if goal should show completion button (when time period is over)
+  bool _shouldShowCompletionButton(Map<String, dynamic> progressData) {
+    final daysRemaining = progressData['daysRemaining'] ?? 1;
+    return daysRemaining <= 0;
+  }
+
+  /// Build the goal completion button
+  Widget _buildCompletionButton(BuildContext context, Map<String, dynamic> goalTypeInfo, Map<String, dynamic> progressData) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.green.shade400,
+            Colors.green.shade600,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.green.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => _showGoalCompletionCelebration(context, goalTypeInfo, progressData),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.celebration,
+                  color: Colors.white,
+                  size: 24,
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Complete Goal',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Show the goal completion celebration modal
+  Future<void> _showGoalCompletionCelebration(BuildContext context, Map<String, dynamic> goalTypeInfo, Map<String, dynamic> progressData) async {
+    // Add the missing imports at the top
+    // For now, we'll implement the modal structure
+    
+    final percentage = ((progressData['percentage'] as double) * 100).round();
+    final goalTitle = widget.goalData['title'] ?? 'Your Goal';
+    final goalType = widget.goalData['goalType'] ?? '';
+    
+    // Calculate goal duration
+    final startDate = DateTime.parse(widget.goalData['startDate']);
+    final durationDays = DateTime.now().difference(startDate).inDays;
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        contentPadding: EdgeInsets.zero,
+        content: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                goalTypeInfo['color'].withOpacity(0.1),
+                goalTypeInfo['color'].withOpacity(0.05),
+              ],
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Celebration header
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: goalTypeInfo['color'].withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.celebration,
+                  size: 48,
+                  color: goalTypeInfo['color'],
+                ),
+              ),
+              const SizedBox(height: 16),
+              
+              Text(
+                '🎉 Congratulations! 🎉',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              
+              Text(
+                'You\'ve completed your goal!',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey.shade600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              
+              // Goal summary
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: goalTypeInfo['color'].withOpacity(0.2)),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Icon(goalTypeInfo['icon'], color: goalTypeInfo['color']),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            goalTitle,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _buildSummaryMetric('Duration', '$durationDays days'),
+                    _buildSummaryMetric('Final Progress', '$percentage%'),
+                    _buildSummaryMetric('Goal Type', _getGoalTypeName(goalType)),
+                    if (progressData['currentMetric'] != null)
+                      _buildSummaryMetric('Achievement', progressData['currentMetric']),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              
+              // Celebration message based on goal type
+              Text(
+                _getCelebrationMessage(goalType, percentage),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade700,
+                  fontStyle: FontStyle.italic,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              
+              // Action buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: goalTypeInfo['color']),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: Text(
+                        'Close',
+                        style: TextStyle(color: goalTypeInfo['color']),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 2,
+                    child: ElevatedButton(
+                      onPressed: () => _completeGoalAndStartNew(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: goalTypeInfo['color'],
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text('Set New Goal'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Build a summary metric row
+  Widget _buildSummaryMetric(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.grey.shade600,
+              fontSize: 14,
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Get celebration message based on goal type and progress
+  String _getCelebrationMessage(String goalType, int percentage) {
+    if (percentage >= 90) {
+      return "Outstanding achievement! You've exceeded expectations and shown incredible dedication to your wellness journey.";
+    } else if (percentage >= 70) {
+      return "Great job! You've made significant progress and built healthy habits that will serve you well.";
+    } else if (percentage >= 50) {
+      return "Well done! Every step forward is progress, and you've shown commitment to positive change.";
+    } else {
+      return "You completed the time period! Even small steps are meaningful progress in your wellness journey.";
+    }
+  }
+
+  /// Get user-friendly goal type name
+  String _getGoalTypeName(String goalType) {
+    switch (goalType) {
+      case 'GoalType.weeklyReduction':
+        return 'Weekly Reduction';
+      case 'GoalType.dailyLimit':
+        return 'Daily Limit';
+      case 'GoalType.alcoholFreeDays':
+        return 'Alcohol-Free Days';
+      case 'GoalType.interventionWins':
+        return 'Intervention Success';
+      case 'GoalType.moodImprovement':
+        return 'Mood & Wellbeing';
+      case 'GoalType.costSavings':
+        return 'Cost Savings';
+      case 'GoalType.streakMaintenance':
+        return 'Streak Maintenance';
+      default:
+        return 'Custom Goal';
+    }
+  }
+
+  /// Complete current goal and navigate to create new goal
+  Future<void> _completeGoalAndStartNew(BuildContext context) async {
+    try {
+      final goalTitle = widget.goalData['title'] ?? 'Goal';
+      final goalType = widget.goalData['goalType'] ?? '';
+      final progressData = _progressData ?? {};
+      final finalProgress = (progressData['percentage'] as double?) ?? 0.0;
+      
+      // Calculate goal duration
+      final startDate = DateTime.parse(widget.goalData['startDate']);
+      final durationDays = DateTime.now().difference(startDate).inDays;
+      
+      // Award achievement for completing the goal
+      await AchievementsService.instance.awardGoalCompletion(
+        goalTitle: goalTitle,
+        goalType: goalType,
+        durationDays: durationDays,
+        finalProgress: finalProgress,
+      );
+      
+      // Complete the goal (move to completed status)
+      await GoalManagementService.instance.completeActiveGoal();
+      
+      Navigator.of(context).pop(); // Close the celebration modal
+      
+      // Notify parent screen that goal was completed
+      widget.onGoalCompleted?.call();
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('🎉 Goal completed! Achievement unlocked!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error completing goal: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 }
