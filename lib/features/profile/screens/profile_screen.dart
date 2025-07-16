@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/services/onboarding_service.dart';
+import '../../../core/services/goal_management_service.dart';
 import '../../../core/constants/onboarding_constants.dart';
 import '../widgets/name_editor_dialog.dart';
 import '../widgets/motivation_editor_dialog.dart';
@@ -166,6 +167,234 @@ class _ProfileScreenState extends State<ProfileScreen> {
         },
       ),
     );
+  }
+
+  Future<void> _showCurrentGoals() async {
+    try {
+      final activeGoal = GoalManagementService.instance.getActiveGoal();
+      
+      if (!mounted) return;
+      
+      if (activeGoal == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No active goal found'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Current Active Goal'),
+          content: SingleChildScrollView(
+            child: Card(
+              margin: EdgeInsets.zero,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      activeGoal['title'] ?? 'Untitled Goal',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Type: ${activeGoal['goalType'] ?? 'Unknown'}',
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                    if (activeGoal['parameters'] != null) ...[
+                      Text(
+                        'Target: ${activeGoal['parameters']['targetValue'] ?? 'N/A'} ${activeGoal['parameters']['targetUnit'] ?? ''}',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      Text(
+                        'Duration: ${activeGoal['parameters']['targetPeriodDays'] ?? 'N/A'} days',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                    ],
+                    if (activeGoal['description'] != null && activeGoal['description'].toString().isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Description: ${activeGoal['description']}',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontStyle: FontStyle.italic,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                    if (activeGoal['metrics'] != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Progress: ${((activeGoal['metrics']['currentProgress'] ?? 0.0) * 100).toStringAsFixed(1)}%',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.blue,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading goal: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _showGoalHistory() async {
+    try {
+      final goalHistory = GoalManagementService.instance.getGoalHistory();
+      
+      if (!mounted) return;
+
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Goal History (${goalHistory.length})'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: goalHistory.isEmpty
+                  ? [
+                      const Text(
+                        'No completed goals yet. Keep working on your current goal!',
+                        style: TextStyle(
+                          fontStyle: FontStyle.italic,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ]
+                  : goalHistory.map((goal) {
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                goal['title'] ?? 'Completed Goal',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Type: ${goal['goalType'] ?? 'Unknown'}',
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                              if (goal['updatedAt'] != null) ...[
+                                Text(
+                                  'Completed: ${DateTime.parse(goal['updatedAt']).toLocal().toString().split(' ')[0]}',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.green,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading goal history: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _clearActiveGoals() async {
+    final shouldClear = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear Active Goal'),
+        content: const Text(
+          'This will remove your active goal and reset your progress. Your goal will be moved to history. Are you sure?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Clear Goal'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldClear == true) {
+      try {
+        // Complete the active goal (moves it to history)
+        await GoalManagementService.instance.completeActiveGoal();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Active goal cleared and moved to history'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error clearing goal: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
   }
 
   String _formatMotivation(String? motivation) {
@@ -399,6 +628,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             const SizedBox(height: 16),
+
+            // Goal Management Section
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.visibility, color: Colors.blue),
+                title: const Text('View Current Goal'),
+                subtitle: const Text('See your active goal and progress'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: _showCurrentGoals,
+              ),
+            ),
+            
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.history, color: Colors.green),
+                title: const Text('Goal History'),
+                subtitle: const Text('View your completed goals'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: _showGoalHistory,
+              ),
+            ),
+            
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.clear_all, color: Colors.red),
+                title: const Text('Clear Active Goal'),
+                subtitle: const Text('Remove current goal (for development/testing)'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: _clearActiveGoals,
+              ),
+            ),
             
             Card(
               child: ListTile(
