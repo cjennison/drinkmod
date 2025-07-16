@@ -23,6 +23,7 @@ class DrinkEntryCard extends StatelessWidget {
     final standardDrinks = entry['standardDrinks']?.toDouble() ?? 0.0;
     final drinkName = entry['drinkName'] as String;
     final hasAdditionalContent = _hasAdditionalContent();
+    final hasInterventionData = entry['interventionData'] != null;
     
     DateTime entryTime;
     try {
@@ -77,7 +78,13 @@ class DrinkEntryCard extends StatelessWidget {
                             ),
                           ),
                         ),
-                        if (hasAdditionalContent)
+                        if (hasInterventionData)
+                          Icon(
+                            Icons.warning,
+                            color: Colors.orange.shade600,
+                            size: 16,
+                          )
+                        else if (hasAdditionalContent)
                           Icon(
                             Icons.star,
                             color: Colors.amber.shade600,

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../../core/utils/drink_intervention_utils.dart';
+import '../../../core/models/intervention_data.dart';
 
 /// Universal therapeutic intervention screen for all drink logging interventions
 /// Provides consistent therapeutic approach regardless of intervention type
 class TherapeuticInterventionScreen extends StatefulWidget {
   final DrinkInterventionResult interventionResult;
-  final VoidCallback onProceed;
+  final void Function(InterventionData) onProceed;
   final VoidCallback onCancel;
 
   const TherapeuticInterventionScreen({
@@ -554,7 +555,7 @@ class _TherapeuticInterventionScreenState extends State<TherapeuticInterventionS
         
         // Secondary action - proceed anyway
         OutlinedButton.icon(
-          onPressed: canProceed ? widget.onProceed : null,
+          onPressed: canProceed ? () => _handleProceed() : null,
           icon: Icon(canProceed ? Icons.check_circle_outline : Icons.lock_outline),
           label: Text(canProceed ? _getProceedButtonText() : 'Complete check-in to proceed'),
           style: OutlinedButton.styleFrom(
@@ -615,5 +616,41 @@ class _TherapeuticInterventionScreenState extends State<TherapeuticInterventionS
     } else {
       return 'Proceed mindfully';
     }
+  }
+
+  /// Handle proceed action by creating intervention data and calling callback
+  void _handleProceed() {
+    if (_currentMood == null || _selectedReason == null || !_hasReflected) {
+      return; // Shouldn't happen due to button state, but safety check
+    }
+    
+    // Determine intervention type based on result properties
+    String interventionType = 'general';
+    if (widget.interventionResult.isScheduleViolation) {
+      interventionType = 'schedule_violation';
+    } else if (widget.interventionResult.isToleranceExceeded) {
+      interventionType = 'tolerance_exceeded';
+    } else if (widget.interventionResult.isLimitExceeded) {
+      interventionType = 'limit_exceeded';
+    } else if (widget.interventionResult.isApproachingLimit) {
+      interventionType = 'approaching_limit';
+    }
+    
+    final interventionData = InterventionData(
+      interventionType: interventionType,
+      userMessage: widget.interventionResult.userMessage,
+      currentMood: _currentMood,
+      selectedReason: _selectedReason,
+      hasReflected: _hasReflected,
+      interventionTimestamp: DateTime.now(),
+      additionalData: {
+        'currentDrinks': widget.interventionResult.currentDrinks,
+        'dailyLimit': widget.interventionResult.dailyLimit,
+        'proposedTotal': widget.interventionResult.proposedTotal,
+        'isWithinTolerance': widget.interventionResult.isWithinTolerance,
+      },
+    );
+    
+    widget.onProceed(interventionData);
   }
 }

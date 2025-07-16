@@ -213,6 +213,7 @@ class HiveDatabaseService {
     int? hungerLevel,
     int? stressLevel,
     String? sleepQuality,
+    Map<String, dynamic>? interventionData,
   }) async {
     if (!_isInitialized) await initialize();
     
@@ -241,6 +242,7 @@ class HiveDatabaseService {
       'hungerLevel': hungerLevel,
       'stressLevel': stressLevel,
       'sleepQuality': sleepQuality,
+      'interventionData': interventionData,
     };
     
     await _drinkEntriesBox.put(entryId, entry);

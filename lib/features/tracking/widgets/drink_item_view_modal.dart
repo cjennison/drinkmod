@@ -34,6 +34,10 @@ class DrinkItemViewModal extends StatelessWidget {
                   children: [
                     const SizedBox(height: 16),
                     _buildCoreInfo(standardDrinks, drinkDate),
+                    if (_hasInterventionInfo()) ...[
+                      const SizedBox(height: 20),
+                      _buildInterventionSection(),
+                    ],
                     if (_hasContextInfo()) ...[
                       const SizedBox(height: 20),
                       _buildContextSection(),
@@ -247,6 +251,67 @@ class DrinkItemViewModal extends StatelessWidget {
     );
   }
 
+  Widget _buildInterventionSection() {
+    final interventionData = entry['interventionData'] as Map<String, dynamic>?;
+    if (interventionData == null) return const SizedBox.shrink();
+
+    return _buildSection(
+      title: 'Intervention Information',
+      icon: Icons.warning_amber,
+      color: Colors.orange.shade600,
+      children: [
+        _buildInfoRow(
+          'Intervention Type', 
+          _getInterventionDescription(interventionData['interventionType'] as String? ?? ''), 
+          Icons.category_outlined
+        ),
+        const SizedBox(height: 12),
+        if (interventionData['userMessage'] != null) ...[
+          _buildInfoRow(
+            'Situation', 
+            interventionData['userMessage'] as String, 
+            Icons.info_outline
+          ),
+          const SizedBox(height: 12),
+        ],
+        if (interventionData['currentMood'] != null) ...[
+          _buildMoodDisplay(interventionData['currentMood'] as int),
+          const SizedBox(height: 12),
+        ],
+        if (interventionData['selectedReason'] != null) ...[
+          _buildInfoRow(
+            'Reason for Proceeding', 
+            interventionData['selectedReason'] as String, 
+            Icons.psychology_outlined
+          ),
+          const SizedBox(height: 12),
+        ],
+        if (interventionData['interventionTimestamp'] != null) ...[
+          _buildInfoRow(
+            'Check-in Time', 
+            DateFormat('h:mm a').format(DateTime.parse(interventionData['interventionTimestamp'] as String)), 
+            Icons.access_time_outlined
+          ),
+        ],
+      ],
+    );
+  }
+
+  String _getInterventionDescription(String interventionType) {
+    switch (interventionType) {
+      case 'schedule_violation':
+        return 'Alcohol-free day intervention';
+      case 'limit_exceeded':
+        return 'Daily limit intervention';
+      case 'approaching_limit':
+        return 'Approaching limit intervention';
+      case 'tolerance_exceeded':
+        return 'Tolerance exceeded intervention';
+      default:
+        return 'Therapeutic intervention';
+    }
+  }
+
   Widget _buildSection({
     required String title,
     required IconData icon,
@@ -358,53 +423,53 @@ class DrinkItemViewModal extends StatelessWidget {
   }
 
   Widget _buildMoodDisplay(int mood) {
+    String moodText;
+    Color moodColor;
+    
+    if (mood <= 3) {
+      moodText = 'Low ($mood/10)';
+      moodColor = Colors.red.shade600;
+    } else if (mood <= 6) {
+      moodText = 'Moderate ($mood/10)';
+      moodColor = Colors.orange.shade600;
+    } else {
+      moodText = 'Good ($mood/10)';
+      moodColor = Colors.green.shade600;
+    }
+    
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(Icons.sentiment_satisfied_outlined, size: 18, color: Colors.grey.shade600),
+        Icon(Icons.mood, size: 18, color: Colors.grey.shade600),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Mood',
+                'Mood at Check-in',
                 style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade600,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey.shade700,
                 ),
               ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Text(
-                    '$mood/10',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: moodColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: moodColor.withOpacity(0.3)),
+                ),
+                child: Text(
+                  moodText,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: moodColor,
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Container(
-                      height: 6,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(3),
-                        color: Colors.grey.shade300,
-                      ),
-                      child: FractionallySizedBox(
-                        alignment: Alignment.centerLeft,
-                        widthFactor: mood / 10,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(3),
-                            color: mood <= 3 ? Colors.red : mood <= 6 ? Colors.orange : Colors.green,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ],
           ),
@@ -708,5 +773,10 @@ class DrinkItemViewModal extends StatelessWidget {
 
   bool _hasAnyEnhancedInfo() {
     return _hasContextInfo() || _hasEmotionalInfo() || _hasReflectionInfo();
+  }
+
+  // Helper method to check if intervention info exists
+  bool _hasInterventionInfo() {
+    return entry['interventionData'] != null;
   }
 }

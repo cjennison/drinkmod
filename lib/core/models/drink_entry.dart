@@ -1,4 +1,5 @@
 import 'package:uuid/uuid.dart';
+import 'intervention_data.dart';
 
 /// Enhanced drink entry model with therapeutic data capture
 class DrinkEntry {
@@ -41,6 +42,7 @@ class DrinkEntry {
   // System calculated
   final bool isWithinLimit; // Calculated field
   final bool isScheduleCompliant; // Was this a scheduled drinking day?
+  final InterventionData? interventionData; // Intervention tracking data
   final Map<String, dynamic>? metadata; // Extensible therapeutic data
 
   DrinkEntry({
@@ -70,6 +72,7 @@ class DrinkEntry {
     this.nextIntention,
     required this.isWithinLimit,
     required this.isScheduleCompliant,
+    this.interventionData,
     this.metadata,
   }) : id = id ?? const Uuid().v4(),
        timestamp = timestamp ?? DateTime.now();
@@ -105,6 +108,9 @@ class DrinkEntry {
       nextIntention: data['nextIntention'] as String?,
       isWithinLimit: data['isWithinLimit'] as bool? ?? true,
       isScheduleCompliant: data['isScheduleCompliant'] as bool? ?? true,
+      interventionData: data['interventionData'] != null 
+          ? InterventionData.fromHive(data['interventionData'] as Map<String, dynamic>)
+          : null,
       metadata: data['metadata'] as Map<String, dynamic>?,
     );
   }
@@ -139,6 +145,7 @@ class DrinkEntry {
       'nextIntention': nextIntention,
       'isWithinLimit': isWithinLimit,
       'isScheduleCompliant': isScheduleCompliant,
+      'interventionData': interventionData?.toHive(),
       'metadata': metadata,
       // Legacy fields for backward compatibility
       'reason': triggerDescription,
@@ -174,6 +181,7 @@ class DrinkEntry {
     String? nextIntention,
     bool? isWithinLimit,
     bool? isScheduleCompliant,
+    InterventionData? interventionData,
     Map<String, dynamic>? metadata,
   }) {
     return DrinkEntry(
@@ -203,6 +211,7 @@ class DrinkEntry {
       nextIntention: nextIntention ?? this.nextIntention,
       isWithinLimit: isWithinLimit ?? this.isWithinLimit,
       isScheduleCompliant: isScheduleCompliant ?? this.isScheduleCompliant,
+      interventionData: interventionData ?? this.interventionData,
       metadata: metadata ?? this.metadata,
     );
   }

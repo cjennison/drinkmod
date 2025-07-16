@@ -81,6 +81,7 @@ class DrinkLoggingCubit extends Cubit<DrinkLoggingState> {
         hungerLevel: updatedEntry.hungerLevel,
         stressLevel: updatedEntry.stressLevel,
         sleepQuality: updatedEntry.sleepQuality,
+        interventionData: updatedEntry.interventionData?.toHive(),
       );
       
       // Update the entry with the database-generated ID

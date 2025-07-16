@@ -316,7 +316,7 @@ class DrinkVisualizer extends StatelessWidget {
                     // Base progress bar
                     FractionallySizedBox(
                       alignment: Alignment.centerLeft,
-                      widthFactor: (progress * 0.5).clamp(0.0, 1.0), // Scale down for display
+                      widthFactor: progress.clamp(0.0, 1.0), // Show actual progress up to 100%
                       child: Container(
                         decoration: BoxDecoration(
                           color: progressColor,

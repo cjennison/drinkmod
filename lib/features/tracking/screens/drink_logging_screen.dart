@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import '../../../core/models/drink_entry.dart';
+import '../../../core/models/intervention_data.dart';
 import '../../../core/services/hive_database_service.dart';
 import '../../../core/services/drink_database_service.dart';
 import '../../../core/utils/drink_intervention_utils.dart';
@@ -51,6 +52,7 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
   int? _stressLevel;
   String? _sleepQuality;
   bool _isInitializing = false;
+  InterventionData? _interventionData; // Store intervention data for drink entry
 
   @override
   void initState() {
@@ -407,8 +409,10 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
       
       // For any intervention (alcohol-free day, limit exceeded, approaching limit, etc)
       if (interventionResult.requiresIntervention) {
-        final shouldProceed = await _showTherapeuticIntervention(interventionResult);
-        if (shouldProceed) {
+        final interventionData = await _showTherapeuticIntervention(interventionResult);
+        if (interventionData != null) {
+          // Store intervention data to be included in drink entry
+          _interventionData = interventionData;
           await _proceedWithSave();
         }
         return;
@@ -430,18 +434,18 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
   }
 
   /// Show the unified therapeutic intervention screen
-  Future<bool> _showTherapeuticIntervention(DrinkInterventionResult interventionResult) async {
-    final result = await Navigator.of(context).push<bool>(
+  Future<InterventionData?> _showTherapeuticIntervention(DrinkInterventionResult interventionResult) async {
+    final result = await Navigator.of(context).push<InterventionData>(
       MaterialPageRoute(
         builder: (context) => TherapeuticInterventionScreen(
           interventionResult: interventionResult,
-          onProceed: () {
-            Navigator.of(context).pop(true);
+          onProceed: (interventionData) {
+            Navigator.of(context).pop(interventionData);
           },
           onCancel: () {
             // User chose to stick to their goal - clear state and go back
             _clearFormState();
-            Navigator.of(context).pop(false);
+            Navigator.of(context).pop(null);
             // Navigate back to home, clearing the drink logging screen
             if (mounted) {
               Navigator.of(context).popUntil((route) => route.isFirst);
@@ -454,7 +458,7 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
       ),
     );
     
-    return result ?? false;
+    return result;
   }
 
   /// Get appropriate positive reinforcement message based on intervention type
@@ -497,6 +501,7 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
       sleepQuality: _sleepQuality,
       isWithinLimit: true, // Will be calculated by service
       isScheduleCompliant: true, // Will be calculated by service
+      interventionData: _interventionData, // Include intervention data if logged through intervention
     );
 
     final cubit = context.read<DrinkLoggingCubit>();
@@ -543,6 +548,7 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
       _hungerLevel = null;
       _stressLevel = null;
       _sleepQuality = null;
+      _interventionData = null; // Reset intervention data
       _currentStep = 0; // Reset to first step
     });
     
