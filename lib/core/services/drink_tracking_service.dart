@@ -1,4 +1,5 @@
 import 'dart:developer' as developer;
+import '../utils/map_utils.dart';
 import 'hive_core.dart';
 
 /// Service for managing drink entries and tracking
@@ -76,7 +77,7 @@ class DrinkTrackingService {
     if (!_hiveCore.isInitialized) return [];
     
     return _hiveCore.drinkEntriesBox.values
-        .map((e) => e.cast<String, dynamic>())
+        .map((e) => MapUtils.deepConvertMap(e))
         .toList();
   }
   

@@ -400,7 +400,7 @@ class WelcomeStep extends StatelessWidget {
   }
   
   Future<Map<String, dynamic>> _getWelcomeData() async {
-    final userData = await UserDataService.instance.getUserData();
+    final userData = UserDataService.instance.getUserData();
     final userName = userData?['name'] as String? ?? 'there';
     
     // Check if user has completed goals before

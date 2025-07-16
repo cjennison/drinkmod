@@ -53,7 +53,7 @@ class _GoalSetupWizardState extends State<GoalSetupWizard> {
   }
 
   Future<void> _checkForExistingGoal() async {
-    final existingGoal = _goalService.getActiveGoal();
+    final existingGoal = await _goalService.getActiveGoal();
     if (existingGoal != null) {
       setState(() {
         _existingGoal = existingGoal;

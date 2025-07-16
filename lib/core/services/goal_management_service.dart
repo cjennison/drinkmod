@@ -1,5 +1,6 @@
 import 'dart:developer' as developer;
 import '../models/user_goal.dart';
+import '../utils/map_utils.dart';
 import 'hive_core.dart';
 
 /// Service for managing user goals and progress tracking
@@ -60,12 +61,20 @@ class GoalManagementService {
 
   /// Get all goals with optional status filter
   List<Map<String, dynamic>> getAllGoals({GoalStatus? status}) {
-    if (!_hiveCore.isInitialized) return [];
+    if (!_hiveCore.isInitialized) {
+      developer.log('HiveCore not initialized when getting all goals', name: 'GoalManagementService');
+      return [];
+    }
     
-    final goals = _hiveCore.goalsBox.values.map((goal) => Map<String, dynamic>.from(goal)).toList();
+    final goals = _hiveCore.goalsBox.values
+        .map((goal) => MapUtils.deepConvertMap(goal))
+        .toList();
+    developer.log('getAllGoals found ${goals.length} total goals', name: 'GoalManagementService');
     
     if (status != null) {
-      return goals.where((goal) => goal['status'] == status.toString()).toList();
+      final filtered = goals.where((goal) => goal['status'] == status.toString()).toList();
+      developer.log('getAllGoals filtered to ${filtered.length} goals with status $status', name: 'GoalManagementService');
+      return filtered;
     }
     
     return goals;
@@ -77,14 +86,19 @@ class GoalManagementService {
   }
 
   /// Get the single active goal (new primary method)
-  Map<String, dynamic>? getActiveGoal() {
+  Future<Map<String, dynamic>?> getActiveGoal() async {
+    await _hiveCore.ensureInitialized();
+    
     final activeGoals = getActiveGoals();
-    return activeGoals.isNotEmpty ? activeGoals.first : null;
+    final result = activeGoals.isNotEmpty ? activeGoals.first : null;
+    developer.log('getActiveGoal result: $result', name: 'GoalManagementService');
+    return result;
   }
 
   /// Check if user has an active goal
-  bool hasActiveGoal() {
-    return getActiveGoal() != null;
+  Future<bool> hasActiveGoal() async {
+    final activeGoal = await getActiveGoal();
+    return activeGoal != null;
   }
 
   /// Set a goal as the single active goal (archives current active goal if exists)
@@ -99,7 +113,7 @@ class GoalManagementService {
     await _hiveCore.ensureInitialized();
     
     // Archive current active goal if it exists
-    final currentActive = getActiveGoal();
+    final currentActive = await getActiveGoal();
     if (currentActive != null) {
       await _archiveGoal(currentActive['id']);
     }
@@ -123,7 +137,7 @@ class GoalManagementService {
 
   /// Complete the current active goal
   Future<void> completeActiveGoal() async {
-    final activeGoal = getActiveGoal();
+    final activeGoal = await getActiveGoal();
     if (activeGoal != null) {
       await _archiveGoal(activeGoal['id']);
     }
@@ -139,7 +153,7 @@ class GoalManagementService {
     if (!_hiveCore.isInitialized) return null;
     
     final goal = _hiveCore.goalsBox.get(goalId);
-    return goal != null ? Map<String, dynamic>.from(goal) : null;
+    return goal != null ? MapUtils.deepConvertMap(goal) : null;
   }
 
   /// Update goal progress
@@ -209,13 +223,16 @@ class GoalManagementService {
   List<Map<String, dynamic>> getGoalsByType(GoalType goalType) {
     return _hiveCore.goalsBox.values
         .where((goal) => goal['goalType'] == goalType.toString())
-        .map((goal) => Map<String, dynamic>.from(goal))
+        .map((goal) => MapUtils.deepConvertMap(goal))
         .toList();
   }
 
   /// Check if user has any active goals (legacy - use hasActiveGoal instead)
   bool hasActiveGoals() {
-    return hasActiveGoal();
+    // Use synchronous version for backward compatibility
+    if (!_hiveCore.isInitialized) return false;
+    final activeGoals = getActiveGoals();
+    return activeGoals.isNotEmpty;
   }
   
   /// Clear all goals (useful for development and user preference)
@@ -239,7 +256,7 @@ class GoalManagementService {
     if (!_hiveCore.isInitialized) return null;
     
     final data = _hiveCore.goalsBox.get('goals');
-    return data?.cast<String, dynamic>();
+    return data != null ? MapUtils.deepConvertMap(data) : null;
   }
   
   /// Update specific goal fields (legacy method)

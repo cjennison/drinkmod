@@ -31,15 +31,31 @@ class _GoalCardState extends State<GoalCard> {
     _loadRealProgressData();
   }
 
+  @override
+  void didUpdateWidget(GoalCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reload progress data if goal data changed
+    if (oldWidget.goalData != widget.goalData) {
+      print('GoalCard: Goal data changed, reloading progress...');
+      setState(() {
+        _isLoading = true;
+      });
+      _loadRealProgressData();
+    }
+  }
+
   Future<void> _loadRealProgressData() async {
     try {
+      print('GoalCard: Loading progress data for goal: ${widget.goalData}');
       final progressService = GoalProgressService.instance;
       final progressData = await progressService.calculateGoalProgress(widget.goalData);
+      print('GoalCard: Progress data loaded: $progressData');
       setState(() {
         _progressData = progressData;
         _isLoading = false;
       });
     } catch (e) {
+      print('GoalCard: Error loading progress data: $e');
       setState(() {
         _progressData = _getEmptyProgressData();
         _isLoading = false;
@@ -93,24 +109,21 @@ class _GoalCardState extends State<GoalCard> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
       ),
-      child: InkWell(
-        onTap: widget.onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                goalTypeInfo['color'].withOpacity(0.05),
-                goalTypeInfo['color'].withOpacity(0.1),
-              ],
-            ),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              goalTypeInfo['color'].withOpacity(0.05),
+              goalTypeInfo['color'].withOpacity(0.1),
+            ],
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(goalTypeInfo, progressData),
               const SizedBox(height: 16),
@@ -128,8 +141,7 @@ class _GoalCardState extends State<GoalCard> {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildHeader(Map<String, dynamic> goalTypeInfo, Map<String, dynamic> progressData) {

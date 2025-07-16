@@ -27,8 +27,11 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
   Future<void> _checkUserGoals() async {
     try {
-      final activeGoal = await Future.microtask(() => GoalManagementService.instance.getActiveGoal());
+      print('ProgressScreen: Checking user goals...');
+      final activeGoal = await GoalManagementService.instance.getActiveGoal();
       final goalHistory = GoalManagementService.instance.getGoalHistory();
+      print('ProgressScreen: Active goal: $activeGoal');
+      print('ProgressScreen: Goal history count: ${goalHistory.length}');
       setState(() {
         _hasActiveGoals = activeGoal != null;
         _hasGoalHistory = goalHistory.isNotEmpty;
@@ -36,6 +39,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
         _isLoading = false;
       });
     } catch (e) {
+      print('ProgressScreen: Error checking goals: $e');
       setState(() {
         _hasActiveGoals = false;
         _hasGoalHistory = false;
@@ -46,9 +50,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
   }
 
   void _onGoalCreated() {
-    setState(() {
-      _hasActiveGoals = true;
-    });
+    // Reload goal data after creation
+    _checkUserGoals();
   }
 
   void _showGoalHistory() {
@@ -206,10 +209,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
           
           // Goal Card
           GoalCard(
+            key: ValueKey(_activeGoalData!['id']),
             goalData: _activeGoalData!,
-            onTap: () {
-              _showGoalDetails();
-            },
             onGoalCompleted: () {
               // Refresh the goal status to show the wizard
               _checkUserGoals();
@@ -279,32 +280,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  void _showGoalDetails() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Goal Details'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Goal Type: ${_activeGoalData!['goalType']?.toString().split('.').last ?? 'Unknown'}'),
-            const SizedBox(height: 8),
-            Text('Created: ${_activeGoalData!['startDate'] ?? 'Unknown'}'),
-            const SizedBox(height: 8),
-            const Text('Detailed analytics and goal management features coming soon...'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
-          ),
-        ],
       ),
     );
   }

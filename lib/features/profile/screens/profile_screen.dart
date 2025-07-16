@@ -172,7 +172,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _showCurrentGoals() async {
     try {
-      final activeGoal = GoalManagementService.instance.getActiveGoal();
+      final activeGoal = await GoalManagementService.instance.getActiveGoal();
       
       if (!mounted) return;
       
@@ -394,6 +394,67 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           );
         }
+      }
+    }
+  }
+
+  Future<void> _debugGoalLoading() async {
+    try {
+      print('=== DEBUG GOAL LOADING ===');
+      
+      // Test HiveCore initialization by calling a method that ensures it
+      print('Testing goal service initialization...');
+      
+      // Get all goals (this will trigger initialization)
+      print('Getting all goals...');
+      final allGoals = GoalManagementService.instance.getAllGoals();
+      print('Total goals found: ${allGoals.length}');
+      for (int i = 0; i < allGoals.length; i++) {
+        final goal = allGoals[i];
+        print('Goal $i: ${goal['id']} - ${goal['title']} - Status: ${goal['status']}');
+      }
+      
+      // Get active goals specifically
+      print('Getting active goals...');
+      final activeGoals = GoalManagementService.instance.getActiveGoals();
+      print('Active goals found: ${activeGoals.length}');
+      
+      // Get the single active goal
+      print('Getting single active goal...');
+      final activeGoal = await GoalManagementService.instance.getActiveGoal();
+      print('Single active goal: ${activeGoal != null ? activeGoal['id'] : 'null'}');
+      if (activeGoal != null) {
+        print('Active goal details: ${activeGoal.toString()}');
+      }
+      
+      // Get goal history
+      print('Getting goal history...');
+      final goalHistory = GoalManagementService.instance.getGoalHistory();
+      print('Goal history count: ${goalHistory.length}');
+      
+      print('=== END DEBUG ===');
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Debug complete - check console output. Active goal: ${activeGoal != null ? 'Found' : 'None'}'),
+            backgroundColor: Colors.blue,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e, stackTrace) {
+      print('=== DEBUG ERROR ===');
+      print('Error: $e');
+      print('StackTrace: $stackTrace');
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Debug failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
@@ -754,6 +815,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 subtitle: const Text('View your completed goals'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: _showGoalHistory,
+              ),
+            ),
+            
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.bug_report, color: Colors.purple),
+                title: const Text('Debug: Test Goal Loading'),
+                subtitle: const Text('Test goal data persistence and loading'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: _debugGoalLoading,
               ),
             ),
             

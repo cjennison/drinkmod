@@ -42,7 +42,7 @@ class _DrinkingCalendarState extends State<DrinkingCalendar> {
       final dateKey = DateFormat('yyyy-MM-dd').format(date);
       
       try {
-        final entries = await _databaseService.getDrinkEntriesForDate(date);
+        final entries = _databaseService.getDrinkEntriesForDate(date);
         daysWithData[dateKey] = entries.isNotEmpty;
       } catch (e) {
         daysWithData[dateKey] = false;

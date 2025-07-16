@@ -1,4 +1,5 @@
 import 'dart:developer' as developer;
+import '../utils/map_utils.dart';
 import 'hive_core.dart';
 
 /// Service for managing user profile data and onboarding
@@ -23,7 +24,7 @@ class UserDataService {
     if (!_hiveCore.isInitialized) return null;
     
     final data = _hiveCore.userBox.get('profile');
-    return data?.cast<String, dynamic>();
+    return data != null ? MapUtils.deepConvertMap(data) : null;
   }
   
   /// Update specific user data fields

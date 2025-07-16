@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:developer' as developer;
 import '../../../core/services/goal_management_service.dart';
 import '../../../core/services/goal_progress_service.dart';
+import '../../../core/utils/map_utils.dart';
 
 /// Comprehensive goal history modal with 2-column layout
 /// Left side: Chronological list of completed goals
@@ -28,7 +29,7 @@ class _GoalHistoryModalState extends State<GoalHistoryModal> {
   void _loadGoalHistory() {
     final history = GoalManagementService.instance.getGoalHistory();
     // Convert each goal to proper Map<String, dynamic> and sort by completion date (most recent first)
-    final cleanHistory = history.map((goal) => _deepConvertMap(goal)).toList();
+    final cleanHistory = history.map((goal) => MapUtils.deepConvertMap(goal)).toList();
     cleanHistory.sort((a, b) {
       final aDate = DateTime.parse(a['updatedAt'] ?? a['startDate']);
       final bDate = DateTime.parse(b['updatedAt'] ?? b['startDate']);
@@ -87,7 +88,7 @@ class _GoalHistoryModalState extends State<GoalHistoryModal> {
       developer.log('Calling GoalProgressService.calculateGoalProgress', name: 'GoalHistoryModal');
       
       // Convert LinkedMap to proper Map<String, dynamic> to avoid type issues
-      final cleanGoalData = _deepConvertMap(goal);
+      final cleanGoalData = MapUtils.deepConvertMap(goal);
       developer.log('Clean goal data type: ${cleanGoalData.runtimeType}', name: 'GoalHistoryModal');
       developer.log('Parameters type: ${cleanGoalData['parameters']?.runtimeType}', name: 'GoalHistoryModal');
       
@@ -113,41 +114,6 @@ class _GoalHistoryModalState extends State<GoalHistoryModal> {
       developer.log('Error in _calculateGoalSummary: $e', name: 'GoalHistoryModal', error: e, stackTrace: stackTrace);
       rethrow;
     }
-  }
-
-  /// Deep convert LinkedMap to Map<String, dynamic> recursively
-  Map<String, dynamic> _deepConvertMap(dynamic value) {
-    if (value is Map) {
-      final result = <String, dynamic>{};
-      for (final entry in value.entries) {
-        final key = entry.key?.toString() ?? '';
-        final val = entry.value;
-        
-        if (val is Map) {
-          result[key] = _deepConvertMap(val);
-        } else if (val is List) {
-          result[key] = _deepConvertList(val);
-        } else {
-          result[key] = val;
-        }
-      }
-      return result;
-    } else {
-      return value as Map<String, dynamic>;
-    }
-  }
-
-  /// Deep convert List with LinkedMaps to proper List
-  List<dynamic> _deepConvertList(List<dynamic> list) {
-    return list.map((item) {
-      if (item is Map) {
-        return _deepConvertMap(item);
-      } else if (item is List) {
-        return _deepConvertList(item);
-      } else {
-        return item;
-      }
-    }).toList();
   }
 
   @override
