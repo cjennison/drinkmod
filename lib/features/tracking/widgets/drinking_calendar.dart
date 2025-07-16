@@ -177,18 +177,19 @@ class _DrinkingCalendarState extends State<DrinkingCalendar> {
                       DateTime.now().year == date.year;
                   final isDrinkingDay = _isDrinkingDay(date);
                   final hasData = _hasDataOnDate(date);
+                  final isFutureDate = date.isAfter(DateTime.now());
                   
                   return GestureDetector(
-                    onTap: () {
+                    onTap: isFutureDate ? null : () {
                       widget.onDateSelected(date);
                       Navigator.of(context).pop();
                     },
                     child: Container(
                       margin: const EdgeInsets.all(2),
                       decoration: BoxDecoration(
-                        color: _getDateBackgroundColor(isSelected, isDrinkingDay, hasData, isToday),
+                        color: _getDateBackgroundColor(isSelected, isDrinkingDay, hasData, isToday, isFutureDate),
                         borderRadius: BorderRadius.circular(8),
-                        border: _getDateBorder(isSelected, isDrinkingDay, hasData, isToday),
+                        border: _getDateBorder(isSelected, isDrinkingDay, hasData, isToday, isFutureDate),
                       ),
                       child: Center(
                         child: Column(
@@ -198,7 +199,7 @@ class _DrinkingCalendarState extends State<DrinkingCalendar> {
                               dayNumber.toString(),
                               style: TextStyle(
                                 fontWeight: isSelected || isToday ? FontWeight.w700 : FontWeight.w500,
-                                color: _getDateTextColor(isSelected, isDrinkingDay, hasData, isToday),
+                                color: _getDateTextColor(isSelected, isDrinkingDay, hasData, isToday, isFutureDate),
                                 fontSize: 12,
                               ),
                             ),
@@ -263,7 +264,10 @@ class _DrinkingCalendarState extends State<DrinkingCalendar> {
     );
   }
 
-  Color _getDateBackgroundColor(bool isSelected, bool isDrinkingDay, bool hasData, bool isToday) {
+  Color _getDateBackgroundColor(bool isSelected, bool isDrinkingDay, bool hasData, bool isToday, bool isFutureDate) {
+    if (isFutureDate) {
+      return Colors.grey.shade100; // Disabled appearance for future dates
+    }
     if (isSelected) {
       return Theme.of(context).primaryColor;
     }
@@ -282,7 +286,10 @@ class _DrinkingCalendarState extends State<DrinkingCalendar> {
     return Colors.grey.shade50;
   }
 
-  Border? _getDateBorder(bool isSelected, bool isDrinkingDay, bool hasData, bool isToday) {
+  Border? _getDateBorder(bool isSelected, bool isDrinkingDay, bool hasData, bool isToday, bool isFutureDate) {
+    if (isFutureDate) {
+      return Border.all(color: Colors.grey.shade300); // Muted border for future dates
+    }
     if (isSelected) {
       return Border.all(color: Theme.of(context).primaryColor, width: 2);
     }
@@ -301,7 +308,10 @@ class _DrinkingCalendarState extends State<DrinkingCalendar> {
     return Border.all(color: Colors.grey.shade200);
   }
 
-  Color _getDateTextColor(bool isSelected, bool isDrinkingDay, bool hasData, bool isToday) {
+  Color _getDateTextColor(bool isSelected, bool isDrinkingDay, bool hasData, bool isToday, bool isFutureDate) {
+    if (isFutureDate) {
+      return Colors.grey.shade400; // Muted text for future dates
+    }
     if (isSelected) {
       return Colors.white;
     }
