@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/services/goal_management_service.dart';
+import '../widgets/goal_card.dart';
 import 'goal_setup_wizard.dart';
 
 /// Progress screen for analytics and streak tracking
@@ -14,6 +15,7 @@ class ProgressScreen extends StatefulWidget {
 class _ProgressScreenState extends State<ProgressScreen> {
   bool _isLoading = true;
   bool _hasActiveGoals = false;
+  Map<String, dynamic>? _activeGoalData;
 
   @override
   void initState() {
@@ -26,11 +28,13 @@ class _ProgressScreenState extends State<ProgressScreen> {
       final activeGoal = await Future.microtask(() => GoalManagementService.instance.getActiveGoal());
       setState(() {
         _hasActiveGoals = activeGoal != null;
+        _activeGoalData = activeGoal;
         _isLoading = false;
       });
     } catch (e) {
       setState(() {
         _hasActiveGoals = false;
+        _activeGoalData = null;
         _isLoading = false;
       });
     }
@@ -176,39 +180,155 @@ class _ProgressScreenState extends State<ProgressScreen> {
   }
 
   Widget _buildProgressContent() {
-    return const Center(
+    if (_activeGoalData == null) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.trending_up_outlined,
+              size: 80,
+              color: Colors.grey,
+            ),
+            SizedBox(height: 20),
+            Text(
+              'No Active Goal',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Create a goal to track your progress',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.trending_up_outlined,
-            size: 80,
-            color: Colors.grey,
-          ),
-          SizedBox(height: 20),
-          Text(
-            'Your Progress',
+          const Text(
+            'Current Goal',
             style: TextStyle(
-              fontSize: 24,
+              fontSize: 28,
               fontWeight: FontWeight.bold,
+              color: Colors.black87,
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
-            'Track your achievements and trends',
+            'Track your progress and achievements',
             style: TextStyle(
               fontSize: 16,
-              color: Colors.grey,
+              color: Colors.grey.shade600,
             ),
           ),
-          SizedBox(height: 24),
-          Text(
-            'Goal dashboard coming soon...',
-            style: TextStyle(
-              fontSize: 14,
-              fontStyle: FontStyle.italic,
-              color: Colors.grey,
+          const SizedBox(height: 24),
+          
+          // Goal Card
+          GoalCard(
+            goalData: _activeGoalData!,
+            onTap: () {
+              _showGoalDetails();
+            },
+          ),
+          
+          const SizedBox(height: 32),
+          
+          // Additional sections coming soon
+          _buildComingSoonSection('Weekly Insights', Icons.analytics_outlined),
+          const SizedBox(height: 16),
+          _buildComingSoonSection('Achievement Badges', Icons.emoji_events_outlined),
+          const SizedBox(height: 16),
+          _buildComingSoonSection('Progress Charts', Icons.show_chart_outlined),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildComingSoonSection(String title, IconData icon) {
+    return Card(
+      elevation: 2,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                size: 24,
+                color: Colors.grey.shade600,
+              ),
             ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Coming soon...',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade600,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showGoalDetails() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Goal Details'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Goal Type: ${_activeGoalData!['goalType']?.toString().split('.').last ?? 'Unknown'}'),
+            const SizedBox(height: 8),
+            Text('Created: ${_activeGoalData!['startDate'] ?? 'Unknown'}'),
+            const SizedBox(height: 8),
+            const Text('Detailed analytics and goal management features coming soon...'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
           ),
         ],
       ),
