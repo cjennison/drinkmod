@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../../core/services/goal_management_service.dart';
+import '../../../core/services/hive_database_service.dart';
 import '../../../core/achievements/achievement_helper.dart';
 import '../widgets/goal_card.dart';
 import '../widgets/goal_history_modal.dart';
+import '../services/chart_data_service.dart';
+import '../widgets/charts/weekly_adherence_chart.dart';
+import '../widgets/charts/weekly_drinking_pattern_chart.dart';
+import '../widgets/charts/time_of_day_pattern_chart.dart';
+import '../widgets/charts/intervention_success_chart.dart';
 import 'goal_setup_wizard.dart';
 
 /// Progress screen for analytics and streak tracking
@@ -20,13 +26,22 @@ class _ProgressScreenState extends State<ProgressScreen> {
   bool _hasGoalHistory = false;
   Map<String, dynamic>? _activeGoalData;
   
+  // Chart data
+  late final ChartDataService _chartDataService;
+  List<WeeklyAdherenceData> _weeklyAdherenceData = [];
+  List<DayOfWeekData> _weeklyPatternData = [];
+  List<TimeOfDayData> _timeOfDayData = [];
+  List<InterventionSuccessData> _interventionData = [];
+  
   // Key for the achievements section to allow refreshing
   final GlobalKey<AchievementsSectionState> _achievementsSectionKey = GlobalKey<AchievementsSectionState>();
 
   @override
   void initState() {
     super.initState();
+    _chartDataService = ChartDataService(HiveDatabaseService.instance);
     _checkUserGoals();
+    _loadChartData();
   }
 
   @override
@@ -48,15 +63,29 @@ class _ProgressScreenState extends State<ProgressScreen> {
         _isLoading = false;
       });
       
-      // Check for achievements fully async after UI is updated
-      _checkAchievementsAsync();
     } catch (e) {
+      debugPrint('Error checking user goals: $e');
       setState(() {
-        _hasActiveGoals = false;
-        _hasGoalHistory = false;
-        _activeGoalData = null;
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _loadChartData() async {
+    try {
+      final adherenceData = _chartDataService.getWeeklyAdherenceData();
+      final patternData = _chartDataService.getWeeklyDrinkingPattern();
+      final timeData = _chartDataService.getTimeOfDayPattern();
+      final interventionData = _chartDataService.getInterventionSuccessData();
+      
+      setState(() {
+        _weeklyAdherenceData = adherenceData;
+        _weeklyPatternData = patternData;
+        _timeOfDayData = timeData;
+        _interventionData = interventionData;
+      });
+    } catch (e) {
+      debugPrint('Error loading chart data: $e');
     }
   }
 
@@ -245,71 +274,219 @@ class _ProgressScreenState extends State<ProgressScreen> {
           
           const SizedBox(height: 32),
           
-          // Additional sections coming soon
-          _buildComingSoonSection('Weekly Insights', Icons.analytics_outlined),
-          const SizedBox(height: 16),
-          
           // Achievement Badges Section
           AchievementsSection(key: _achievementsSectionKey),
-          const SizedBox(height: 16),
+          const SizedBox(height: 32),
           
-          _buildComingSoonSection('Progress Charts', Icons.show_chart_outlined),
+          // Progress Charts Section
+          _buildProgressChartsSection(),
         ],
       ),
     );
   }
 
-  Widget _buildComingSoonSection(String title, IconData icon) {
-    return Card(
-      elevation: 2,
-      margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
+  Widget _buildProgressChartsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section Header
+        Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                icon,
-                size: 24,
-                color: Colors.grey.shade600,
-              ),
+            Icon(
+              Icons.show_chart_outlined,
+              color: Theme.of(context).primaryColor,
+              size: 24,
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Coming soon...',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade600,
-                      fontStyle: FontStyle.italic,
-                    ),
-                  ),
-                ],
+            const SizedBox(width: 12),
+            Text(
+              'Progress Charts',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
               ),
             ),
           ],
         ),
-      ),
+        const SizedBox(height: 20),
+        
+        // Charts Grid
+        Column(
+          children: [
+            // Weekly Adherence Trend Chart
+            Card(
+              elevation: 2,
+              margin: EdgeInsets.zero,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.trending_up,
+                          color: Colors.green.shade600,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Weekly Goal Adherence',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Track your progress over the last 12 weeks',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    WeeklyAdherenceChart(data: _weeklyAdherenceData),
+                  ],
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 20),
+            
+            // Daily Pattern Chart
+            Card(
+              elevation: 2,
+              margin: EdgeInsets.zero,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.bar_chart,
+                          color: Colors.blue.shade600,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Weekly Drinking Pattern',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Average drinks consumed by day of week',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    WeeklyDrinkingPatternChart(data: _weeklyPatternData),
+                  ],
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 20),
+            
+            // Intervention Success Chart
+            Card(
+              elevation: 2,
+              margin: EdgeInsets.zero,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.shield_outlined,
+                          color: Colors.purple.shade600,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Intervention Success Rate',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'How often you resist urges and stay on track',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    InterventionSuccessChart(data: _interventionData),
+                  ],
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 20),
+            
+            // Time of Day Pattern Chart
+            Card(
+              elevation: 2,
+              margin: EdgeInsets.zero,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.access_time,
+                          color: Colors.orange.shade600,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Time of Day Patterns',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'When you\'re most likely to drink throughout the day',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    TimeOfDayPatternChart(data: _timeOfDayData),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
