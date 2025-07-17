@@ -216,11 +216,11 @@ class PersonaDataService {
         
       case GoalType.interventionWins:
         parameters = {
-          'targetInterventionWins': 10,
-          'targetValue': 10.0,
+          'targetSuccessRate': 70,
+          'targetValue': 70.0,
         };
         title = 'Intervention Success';
-        description = 'Successfully decline 10 drinking opportunities';
+        description = 'Achieve a 70% success rate when interventions occur';
         chartType = ChartType.interventionStats;
         break;
         

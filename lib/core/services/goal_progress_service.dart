@@ -1,5 +1,6 @@
 import '../models/drink_entry.dart';
 import '../services/drink_tracking_service.dart';
+import '../services/hive_database_service.dart';
 
 /// Service that integrates real data for goal progress calculations
 class GoalProgressService {
@@ -36,6 +37,8 @@ class GoalProgressService {
         return _calculateAlcoholFreeDaysProgress(goalData, drinkEntries, parameters);
       case 'GoalType.costSavings':
         return _calculateCostSavingsProgress(goalData, drinkEntries, parameters);
+      case 'GoalType.interventionWins':
+        return _calculateInterventionWinsProgress(goalData, parameters);
       default:
         return _getDefaultProgress(goalData);
     }
@@ -289,6 +292,124 @@ class GoalProgressService {
       ],
       'daysRemaining': _calculateDaysRemaining(goalData),
       'timeProgress': timeProgress.clamp(0.0, 1.0),
+    };
+  }
+
+  /// Calculate real progress for intervention wins goals (percentage-based)
+  Map<String, dynamic> _calculateInterventionWinsProgress(
+    Map<String, dynamic> goalData,
+    Map<String, dynamic> parameters,
+  ) {
+    final targetSuccessRate = (parameters['targetSuccessRate'] as num? ?? 70) / 100.0; // Default 70%
+    final startDate = DateTime.parse(goalData['startDate']);
+    final now = DateTime.now();
+    final daysSinceStart = now.difference(startDate).inDays;
+    
+    // Get actual intervention events from database
+    final interventionEvents = HiveDatabaseService.instance.getInterventionEvents(
+      startDate: startDate,
+      endDate: now,
+    );
+    
+    final totalInterventions = interventionEvents.length;
+    final wins = interventionEvents.where((event) => 
+      event['decision'] == 'InterventionDecision.declined'
+    ).length;
+    
+    final currentSuccessRate = totalInterventions > 0 ? wins / totalInterventions : 0.0;
+    
+    // Calculate time-based progress (how much of the goal duration has passed)
+    final durationWeeks = parameters['durationWeeks'] as num? ?? 8;
+    final totalDays = (durationWeeks * 7).toInt();
+    final timeProgress = totalDays > 0 ? (daysSinceStart / totalDays).clamp(0.0, 1.0) : 0.0;
+    
+    // Calculate overall progress using a hybrid model:
+    // - If no interventions yet: progress based on time elapsed (being "on track")
+    // - If interventions exist: weighted combination of time progress and success rate
+    double overallProgress;
+    
+    if (totalInterventions == 0) {
+      // No interventions = good self-management
+      if (timeProgress >= 1.0) {
+        // Goal duration completed with no interventions = 100% success
+        overallProgress = 1.0;
+      } else {
+        // Still in progress: give credit for maintaining goal without interventions
+        // Cap at 80% during active period to encourage completing full duration
+        overallProgress = timeProgress * 0.8;
+      }
+    } else {
+      // With interventions: combine time progress with success rate performance
+      final successRateProgress = targetSuccessRate > 0 ? (currentSuccessRate / targetSuccessRate).clamp(0.0, 1.0) : 0.0;
+      
+      // Weight the progress: 60% time-based, 40% success rate based
+      // This gives credit for time commitment while rewarding intervention success
+      overallProgress = (timeProgress * 0.6) + (successRateProgress * 0.4);
+    }
+    
+    // Create appropriate recent activity message based on intervention data
+    String activityMessage;
+    if (totalInterventions == 0) {
+      if (daysSinceStart == 0) {
+        activityMessage = 'Goal created today - interventions will be tracked automatically!';
+      } else if (daysSinceStart <= 7) {
+        activityMessage = 'No interventions yet this week - great self-control!';
+      } else {
+        activityMessage = 'No interventions in ${daysSinceStart} days - excellent self-management!';
+      }
+    } else {
+      final successRatePercent = (currentSuccessRate * 100).round();
+      if (wins >= totalInterventions * 0.8) {
+        activityMessage = '$successRatePercent% success rate ($wins/$totalInterventions) - fantastic willpower!';
+      } else if (wins >= totalInterventions * 0.5) {
+        activityMessage = '$successRatePercent% success rate ($wins/$totalInterventions) - making progress!';
+      } else {
+        activityMessage = '$successRatePercent% success rate ($wins/$totalInterventions) - every attempt counts!';
+      }
+    }
+    
+    // Determine if on track using the new progress model
+    bool isOnTrack;
+    if (totalInterventions == 0) {
+      // No interventions = on track if maintaining self-control within expected timeframe
+      isOnTrack = true;
+    } else {
+      // With interventions: on track if success rate is reasonable AND overall progress is good
+      final minimumSuccessRate = targetSuccessRate * 0.8; // 80% of target
+      final successRateOK = currentSuccessRate >= minimumSuccessRate;
+      final progressOK = overallProgress >= (timeProgress * 0.8); // Should be at least 80% of expected progress
+      isOnTrack = successRateOK && progressOK;
+    }
+    
+    return {
+      'percentage': overallProgress.clamp(0.0, 1.0),
+      'isOnTrack': isOnTrack,
+      'statusText': totalInterventions == 0 
+          ? 'No interventions yet' 
+          : '${wins}/${totalInterventions} interventions won (${(currentSuccessRate * 100).round()}% vs ${(targetSuccessRate * 100).round()}% target)',
+      'currentMetric': totalInterventions == 0 
+          ? 'No interventions' 
+          : '${(currentSuccessRate * 100).round()}% success ($totalInterventions total)',
+      'targetMetric': '${(targetSuccessRate * 100).round()}% target',
+      'bonusMetric': totalInterventions > 5 && currentSuccessRate >= targetSuccessRate 
+          ? 'Target achieved!' 
+          : null,
+      'recentActions': [
+        {
+          'icon': 'Icons.psychology',
+          'color': 'Colors.purple',
+          'text': activityMessage,
+        }
+      ],
+      'daysRemaining': _calculateDaysRemaining(goalData),
+      'timeProgress': timeProgress,
+      'interventionStats': {
+        'totalInterventions': totalInterventions,
+        'wins': wins,
+        'losses': totalInterventions - wins,
+        'currentSuccessRate': currentSuccessRate,
+        'targetSuccessRate': targetSuccessRate,
+      },
     };
   }
 

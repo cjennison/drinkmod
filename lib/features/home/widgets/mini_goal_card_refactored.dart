@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/services/goal_management_service.dart';
-import '../../progress/widgets/goal_progress_card.dart';
-import '../../progress/shared/types/goal_display_types.dart';
+import '../../progress/widgets/consolidated_goal_card.dart';
+import '../../progress/shared/types/progress_types.dart';
 
 /// Mini version of the goal card for home screen
 /// Shows condensed goal progress and navigates to progress page when tapped
@@ -57,10 +57,10 @@ class _MiniGoalCardState extends State<MiniGoalCard> {
       return _buildGoalCTACard(context);
     }
 
-    // Use the goal progress card in compact variant
-    return GoalProgressCard(
+    // Use the consolidated goal card in mini variant
+    return ConsolidatedGoalCard(
       goalData: _goalData!,
-      variant: GoalCardSize.compact,
+      variant: GoalCardVariant.mini,
       onTap: widget.onTap,
     );
   }

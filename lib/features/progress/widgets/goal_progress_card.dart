@@ -1,0 +1,552 @@
+import 'package:flutter/material.dart';
+import '../shared/components/adaptive_goal_card.dart';
+import '../shared/components/goal_card_components.dart';
+import '../shared/types/goal_display_types.dart';
+import '../shared/utils/goal_type_utils.dart';
+
+/// Goal progress card with adaptive sizing and shared UI components
+class GoalProgressCard extends AdaptiveGoalCard {
+  final VoidCallback? onGoalCompleted;
+  
+  const GoalProgressCard({
+    super.key,
+    required super.goalData,
+    super.onTap,
+    super.variant = GoalCardSize.expanded,
+    this.onGoalCompleted,
+  });
+
+  @override
+  State<GoalProgressCard> createState() => _GoalProgressCardState();
+}
+
+class _GoalProgressCardState extends AdaptiveGoalCardState<GoalProgressCard> {
+  
+  @override
+  Widget build(BuildContext context) {
+    switch (loadingState) {
+      case DataLoadingState.loading:
+        return buildLoadingState();
+      case DataLoadingState.error:
+        return buildErrorState();
+      case DataLoadingState.empty:
+      case DataLoadingState.loaded:
+        return _buildLoadedCard();
+    }
+  }
+
+  Widget _buildLoadedCard() {
+    final data = progressData!;
+    final goalTypeInfo = _getGoalTypeInfo();
+    
+    return GoalCardComponents.buildCardContainer(
+      color: goalTypeInfo['color'],
+      margin: _getCardMargin(),
+      onTap: widget.onTap,
+      child: _buildContent(data, goalTypeInfo),
+    );
+  }
+
+  Widget _buildContent(Map<String, dynamic> data, Map<String, dynamic> goalTypeInfo) {
+    switch (widget.variant) {
+      case GoalCardSize.compact:
+        return _buildCompactContent(data, goalTypeInfo);
+      case GoalCardSize.standard:
+        return _buildStandardContent(data, goalTypeInfo);
+      case GoalCardSize.expanded:
+        return _buildExpandedContent(data, goalTypeInfo);
+    }
+  }
+
+  Widget _buildCompactContent(Map<String, dynamic> data, Map<String, dynamic> goalTypeInfo) {
+    final percentage = ((data['percentage'] as num).toDouble() * 100).clamp(0.0, 100.0);
+    
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                goalTypeInfo['icon'],
+                color: goalTypeInfo['color'],
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  goalTypeInfo['title'],
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          LinearProgressIndicator(
+            value: percentage / 100.0,
+            backgroundColor: Colors.grey[200],
+            valueColor: AlwaysStoppedAnimation<Color>(goalTypeInfo['color']),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${percentage.toStringAsFixed(0)}% Complete',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey[600],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStandardContent(Map<String, dynamic> data, Map<String, dynamic> goalTypeInfo) {
+    final percentage = ((data['percentage'] as num).toDouble() * 100).clamp(0.0, 100.0);
+    final isOnTrack = data['isOnTrack'] ?? true;
+    
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GoalCardComponents.buildCardHeader(
+            goalData: widget.goalData,
+            icon: goalTypeInfo['icon'],
+            color: goalTypeInfo['color'],
+            title: goalTypeInfo['title'],
+            subtitle: goalTypeInfo['subtitle'],
+          ),
+          const SizedBox(height: 12),
+          GoalCardComponents.buildProgressIndicator(
+            percentage: percentage,
+            color: goalTypeInfo['color'],
+            isOnTrack: isOnTrack,
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${percentage.toStringAsFixed(1)}% Complete',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                _getTimelineText(),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+          Text(
+            data['statusText'] ?? 'No status available',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExpandedContent(Map<String, dynamic> data, Map<String, dynamic> goalTypeInfo) {
+    final percentage = ((data['percentage'] as num).toDouble() * 100).clamp(0.0, 100.0);
+    final isOnTrack = data['isOnTrack'] ?? true;
+    final actions = data['recentActions'] as List<dynamic>? ?? [];
+    
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildEnhancedHeader(goalTypeInfo),
+          const SizedBox(height: 16),
+          GoalCardComponents.buildProgressIndicator(
+            percentage: percentage,
+            color: goalTypeInfo['color'],
+            isOnTrack: isOnTrack,
+          ),
+          const SizedBox(height: 16),
+          // Show completion CTA when goal time is up OR when 100% complete
+          Builder(
+            builder: (context) {
+              final endDate = _calculateEndDate();
+              final daysRemaining = _calculateDaysRemaining(endDate);
+              final isTimeUp = daysRemaining <= 0;
+              final isPercentComplete = percentage >= 100.0;
+              
+              if (isTimeUp || isPercentComplete) {
+                return Column(
+                  children: [
+                    _buildGoalCompleteSection(),
+                    const SizedBox(height: 16),
+                  ],
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+          _buildSimplifiedMetrics(data),
+          const SizedBox(height: 16),
+          GoalCardComponents.buildActionsList(
+            actions: actions,
+            title: 'Recent Activity',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Map<String, dynamic> _getGoalTypeInfo() {
+    final goalTypeString = widget.goalData['goalType']?.toString();
+    final displayName = GoalTypeHelper.getDisplayNameFromString(goalTypeString);
+    
+    // Default values
+    IconData icon = Icons.flag;
+    Color color = Colors.blue;
+    String subtitle = 'Track your progress';
+
+    // Customize based on goal type
+    if (goalTypeString != null) {
+      if (goalTypeString.contains('daily')) {
+        icon = Icons.today;
+        color = Colors.green;
+        subtitle = 'Daily tracking goal';
+      } else if (goalTypeString.contains('weekly')) {
+        icon = Icons.calendar_view_week;
+        color = Colors.orange;
+        subtitle = 'Weekly progress goal';
+      } else if (goalTypeString.contains('streak') || goalTypeString.contains('dry')) {
+        icon = Icons.local_fire_department;
+        color = Colors.red;
+        subtitle = 'Streak maintenance goal';
+      } else if (goalTypeString.contains('intervention')) {
+        icon = Icons.psychology;
+        color = Colors.purple;
+        subtitle = 'Intervention success goal';
+      } else if (goalTypeString.contains('mood')) {
+        icon = Icons.sentiment_satisfied;
+        color = Colors.teal;
+        subtitle = 'Mood improvement goal';
+      } else if (goalTypeString.contains('cost')) {
+        icon = Icons.savings;
+        color = Colors.amber;
+        subtitle = 'Cost savings goal';
+      }
+    }
+
+    return {
+      'title': displayName,
+      'subtitle': subtitle,
+      'icon': icon,
+      'color': color,
+    };
+  }
+
+  EdgeInsets _getCardMargin() {
+    switch (widget.variant) {
+      case GoalCardSize.compact:
+        return const EdgeInsets.symmetric(horizontal: 8, vertical: 4);
+      case GoalCardSize.standard:
+        return const EdgeInsets.symmetric(horizontal: 12, vertical: 6);
+      case GoalCardSize.expanded:
+        return const EdgeInsets.symmetric(horizontal: 16, vertical: 8);
+    }
+  }
+
+  DateTime? _calculateEndDate() {
+    final startDate = DateTime.tryParse(widget.goalData['startDate'] ?? '');
+    if (startDate == null) return null;
+    
+    final parameters = widget.goalData['parameters'] as Map<String, dynamic>? ?? {};
+    final goalType = widget.goalData['goalType']?.toString();
+    
+    // Calculate end date based on goal type and duration
+    if (goalType?.contains('daily') == true) {
+      final weeks = parameters['durationWeeks'] as int? ?? 4;
+      return startDate.add(Duration(days: weeks * 7));
+    } else if (goalType?.contains('weekly') == true || goalType?.contains('cost') == true) {
+      final months = parameters['durationMonths'] as int? ?? 3;
+      return DateTime(startDate.year, startDate.month + months, startDate.day);
+    } else if (goalType?.contains('intervention') == true) {
+      final weeks = parameters['durationWeeks'] as int? ?? 4;
+      return startDate.add(Duration(days: weeks * 7));
+    }
+    
+    // Default to 30 days
+    return startDate.add(const Duration(days: 30));
+  }
+  
+  int _calculateDaysRemaining(DateTime? endDate) {
+    if (endDate == null) return 0;
+    final now = DateTime.now();
+    final difference = endDate.difference(now).inDays;
+    return difference > 0 ? difference : 0;
+  }
+  
+  int _calculateDaysSinceStart(DateTime? startDate) {
+    if (startDate == null) return 0;
+    final now = DateTime.now();
+    return now.difference(startDate).inDays + 1; // +1 to include start day
+  }
+  
+  String _formatShortDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date).inDays;
+    
+    if (difference == 0) return 'Today';
+    if (difference == 1) return 'Yesterday';
+    if (difference < 7) return '${difference}d ago';
+    
+    return '${date.month}/${date.day}';
+  }
+
+  String _getTimelineText() {
+    final endDate = _calculateEndDate();
+    final daysRemaining = _calculateDaysRemaining(endDate);
+    final startDate = DateTime.tryParse(widget.goalData['startDate'] ?? '');
+    final daysSinceStart = _calculateDaysSinceStart(startDate);
+    
+    if (daysRemaining <= 0) {
+      return 'Goal period ended';
+    } else if (daysRemaining == 1) {
+      return '1 day remaining';
+    } else if (daysRemaining <= 7) {
+      return '$daysRemaining days remaining';
+    } else if (daysSinceStart == 1) {
+      return 'Started today';
+    } else {
+      return 'Day $daysSinceStart of goal';
+    }
+  }
+
+  Widget _buildEnhancedHeader(Map<String, dynamic> goalTypeInfo) {
+    final startDate = DateTime.tryParse(widget.goalData['startDate'] ?? '');
+    
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: goalTypeInfo['color'].withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            goalTypeInfo['icon'],
+            color: goalTypeInfo['color'],
+            size: 24,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                goalTypeInfo['title'],
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                goalTypeInfo['subtitle'],
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (startDate != null)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  'Started',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  _formatShortDate(startDate),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildGoalCompleteSection() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.green[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.green[200]!),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.celebration, color: Colors.green[600], size: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Goal Complete! 🎉',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green[700],
+                  ),
+                ),
+                Text(
+                  'Ready to set your next challenge?',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.green[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              // Navigate to goal setup or call callback
+              widget.onGoalCompleted?.call();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green[600],
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text('Set New Goal'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSimplifiedMetrics(Map<String, dynamic> data) {
+    final endDate = _calculateEndDate();
+    final daysRemaining = _calculateDaysRemaining(endDate);
+    final goalType = widget.goalData['goalType']?.toString();
+    
+    // For intervention goals, check if target success rate is achieved
+    bool isInterventionGoalComplete = false;
+    if (goalType?.contains('intervention') == true) {
+      // Check if interventionStats data exists for percentage-based goals
+      final interventionStats = data['interventionStats'] as Map<String, dynamic>?;
+      if (interventionStats != null) {
+        final currentRate = interventionStats['currentSuccessRate'] as double? ?? 0.0;
+        final targetRate = interventionStats['targetSuccessRate'] as double? ?? 0.7;
+        final totalInterventions = interventionStats['totalInterventions'] as int? ?? 0;
+        // Goal is complete if they have at least 3 interventions and met the target rate
+        isInterventionGoalComplete = totalInterventions >= 3 && currentRate >= targetRate;
+      } else {
+        // Fallback for old win-count based goals
+        final currentWins = int.tryParse(data['currentMetric']?.toString().replaceAll(RegExp(r'[^\d]'), '') ?? '0') ?? 0;
+        final targetWins = int.tryParse(data['targetMetric']?.toString().replaceAll(RegExp(r'[^\d]'), '') ?? '0') ?? 0;
+        isInterventionGoalComplete = currentWins >= targetWins;
+      }
+    }
+    
+    // Max 3 boxes: Current, Target, Status/Days Left
+    return Row(
+      children: [
+        Expanded(
+          child: GoalCardComponents.buildMetricChip(
+            label: 'Current',
+            value: data['currentMetric']?.toString() ?? '0',
+            color: Colors.blue,
+            icon: Icons.check_circle_outline,
+          ),
+        ),
+        Expanded(
+          child: GoalCardComponents.buildMetricChip(
+            label: 'Target',
+            value: data['targetMetric']?.toString() ?? 'N/A',
+            color: Colors.green,
+            icon: Icons.flag_outlined,
+          ),
+        ),
+        Expanded(
+          child: GoalCardComponents.buildMetricChip(
+            label: _getThirdMetricLabel(daysRemaining, isInterventionGoalComplete),
+            value: _getThirdMetricValue(daysRemaining, isInterventionGoalComplete),
+            color: _getThirdMetricColor(daysRemaining, isInterventionGoalComplete),
+            icon: _getThirdMetricIcon(daysRemaining, isInterventionGoalComplete),
+          ),
+        ),
+      ],
+    );
+  }
+  
+  String _getThirdMetricLabel(int daysRemaining, bool isInterventionGoalComplete) {
+    if (isInterventionGoalComplete) {
+      return 'Status';
+    } else if (daysRemaining > 0) {
+      return 'Days Left';
+    } else {
+      return 'Status';
+    }
+  }
+  
+  String _getThirdMetricValue(int daysRemaining, bool isInterventionGoalComplete) {
+    if (isInterventionGoalComplete) {
+      return 'Complete';
+    } else if (daysRemaining > 0) {
+      return daysRemaining.toString();
+    } else {
+      return 'Time Up';
+    }
+  }
+  
+  Color _getThirdMetricColor(int daysRemaining, bool isInterventionGoalComplete) {
+    if (isInterventionGoalComplete) {
+      return Colors.green;
+    } else if (daysRemaining > 7) {
+      return Colors.teal;
+    } else if (daysRemaining > 0) {
+      return Colors.red;
+    } else {
+      return Colors.grey;
+    }
+  }
+  
+  IconData _getThirdMetricIcon(int daysRemaining, bool isInterventionGoalComplete) {
+    if (isInterventionGoalComplete) {
+      return Icons.check_circle;
+    } else if (daysRemaining > 0) {
+      return Icons.timer;
+    } else {
+      return Icons.schedule;
+    }
+  }
+}

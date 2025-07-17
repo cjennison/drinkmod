@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../../../core/models/user_goal.dart';
 import '../../../../core/services/drink_tracking_service.dart';
+import '../../shared/components/goal_form_components.dart';
 
 /// Goal parameters configuration step with smart defaults and validation
 class GoalParametersStep extends StatefulWidget {
@@ -22,137 +22,209 @@ class _GoalParametersStepState extends State<GoalParametersStep> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
-  
-  // Parameter controllers
-  final _weeklyDrinksController = TextEditingController();
-  final _dailyLimitController = TextEditingController();
+  final _primaryController = TextEditingController();
   final _durationController = TextEditingController();
-  final _alcoholFreeDaysController = TextEditingController();
-  final _interventionWinsController = TextEditingController();
-  final _targetMoodController = TextEditingController();
-  final _costSavingsController = TextEditingController();
   
-  Map<String, dynamic> _currentBaseline = {};
+  Map<String, dynamic> _baseline = {};
   bool _isLoading = true;
+  String? _selectedDurationUnit = 'Weeks';
   
   @override
   void initState() {
     super.initState();
     _loadBaseline();
-    _setDefaultValues();
+    _setDefaults();
   }
   
   @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
-    _weeklyDrinksController.dispose();
-    _dailyLimitController.dispose();
+    _primaryController.dispose();
     _durationController.dispose();
-    _alcoholFreeDaysController.dispose();
-    _interventionWinsController.dispose();
-    _targetMoodController.dispose();
-    _costSavingsController.dispose();
     super.dispose();
   }
   
   Future<void> _loadBaseline() async {
     try {
-      // Get user's current drinking baseline
       final analytics = DrinkTrackingService.instance;
-      final averageDaily = analytics.calculateAverageDrinksPerDay();
-      
-      // Calculate proper weekly average based on daily average and drinking frequency
-      // This gives a more accurate representation than just the current week
-      final weeklyAverage = _calculateHistoricalWeeklyAverage(analytics);
-      
       setState(() {
-        _currentBaseline = {
-          'weeklyAverage': weeklyAverage,
-          'dailyAverage': averageDaily,
+        _baseline = {
+          'weeklyAverage': _calculateWeeklyAverage(analytics),
+          'dailyAverage': analytics.calculateAverageDrinksPerDay(),
         };
         _isLoading = false;
       });
     } catch (e) {
       setState(() {
-        _currentBaseline = {
-          'weeklyAverage': 7.0,
-          'dailyAverage': 1.0,
-        };
+        _baseline = {'weeklyAverage': 7.0, 'dailyAverage': 1.0};
         _isLoading = false;
       });
     }
   }
 
-  /// Calculate weekly average based on historical data
-  double _calculateHistoricalWeeklyAverage(DrinkTrackingService analytics) {
-    final allEntries = analytics.getAllDrinkEntries();
-    if (allEntries.isEmpty) return 0.0;
-
-    // Group entries by week
-    final weeklyTotals = <String, double>{};
+  double _calculateWeeklyAverage(DrinkTrackingService analytics) {
+    final entries = analytics.getAllDrinkEntries();
+    if (entries.isEmpty) return 0.0;
     
-    for (final entry in allEntries) {
+    final weeklyTotals = <String, double>{};
+    for (final entry in entries) {
       final date = DateTime.parse(entry['drinkDate']);
-      // Get Monday of that week as the week key
       final monday = date.subtract(Duration(days: date.weekday - 1));
       final weekKey = '${monday.year}-${monday.month}-${monday.day}';
-      
       weeklyTotals[weekKey] = (weeklyTotals[weekKey] ?? 0.0) + (entry['standardDrinks'] as double);
     }
     
     if (weeklyTotals.isEmpty) return 0.0;
-    
-    // Calculate average across all weeks with data
-    final totalDrinks = weeklyTotals.values.fold<double>(0.0, (sum, drinks) => sum + drinks);
-    return totalDrinks / weeklyTotals.length;
+    return weeklyTotals.values.fold<double>(0.0, (sum, drinks) => sum + drinks) / weeklyTotals.length;
   }
   
-  void _setDefaultValues() {
-    switch (widget.goalType) {
+  void _setDefaults() {
+    final defaults = _getGoalDefaults(widget.goalType);
+    _titleController.text = defaults['title']!;
+    _descriptionController.text = defaults['description']!;
+    _primaryController.text = defaults['primaryValue']!;
+    _durationController.text = defaults['duration']!;
+    _selectedDurationUnit = defaults['durationUnit']!;
+  }
+
+  Map<String, String> _getGoalDefaults(GoalType type) {
+    switch (type) {
       case GoalType.weeklyReduction:
-        _titleController.text = 'Reduce Weekly Drinking';
-        _descriptionController.text = 'Gradually reduce my weekly alcohol consumption to a healthier level';
-        _durationController.text = '3';
-        break;
+        return {
+          'title': 'Reduce Weekly Drinking',
+          'description': 'Gradually reduce my weekly alcohol consumption',
+          'primaryValue': '5',
+          'duration': '3',
+          'durationUnit': 'Months',
+        };
       case GoalType.dailyLimit:
-        _titleController.text = 'Daily Drink Limit';
-        _descriptionController.text = 'Stay within my daily drink limit consistently';
-        _dailyLimitController.text = '2';
-        _durationController.text = '4';
-        break;
+        return {
+          'title': 'Daily Drink Limit',
+          'description': 'Stay within my daily drink limit',
+          'primaryValue': '2',
+          'duration': '4',
+          'durationUnit': 'Weeks',
+        };
       case GoalType.alcoholFreeDays:
-        _titleController.text = 'Alcohol-Free Days';
-        _descriptionController.text = 'Maintain regular alcohol-free days each week';
-        _alcoholFreeDaysController.text = '3';
-        _durationController.text = '2';
-        break;
+        return {
+          'title': 'Alcohol-Free Days',
+          'description': 'Maintain regular alcohol-free days',
+          'primaryValue': '3',
+          'duration': '2',
+          'durationUnit': 'Months',
+        };
       case GoalType.interventionWins:
-        _titleController.text = 'Intervention Success';
-        _descriptionController.text = 'Build strength by choosing not to drink when prompted';
-        _interventionWinsController.text = '10';
-        _durationController.text = '6';
-        break;
+        return {
+          'title': 'Intervention Success Rate',
+          'description': 'Succeed in X% of intervention moments when they occur',
+          'primaryValue': '70',
+          'duration': '8',
+          'durationUnit': 'Weeks',
+        };
       case GoalType.moodImprovement:
-        _titleController.text = 'Mood & Wellbeing';
-        _descriptionController.text = 'Improve my overall mood and energy through mindful drinking';
-        _targetMoodController.text = '7';
-        _durationController.text = '8';
-        break;
+        return {
+          'title': 'Mood & Wellbeing',
+          'description': 'Improve mood through mindful drinking',
+          'primaryValue': '7',
+          'duration': '8',
+          'durationUnit': 'Weeks',
+        };
       case GoalType.costSavings:
-        _titleController.text = 'Cost Savings';
-        _descriptionController.text = 'Save money by reducing my alcohol spending';
-        _costSavingsController.text = '200';
-        _durationController.text = '3';
-        break;
+        return {
+          'title': 'Cost Savings',
+          'description': 'Save money by reducing alcohol spending',
+          'primaryValue': '200',
+          'duration': '3',
+          'durationUnit': 'Months',
+        };
       case GoalType.streakMaintenance:
+        return {
+          'title': 'Streak Maintenance',
+          'description': 'Maintain a consistent streak',
+          'primaryValue': '30',
+          'duration': '3',
+          'durationUnit': 'Months',
+        };
       case GoalType.customGoal:
-        _titleController.text = 'Custom Goal';
-        _descriptionController.text = 'My personalized drinking goal';
-        break;
+        return {
+          'title': 'Custom Goal',
+          'description': 'My personalized drinking goal',
+          'primaryValue': '1',
+          'duration': '1',
+          'durationUnit': 'Weeks',
+        };
     }
   }
-  
+
+  String _getPrimaryFieldLabel() {
+    switch (widget.goalType) {
+      case GoalType.weeklyReduction:
+        return 'Target Drinks Per Week';
+      case GoalType.dailyLimit:
+        return 'Daily Limit';
+      case GoalType.alcoholFreeDays:
+        return 'Alcohol-Free Days Per Week';
+      case GoalType.interventionWins:
+        return 'Target Success Rate (%)';
+      case GoalType.moodImprovement:
+        return 'Target Mood Rating (1-10)';
+      case GoalType.costSavings:
+        return 'Target Savings';
+      case GoalType.streakMaintenance:
+        return 'Streak Days';
+      case GoalType.customGoal:
+        return 'Target Value';
+    }
+  }
+
+  Map<String, dynamic> _buildParameters() {
+    final primaryValue = double.parse(_primaryController.text);
+    final duration = int.parse(_durationController.text);
+    
+    final params = <String, dynamic>{
+      'targetValue': primaryValue,
+      'duration': duration,
+      'durationUnit': _selectedDurationUnit?.toLowerCase(),
+      'currentBaseline': _baseline,
+    };
+
+    switch (widget.goalType) {
+      case GoalType.weeklyReduction:
+        params['targetWeeklyDrinks'] = primaryValue.toInt();
+        params['durationMonths'] = duration;
+        break;
+      case GoalType.dailyLimit:
+        params['dailyLimit'] = primaryValue.toInt();
+        params['durationWeeks'] = duration;
+        break;
+      case GoalType.alcoholFreeDays:
+        params['alcoholFreeDaysPerWeek'] = primaryValue.toInt();
+        params['durationMonths'] = duration;
+        break;
+      case GoalType.interventionWins:
+        params['targetSuccessRate'] = primaryValue.toInt(); // Store as percentage (70 = 70%)
+        params['durationWeeks'] = duration;
+        break;
+      case GoalType.moodImprovement:
+        params['targetAverageMood'] = primaryValue;
+        params['durationWeeks'] = duration;
+        break;
+      case GoalType.costSavings:
+        params['targetSavings'] = primaryValue;
+        params['durationMonths'] = duration;
+        break;
+      case GoalType.streakMaintenance:
+        params['streakDays'] = primaryValue.toInt();
+        break;
+      case GoalType.customGoal:
+        params['customValue'] = primaryValue;
+        break;
+    }
+    
+    return params;
+  }
+
   void _onContinue() {
     if (_formKey.currentState!.validate()) {
       final parameters = _buildParameters();
@@ -163,632 +235,134 @@ class _GoalParametersStepState extends State<GoalParametersStep> {
       );
     }
   }
-  
-  Map<String, dynamic> _buildParameters() {
-    final params = <String, dynamic>{};
-    
-    switch (widget.goalType) {
-      case GoalType.weeklyReduction:
-        params['targetWeeklyDrinks'] = int.parse(_weeklyDrinksController.text);
-        params['durationMonths'] = int.parse(_durationController.text);
-        params['currentBaseline'] = _currentBaseline['weeklyAverage'] ?? 7.0;
-        params['targetValue'] = int.parse(_weeklyDrinksController.text).toDouble();
-        break;
-      case GoalType.dailyLimit:
-        params['dailyLimit'] = int.parse(_dailyLimitController.text);
-        params['durationWeeks'] = int.parse(_durationController.text);
-        params['allowedViolations'] = 0;
-        params['targetValue'] = int.parse(_durationController.text) * 7.0;
-        break;
-      case GoalType.alcoholFreeDays:
-        params['alcoholFreeDaysPerWeek'] = int.parse(_alcoholFreeDaysController.text);
-        params['durationMonths'] = int.parse(_durationController.text);
-        params['targetValue'] = int.parse(_durationController.text) * 4.33;
-        break;
-      case GoalType.interventionWins:
-        params['targetInterventionWins'] = int.parse(_interventionWinsController.text);
-        params['durationWeeks'] = int.parse(_durationController.text);
-        params['targetValue'] = int.parse(_interventionWinsController.text).toDouble();
-        break;
-      case GoalType.moodImprovement:
-        params['targetAverageMood'] = double.parse(_targetMoodController.text);
-        params['durationWeeks'] = int.parse(_durationController.text);
-        params['targetValue'] = double.parse(_targetMoodController.text);
-        break;
-      case GoalType.costSavings:
-        params['targetSavings'] = double.parse(_costSavingsController.text);
-        params['durationMonths'] = int.parse(_durationController.text);
-        params['baselineMonthlyCost'] = _estimateMonthlyCost();
-        params['targetValue'] = double.parse(_costSavingsController.text);
-        break;
-      case GoalType.streakMaintenance:
-      case GoalType.customGoal:
-        params['targetValue'] = 1.0;
-        break;
+
+  Widget _buildBaselineInfo() {
+    if (_isLoading) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              SizedBox(width: 12),
+              Text('Loading your drinking baseline...'),
+            ],
+          ),
+        ),
+      );
     }
-    
-    return params;
-  }
-  
-  double _estimateMonthlyCost() {
-    // Rough estimate: $8 per drink, weekly average
-    final weeklyAverage = _currentBaseline['weeklyAverage'] as double? ?? 7.0;
-    return weeklyAverage * 4.33 * 8.0;
+
+    return Card(
+      color: Colors.blue.shade50,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.info, color: Colors.blue.shade700),
+                const SizedBox(width: 8),
+                Text(
+                  'Your Current Baseline',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue.shade700,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text('Weekly Average: ${_baseline['weeklyAverage']?.toStringAsFixed(1) ?? '0'} drinks'),
+            Text('Daily Average: ${_baseline['dailyAverage']?.toStringAsFixed(1) ?? '0'} drinks'),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              _buildHeader(),
-              
-              const SizedBox(height: 20),
-              
-              // Current baseline info
-              _buildBaselineInfo(),
-              
-              const SizedBox(height: 20),
-              
-              // Form fields - expandable scrollable area
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      _buildTitleField(),
-                      const SizedBox(height: 16),
-                      _buildDescriptionField(),
-                      const SizedBox(height: 20),
-                      ..._buildGoalSpecificFields(),
-                      const SizedBox(height: 20), // Bottom padding for scroll
-                    ],
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Goal Parameters'),
+        elevation: 0,
+      ),
+      body: Form(
+        key: _formKey,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            _buildBaselineInfo(),
+            const SizedBox(height: 16),
+            
+            GoalFormComponents.buildFormSection(
+              title: 'Goal Details',
+              subtitle: 'Give your goal a name and description',
+              children: [
+                GoalFormComponents.buildTextInput(
+                  controller: _titleController,
+                  label: 'Goal Title',
+                  hint: 'Enter a motivating title for your goal',
+                  isRequired: true,
+                  maxLength: 50,
+                ),
+                GoalFormComponents.buildTextInput(
+                  controller: _descriptionController,
+                  label: 'Description',
+                  hint: 'Describe what this goal means to you',
+                  maxLength: 200,
+                  maxLines: 3,
+                ),
+              ],
+            ),
+            
+            GoalFormComponents.buildFormSection(
+              title: 'Target & Duration',
+              subtitle: 'Set your target and timeframe',
+              children: [
+                if (widget.goalType == GoalType.costSavings)
+                  GoalFormComponents.buildMoneyField(
+                    controller: _primaryController,
+                    label: _getPrimaryFieldLabel(),
+                    isRequired: true,
+                  )
+                else
+                  GoalFormComponents.buildGoalTypeField(
+                    goalType: widget.goalType,
+                    label: _getPrimaryFieldLabel(),
+                    controller: _primaryController,
+                    isRequired: true,
                   ),
+                GoalFormComponents.buildDurationField(
+                  controller: _durationController,
+                  selectedUnit: _selectedDurationUnit,
+                  onUnitChanged: (unit) {
+                    setState(() {
+                      _selectedDurationUnit = unit;
+                    });
+                  },
+                  isRequired: true,
                 ),
-              ),
-              
-              // Continue button - always visible at bottom
-              _buildContinueButton(),
-              const SizedBox(height: 12),
-            ],
+              ],
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.all(16),
+        child: ElevatedButton(
+          onPressed: _onContinue,
+          style: ElevatedButton.styleFrom(
+            minimumSize: const Size(double.infinity, 50),
           ),
+          child: const Text('Continue'),
         ),
       ),
     );
-  }
-  
-  Widget _buildHeader() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Configure Your Goal',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          'Set specific parameters for your ${_getGoalTypeName()} goal.',
-          style: TextStyle(
-            fontSize: 15,
-            color: Colors.grey.shade600,
-            height: 1.2,
-          ),
-        ),
-      ],
-    );
-  }
-  
-  Widget _buildBaselineInfo() {
-    final weeklyAverage = _currentBaseline['weeklyAverage'] as double? ?? 0.0;
-    final dailyAverage = _currentBaseline['dailyAverage'] as double? ?? 0.0;
-    
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.blue.shade100),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.analytics_outlined, color: Colors.blue.shade600, size: 18),
-              const SizedBox(width: 6),
-              const Text(
-                'Your Current Pattern',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _buildBaselineItem(
-                  'Weekly Average',
-                  '${weeklyAverage.toStringAsFixed(1)} drinks',
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildBaselineItem(
-                  'Daily Average',
-                  '${dailyAverage.toStringAsFixed(1)} drinks',
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildBaselineItem(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey.shade600,
-          ),
-        ),
-      ],
-    );
-  }
-  
-  Widget _buildTitleField() {
-    return TextFormField(
-      controller: _titleController,
-      decoration: InputDecoration(
-        labelText: 'Goal Title',
-        hintText: 'Give your goal a motivating name',
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-      validator: (value) {
-        if (value == null || value.trim().isEmpty) {
-          return 'Please enter a goal title';
-        }
-        if (value.trim().length < 3) {
-          return 'Title must be at least 3 characters';
-        }
-        return null;
-      },
-    );
-  }
-  
-  Widget _buildDescriptionField() {
-    return TextFormField(
-      controller: _descriptionController,
-      maxLines: 3,
-      decoration: InputDecoration(
-        labelText: 'Description (Optional)',
-        hintText: 'Describe what this goal means to you',
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    );
-  }
-  
-  List<Widget> _buildGoalSpecificFields() {
-    switch (widget.goalType) {
-      case GoalType.weeklyReduction:
-        return _buildWeeklyReductionFields();
-      case GoalType.dailyLimit:
-        return _buildDailyLimitFields();
-      case GoalType.alcoholFreeDays:
-        return _buildAlcoholFreeDaysFields();
-      case GoalType.interventionWins:
-        return _buildInterventionWinsFields();
-      case GoalType.moodImprovement:
-        return _buildMoodImprovementFields();
-      case GoalType.costSavings:
-        return _buildCostSavingsFields();
-      case GoalType.streakMaintenance:
-      case GoalType.customGoal:
-        return [];
-    }
-  }
-  
-  List<Widget> _buildWeeklyReductionFields() {
-    final currentWeekly = _currentBaseline['weeklyAverage'] as double? ?? 7.0;
-    final recommendedTarget = (currentWeekly * 0.7).round(); // 30% reduction
-    
-    if (_weeklyDrinksController.text.isEmpty) {
-      _weeklyDrinksController.text = recommendedTarget.toString();
-    }
-    
-    return [
-      TextFormField(
-        controller: _weeklyDrinksController,
-        keyboardType: TextInputType.number,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: InputDecoration(
-          labelText: 'Target Weekly Drinks',
-          hintText: 'Recommended: $recommendedTarget',
-          helperText: 'Current average: ${currentWeekly.toStringAsFixed(1)} drinks/week',
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Please enter target weekly drinks';
-          }
-          final number = int.tryParse(value);
-          if (number == null || number < 0) {
-            return 'Please enter a valid number';
-          }
-          if (number >= currentWeekly) {
-            return 'Target should be less than current average (${currentWeekly.toStringAsFixed(1)})';
-          }
-          return null;
-        },
-      ),
-      const SizedBox(height: 20),
-      TextFormField(
-        controller: _durationController,
-        keyboardType: TextInputType.number,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: InputDecoration(
-          labelText: 'Duration (Months)',
-          hintText: 'How long to reach this goal',
-          helperText: 'Recommended: 2-6 months for sustainable change',
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Please enter duration';
-          }
-          final number = int.tryParse(value);
-          if (number == null || number < 1 || number > 12) {
-            return 'Duration must be between 1-12 months';
-          }
-          return null;
-        },
-      ),
-    ];
-  }
-  
-  List<Widget> _buildDailyLimitFields() {
-    return [
-      TextFormField(
-        controller: _dailyLimitController,
-        keyboardType: TextInputType.number,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: InputDecoration(
-          labelText: 'Daily Limit (Drinks)',
-          hintText: 'Maximum drinks per day',
-          helperText: 'Health guidelines suggest 1-2 drinks per day',
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Please enter daily limit';
-          }
-          final number = int.tryParse(value);
-          if (number == null || number < 0 || number > 10) {
-            return 'Daily limit must be between 0-10 drinks';
-          }
-          return null;
-        },
-      ),
-      const SizedBox(height: 20),
-      TextFormField(
-        controller: _durationController,
-        keyboardType: TextInputType.number,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: InputDecoration(
-          labelText: 'Duration (Weeks)',
-          hintText: 'How many weeks to maintain this limit',
-          helperText: 'Start with 2-4 weeks, then extend if successful',
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Please enter duration';
-          }
-          final number = int.tryParse(value);
-          if (number == null || number < 1 || number > 52) {
-            return 'Duration must be between 1-52 weeks';
-          }
-          return null;
-        },
-      ),
-    ];
-  }
-  
-  List<Widget> _buildAlcoholFreeDaysFields() {
-    return [
-      TextFormField(
-        controller: _alcoholFreeDaysController,
-        keyboardType: TextInputType.number,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: InputDecoration(
-          labelText: 'Alcohol-Free Days Per Week',
-          hintText: 'Number of AF days weekly',
-          helperText: 'Start with 2-3 days, increase gradually',
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Please enter alcohol-free days';
-          }
-          final number = int.tryParse(value);
-          if (number == null || number < 1 || number > 7) {
-            return 'Must be between 1-7 days per week';
-          }
-          return null;
-        },
-      ),
-      const SizedBox(height: 20),
-      TextFormField(
-        controller: _durationController,
-        keyboardType: TextInputType.number,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: InputDecoration(
-          labelText: 'Duration (Months)',
-          hintText: 'How long to maintain this pattern',
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Please enter duration';
-          }
-          final number = int.tryParse(value);
-          if (number == null || number < 1 || number > 12) {
-            return 'Duration must be between 1-12 months';
-          }
-          return null;
-        },
-      ),
-    ];
-  }
-  
-  List<Widget> _buildInterventionWinsFields() {
-    return [
-      TextFormField(
-        controller: _interventionWinsController,
-        keyboardType: TextInputType.number,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: InputDecoration(
-          labelText: 'Target Intervention Wins',
-          hintText: 'Number of successful "no" choices',
-          helperText: 'Start with 5-10 wins to build confidence',
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Please enter target wins';
-          }
-          final number = int.tryParse(value);
-          if (number == null || number < 1 || number > 100) {
-            return 'Target must be between 1-100 wins';
-          }
-          return null;
-        },
-      ),
-      const SizedBox(height: 20),
-      TextFormField(
-        controller: _durationController,
-        keyboardType: TextInputType.number,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: InputDecoration(
-          labelText: 'Duration (Weeks)',
-          hintText: 'Time frame to achieve wins',
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Please enter duration';
-          }
-          final number = int.tryParse(value);
-          if (number == null || number < 1 || number > 52) {
-            return 'Duration must be between 1-52 weeks';
-          }
-          return null;
-        },
-      ),
-    ];
-  }
-  
-  List<Widget> _buildMoodImprovementFields() {
-    return [
-      TextFormField(
-        controller: _targetMoodController,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        decoration: InputDecoration(
-          labelText: 'Target Average Mood (1-10)',
-          hintText: 'Desired mood score',
-          helperText: '7+ is considered good wellbeing',
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Please enter target mood';
-          }
-          final number = double.tryParse(value);
-          if (number == null || number < 1 || number > 10) {
-            return 'Mood must be between 1-10';
-          }
-          return null;
-        },
-      ),
-      const SizedBox(height: 20),
-      TextFormField(
-        controller: _durationController,
-        keyboardType: TextInputType.number,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: InputDecoration(
-          labelText: 'Duration (Weeks)',
-          hintText: 'Time to achieve mood target',
-          helperText: 'Allow 4-8 weeks to see mood changes',
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Please enter duration';
-          }
-          final number = int.tryParse(value);
-          if (number == null || number < 2 || number > 52) {
-            return 'Duration must be between 2-52 weeks';
-          }
-          return null;
-        },
-      ),
-    ];
-  }
-  
-  List<Widget> _buildCostSavingsFields() {
-    final estimatedSavings = _estimateMonthlyCost() * 0.3; // 30% reduction
-    
-    if (_costSavingsController.text.isEmpty) {
-      _costSavingsController.text = estimatedSavings.round().toString();
-    }
-    
-    return [
-      TextFormField(
-        controller: _costSavingsController,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        decoration: InputDecoration(
-          labelText: 'Target Savings (\$)',
-          hintText: 'Amount to save',
-          helperText: 'Estimated potential: \$${estimatedSavings.round()}/month',
-          prefixText: '\$',
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Please enter target savings';
-          }
-          final number = double.tryParse(value);
-          if (number == null || number < 1) {
-            return 'Savings must be a positive amount';
-          }
-          return null;
-        },
-      ),
-      const SizedBox(height: 20),
-      TextFormField(
-        controller: _durationController,
-        keyboardType: TextInputType.number,
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: InputDecoration(
-          labelText: 'Duration (Months)',
-          hintText: 'Time frame to save money',
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Please enter duration';
-          }
-          final number = int.tryParse(value);
-          if (number == null || number < 1 || number > 12) {
-            return 'Duration must be between 1-12 months';
-          }
-          return null;
-        },
-      ),
-    ];
-  }
-  
-  Widget _buildContinueButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: _onContinue,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue.shade600,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 2,
-        ),
-        child: const Text(
-          'Continue',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    );
-  }
-  
-  String _getGoalTypeName() {
-    switch (widget.goalType) {
-      case GoalType.weeklyReduction:
-        return 'Weekly Reduction';
-      case GoalType.dailyLimit:
-        return 'Daily Limit';
-      case GoalType.alcoholFreeDays:
-        return 'Alcohol-Free Days';
-      case GoalType.interventionWins:
-        return 'Intervention Success';
-      case GoalType.moodImprovement:
-        return 'Mood & Wellbeing';
-      case GoalType.costSavings:
-        return 'Cost Savings';
-      case GoalType.streakMaintenance:
-        return 'Streak Maintenance';
-      case GoalType.customGoal:
-        return 'Custom Goal';
-    }
   }
 }

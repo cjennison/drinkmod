@@ -16,6 +16,7 @@ class GoalSetupWizard extends StatefulWidget {
   final VoidCallback? onSkipped;
   final VoidCallback? onShowHistory;
   final bool canPop; // New parameter to control navigation behavior
+  final bool isReplacingGoal; // New parameter to indicate goal replacement
   
   const GoalSetupWizard({
     super.key,
@@ -23,6 +24,7 @@ class GoalSetupWizard extends StatefulWidget {
     this.onSkipped,
     this.onShowHistory,
     this.canPop = true, // Default to true for backward compatibility
+    this.isReplacingGoal = false, // Default to false for first-time setup
   });
 
   @override
@@ -40,15 +42,24 @@ class _GoalSetupWizardState extends State<GoalSetupWizard> {
   String _goalTitle = '';
   String _goalDescription = '';
   Map<String, dynamic>? _existingGoal;
+  bool _isFirstGoal = true; // Track if this is the user's first goal
   
   static const int totalSteps = 5;
 
   @override
   void initState() {
     super.initState();
-    // Check for existing goal after the first frame is rendered
+    // Check for existing goal and goal history after the first frame is rendered
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkForExistingGoal();
+      _checkGoalHistory();
+    });
+  }
+
+  void _checkGoalHistory() {
+    final goalHistory = _goalService.getGoalHistory();
+    setState(() {
+      _isFirstGoal = goalHistory.isEmpty;
     });
   }
 
@@ -58,8 +69,43 @@ class _GoalSetupWizardState extends State<GoalSetupWizard> {
       setState(() {
         _existingGoal = existingGoal;
       });
+      
+      // Check if the existing goal is completed (no days remaining)
+      if (_isGoalCompleted(existingGoal)) {
+        // Goal is completed, proceed directly without replacement dialog
+        return;
+      }
+      
+      // Goal is still active, show replacement dialog
       await _showGoalReplacementDialog();
     }
+  }
+
+  /// Check if a goal is completed based on days remaining
+  bool _isGoalCompleted(Map<String, dynamic> goalData) {
+    final startDate = DateTime.tryParse(goalData['startDate'] ?? '');
+    if (startDate == null) return false;
+    
+    final parameters = goalData['parameters'] as Map<String, dynamic>? ?? {};
+    final goalType = goalData['goalType']?.toString();
+    
+    // Calculate end date based on goal type and duration
+    DateTime endDate;
+    if (goalType?.contains('daily') == true) {
+      final weeks = parameters['durationWeeks'] as int? ?? 4;
+      endDate = startDate.add(Duration(days: weeks * 7));
+    } else if (goalType?.contains('weekly') == true || goalType?.contains('cost') == true) {
+      final months = parameters['durationMonths'] as int? ?? 3;
+      endDate = DateTime(startDate.year, startDate.month + months, startDate.day);
+    } else {
+      // Default to 30 days
+      endDate = startDate.add(const Duration(days: 30));
+    }
+    
+    // Calculate days remaining
+    final now = DateTime.now();
+    final difference = endDate.difference(now).inDays;
+    return difference <= 0; // Goal is completed if no days remaining
   }
 
   Future<void> _showGoalReplacementDialog() async {
@@ -380,7 +426,7 @@ class _GoalSetupWizardState extends State<GoalSetupWizard> {
             )
           : null,
         actions: [
-          if (_currentStep < totalSteps - 2) // Don't show skip on confirmation steps
+          if (_currentStep < totalSteps - 2 && !_isFirstGoal && widget.onSkipped != null) // Don't show skip on confirmation steps, for first-time users, or when no skip callback
             TextButton(
               onPressed: _skipGoalSetup,
               child: Text(
@@ -406,6 +452,7 @@ class _GoalSetupWizardState extends State<GoalSetupWizard> {
               children: [
                 WelcomeStep(
                   onNext: _nextStep,
+                  isReplacingGoal: widget.isReplacingGoal,
                 ),
                 GoalTypeSelectionStep(
                   onGoalTypeSelected: _onGoalTypeSelected,

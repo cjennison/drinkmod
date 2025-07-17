@@ -6,10 +6,12 @@ import '../../../../core/services/goal_management_service.dart';
 /// Welcome step that introduces the goal system with personalized motivation
 class WelcomeStep extends StatelessWidget {
   final VoidCallback onNext;
+  final bool isReplacingGoal;
   
   const WelcomeStep({
     super.key,
     required this.onNext,
+    this.isReplacingGoal = false,
   });
 
   @override
@@ -62,6 +64,9 @@ class WelcomeStep extends StatelessWidget {
         final userName = data['userName'] as String;
         final hasCompletedGoals = data['hasCompletedGoals'] as bool;
         
+        // Use replacement context if explicitly replacing, otherwise check history
+        final isNewGoal = isReplacingGoal || hasCompletedGoals;
+        
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -75,7 +80,7 @@ class WelcomeStep extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              hasCompletedGoals 
+              isNewGoal 
                 ? 'Ready to set your next goal?'
                 : 'Ready to take your progress to the next level?',
               style: const TextStyle(
@@ -371,6 +376,9 @@ class WelcomeStep extends StatelessWidget {
       builder: (context, snapshot) {
         final hasCompletedGoals = snapshot.data?['hasCompletedGoals'] as bool? ?? false;
         
+        // Use replacement context if explicitly replacing, otherwise check history
+        final isNewGoal = isReplacingGoal || hasCompletedGoals;
+        
         return SizedBox(
           width: double.infinity,
           child: ElevatedButton(
@@ -385,7 +393,7 @@ class WelcomeStep extends StatelessWidget {
               elevation: 2,
             ),
             child: Text(
-              hasCompletedGoals 
+              isNewGoal 
                 ? 'Let\'s Set Up Your Next Goal'
                 : 'Let\'s Set Up Your First Goal',
               style: const TextStyle(

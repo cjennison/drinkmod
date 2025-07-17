@@ -506,8 +506,8 @@ class _GoalConfirmationStepState extends State<GoalConfirmationStep>
         final days = widget.goal.parameters['alcoholFreeDaysPerWeek'] as int? ?? 0;
         return '$days AF days/week';
       case GoalType.interventionWins:
-        final wins = widget.goal.parameters['targetInterventionWins'] as int? ?? 0;
-        return '$wins successful wins';
+        final successRate = widget.goal.parameters['targetSuccessRate'] as int? ?? 0;
+        return '$successRate% success rate';
       case GoalType.moodImprovement:
         final mood = widget.goal.parameters['targetAverageMood'] as double? ?? 0.0;
         return '${mood.toStringAsFixed(1)}/10 mood';

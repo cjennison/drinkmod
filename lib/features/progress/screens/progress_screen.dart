@@ -211,10 +211,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
           GoalCard(
             key: ValueKey(_activeGoalData!['id']),
             goalData: _activeGoalData!,
-            onGoalCompleted: () {
-              // Refresh the goal status to show the wizard
-              _checkUserGoals();
-            },
+            onGoalCompleted: _navigateToNewGoalWizard,
           ),
           
           const SizedBox(height: 32),
@@ -375,6 +372,26 @@ class _ProgressScreenState extends State<ProgressScreen> {
               });
             },
           ),
+        ),
+      ),
+    );
+  }
+
+  void _navigateToNewGoalWizard() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => GoalSetupWizard(
+          onGoalCreated: () {
+            // Close the wizard and refresh the progress screen
+            Navigator.pop(context);
+            _checkUserGoals();
+          },
+          // Don't show skip button when creating a new goal from completed goal
+          onSkipped: null,
+          onShowHistory: _showGoalHistory,
+          canPop: true,
+          isReplacingGoal: true, // Indicate this is replacing an existing goal
         ),
       ),
     );

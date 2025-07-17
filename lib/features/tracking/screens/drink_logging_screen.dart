@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'dart:developer' as developer;
 import '../../../core/models/drink_entry.dart';
 import '../../../core/models/intervention_data.dart';
+import '../../../core/models/intervention_event.dart';
 import '../../../core/services/hive_database_service.dart';
 import '../../../core/services/drink_database_service.dart';
 import '../../../core/utils/drink_intervention_utils.dart';
@@ -439,10 +441,15 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
       MaterialPageRoute(
         builder: (context) => TherapeuticInterventionScreen(
           interventionResult: interventionResult,
-          onProceed: (interventionData) {
+          onProceed: (interventionData) async {
+            // Record intervention event - user proceeded (intervention loss)
+            await _recordInterventionDecision(interventionResult, proceeded: true);
             Navigator.of(context).pop(interventionData);
           },
-          onCancel: () {
+          onCancel: () async {
+            // Record intervention event - user declined (intervention win)
+            await _recordInterventionDecision(interventionResult, proceeded: false);
+            
             // User chose to stick to their goal - clear state and go back
             _clearFormState();
             Navigator.of(context).pop(null);
@@ -459,6 +466,41 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
     );
     
     return result;
+  }
+
+  /// Record intervention decision for goal tracking
+  Future<void> _recordInterventionDecision(DrinkInterventionResult interventionResult, {required bool proceeded}) async {
+    try {
+      // Determine intervention type
+      InterventionType interventionType;
+      if (interventionResult.isScheduleViolation) {
+        interventionType = InterventionType.scheduleViolation;
+      } else if (interventionResult.isToleranceExceeded) {
+        interventionType = InterventionType.toleranceExceeded;
+      } else if (interventionResult.isLimitExceeded) {
+        interventionType = InterventionType.limitExceeded;
+      } else if (interventionResult.isApproachingLimit) {
+        interventionType = InterventionType.approachingLimit;
+      } else {
+        interventionType = InterventionType.approachingLimit; // Default fallback
+      }
+      
+      // Record the decision
+      final decision = proceeded ? InterventionDecision.proceeded : InterventionDecision.declined;
+      
+      await HiveDatabaseService.instance.recordInterventionEvent(
+        interventionType: interventionType,
+        decision: decision,
+        context: {
+          'currentDrinks': interventionResult.currentDrinks,
+          'dailyLimit': interventionResult.dailyLimit,
+          'proposedTotal': interventionResult.proposedTotal,
+          'reason': interventionResult.reason,
+        },
+      );
+    } catch (e) {
+      developer.log('Failed to record intervention event: $e', name: 'DrinkLoggingScreen');
+    }
   }
 
   /// Get appropriate positive reinforcement message based on intervention type
