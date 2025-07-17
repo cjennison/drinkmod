@@ -48,7 +48,8 @@ class AchievementBadge extends StatelessWidget {
           if (showLabel) ...[
             const SizedBox(height: 8),
             SizedBox(
-              width: size + 16,
+              width: 64, // Match the fixed width from badge list
+              height: 32, // Increased height for text area
               child: Text(
                 achievement.name,
                 style: const TextStyle(
@@ -112,34 +113,60 @@ class AchievementBadgeList extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              ...visibleAchievements.map((granted) => Padding(
-                padding: const EdgeInsets.only(right: 16),
-                child: AchievementBadge(
-                  grantedAchievement: granted,
-                  onTap: () => onAchievementTap?.call(granted),
-                ),
-              )),
-              if (hasMore && onViewAllTap != null)
-                GestureDetector(
-                  onTap: onViewAllTap,
-                  child: Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.more_horiz,
-                      color: Colors.grey,
+        SizedBox(
+          height: 88, // Increased height to accommodate larger text area
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start, // Align from top
+              children: [
+                ...visibleAchievements.map((granted) => Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: SizedBox(
+                    width: 64, // Fixed width for consistent spacing
+                    height: 88, // Fixed height
+                    child: AchievementBadge(
+                      grantedAchievement: granted,
+                      onTap: () => onAchievementTap?.call(granted),
                     ),
                   ),
-                ),
-            ],
+                )),
+                if (hasMore && onViewAllTap != null)
+                  SizedBox(
+                    width: 64,
+                    height: 88,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        GestureDetector(
+                          onTap: onViewAllTap,
+                          child: Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.more_horiz,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'More',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ],
