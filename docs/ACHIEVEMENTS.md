@@ -37,7 +37,7 @@ The Drinkmod app now has a complete achievement system that rewards users for re
 5. **UI Components**
    - **Achievement Modal**: Animated notification when achievements are granted
    - **Achievement Badge**: Individual achievement display
-   - **Achievements List View**: Full browser for all achievements
+   - **Achievements List View**: Full browser showing both unlocked and locked achievements
    - **Achievements Section**: Integration widget for progress screen
 
 ## Integration Points
@@ -101,6 +101,7 @@ The account age achievements (`1_day_down`, `3_days_down`, `7_days_down`) are ca
    - Achievement detail modals
    - Progress bars for upcoming achievements
    - Achievement sharing capabilities
+   - Visual progress indicators for achievement chains
 
 3. **Notification System**
    - Push notifications for achievements
@@ -177,6 +178,24 @@ void didChangeDependencies() {
 4. **Achievement Granting**: `AchievementManager._grantAchievement()` stores with context
 5. **Modal Display**: Uses shared navigator key for proper overlay presentation
 6. **UI Refresh**: Achievement sections refresh after granting new achievements
+
+## Enhanced Achievements List View
+The achievements list now displays both unlocked and locked achievements, helping users understand what they can work towards:
+
+**Visual Design**:
+- **Unlocked Section**: Full-color icons with check marks and unlock dates
+- **Locked Section**: Greyed-out icons with "Locked" badges
+- **Progress Indicator**: App bar shows "X of Y unlocked" count
+
+**Organization**:
+- Achievements grouped into "Unlocked" and "Work Towards" sections
+- Locked achievements sorted by category and chain position
+- Account milestones (1-day, 3-day, 7-day) appear in logical progression
+
+**User Benefits**:
+- Clear visibility of all available achievements
+- Motivation to work towards specific goals
+- Understanding of achievement progression and requirements
 
 ## Implementation Status
 ✅ Core architecture implemented
