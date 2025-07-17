@@ -154,8 +154,8 @@ class OnboardingConstants {
   ];
 
   // Drink limits
-  static const List<int> drinkLimitOptions = [1, 2, 3, 4, 5, 6];
-  static const List<int> weeklyLimitOptions = [2, 3, 4, 5, 6, 7, 8, 10, 12, 14];
+  static const List<int> drinkLimitOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+  static const List<int> weeklyLimitOptions = [2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 20, 24, 30];
 
   /// Get human-readable display text for any onboarding value
   static String getDisplayText(String value) {

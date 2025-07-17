@@ -45,6 +45,14 @@ class PersonaDataService {
       pattern: DrinkingPattern.regular,
       goalType: GoalType.interventionWins,
     ),
+    PersonaDefinition(
+      name: "Stonks Sarah",
+      description: "30 days of data, Heavy first 20 days (6-8 drinks), good last 10 days (0-1 drinks), cost savings goal",
+      days: 30,
+      schedule: DrinkingSchedule.costSavingsTransition,
+      pattern: DrinkingPattern.heavyToLight,
+      goalType: GoalType.costSavings,
+    ),
   ];
 
   /// Generate and inject persona data into the database
@@ -133,26 +141,42 @@ class PersonaDataService {
           final timeOfDay = _getRandomTimeOfDay();
           final drinkTime = _getRandomTimeOnDate(date);
           
-          try {
-            await _drinkService.createDrinkEntry(
-              drinkDate: drinkTime,
-              drinkName: _getRandomDrinkName(),
-              standardDrinks: _getRandomStandardDrinks(),
-              drinkType: _getRandomDrinkType(),
-              timeOfDay: timeOfDay,
-              reason: 'Generated test data for ${persona.name}',
-              location: _getRandomLocation(),
-              socialContext: _getRandomSocialContext(),
-              moodBefore: _getRandomMood(),
-            );
-            totalEntriesCreated++;
-            
-            if (totalEntriesCreated <= 3) {
-              print('✓ Created entry $totalEntriesCreated: ${_getRandomDrinkName()} on ${date.toString().split(' ')[0]}');
+          // For Sarah's pattern, adjust drink count based on day number
+          int actualDrinkCount = drinkCount;
+          if (persona.pattern == DrinkingPattern.heavyToLight) {
+            final dayNumber = date.difference(startDate).inDays + 1;
+            if (dayNumber <= 20) {
+              // Heavy period: 6-8 drinks per drinking day
+              actualDrinkCount = _random.nextInt(3) + 6;
+            } else {
+              // Light period: 0-1 drinks per drinking day
+              actualDrinkCount = _random.nextBool() ? 0 : 1;
             }
-          } catch (e) {
-            print('❌ Failed to create drink entry for day $day: $e');
-            rethrow;
+          }
+          
+          // Only create entry if we should have drinks this iteration
+          if (i < actualDrinkCount) {
+            try {
+              await _drinkService.createDrinkEntry(
+                drinkDate: drinkTime,
+                drinkName: _getRandomDrinkName(),
+                standardDrinks: _getRandomStandardDrinks(),
+                drinkType: _getRandomDrinkType(),
+                timeOfDay: timeOfDay,
+                reason: 'Generated test data for ${persona.name}',
+                location: _getRandomLocation(),
+                socialContext: _getRandomSocialContext(),
+                moodBefore: _getRandomMood(),
+              );
+              totalEntriesCreated++;
+              
+              if (totalEntriesCreated <= 3) {
+                print('✓ Created entry $totalEntriesCreated: ${_getRandomDrinkName()} on ${date.toString().split(' ')[0]}');
+              }
+            } catch (e) {
+              print('❌ Failed to create drink entry for day $day: $e');
+              rethrow;
+            }
           }
         }
       }
@@ -167,10 +191,19 @@ class PersonaDataService {
     
     // Calculate a random goal creation date within the persona's timeline
     final accountStartDate = DateTime.now().subtract(Duration(days: persona.days));
-    // For personas with long timelines, create goals that are near completion for testing
-    final goalCreationDaysAgo = persona.days > 30 
-        ? _random.nextInt(10) + 3  // Goals created 3-13 days ago for testing completion
-        : _random.nextInt(persona.days - 5) + 3; // Original logic for shorter timelines
+    
+    int goalCreationDaysAgo;
+    if (persona.name == "Stonks Sarah") {
+      // Sarah: Goal created between days 18-30 (12-2 days ago from 30-day timeline)
+      goalCreationDaysAgo = _random.nextInt(13) + 2; // 2-14 days ago
+    } else if (persona.days > 30) {
+      // For personas with long timelines, create goals that are near completion for testing
+      goalCreationDaysAgo = _random.nextInt(10) + 3;  // Goals created 3-13 days ago for testing completion
+    } else {
+      // Original logic for shorter timelines
+      goalCreationDaysAgo = _random.nextInt(persona.days - 5) + 3; // Original logic for shorter timelines
+    }
+    
     final goalCreationDate = accountStartDate.add(Duration(days: goalCreationDaysAgo));
     
     print('📅 Setting goal creation date to: ${goalCreationDate.toString().split(' ')[0]} (${DateTime.now().difference(goalCreationDate).inDays} days ago)');
@@ -222,6 +255,20 @@ class PersonaDataService {
         title = 'Intervention Success';
         description = 'Achieve a 70% success rate when interventions occur';
         chartType = ChartType.interventionStats;
+        break;
+        
+      case GoalType.costSavings:
+        // Sarah: Cost savings goal with realistic parameters based on heavy drinking history
+        parameters = {
+          'targetSavings': 800.0, // Target to save $800
+          'avgCostPerDrink': 12.0, // $12 per drink (premium drinks)
+          'baselineWeeklyDrinks': 35.0, // Heavy baseline: ~5 drinks/day = 35/week
+          'durationMonths': 2, // 2 month goal
+          'targetValue': 800.0,
+        };
+        title = 'Financial Savings Goal';
+        description = 'Save \$800 by reducing alcohol spending';
+        chartType = ChartType.costSavingsProgress;
         break;
         
       default:
@@ -319,6 +366,15 @@ class PersonaDataService {
           'drinkLimit': 2,
           'weeklyLimit': 6,
         };
+        
+      case DrinkingSchedule.costSavingsTransition:
+        // Sarah: Transitioning from heavy to light drinking
+        return {
+          'schedule': OnboardingConstants.scheduleSocialOccasions, // Use social occasions as base
+          'weeklyPattern': null,
+          'drinkLimit': 8, // High initial limit for heavy drinking period
+          'weeklyLimit': 30, // High weekly limit to reflect heavy drinking history
+        };
     }
   }
 
@@ -333,6 +389,8 @@ class PersonaDataService {
         return "personal_values";
       case "Normal Norman":
         return "balance_control";
+      case "Stonks Sarah":
+        return "financial_savings"; // Cost-focused motivation
       default:
         return "health_wellbeing";
     }
@@ -349,6 +407,8 @@ class PersonaDataService {
         return OnboardingConstants.strictnessMedium;
       case DrinkingPattern.regular:
         return OnboardingConstants.strictnessLow;
+      case DrinkingPattern.heavyToLight:
+        return OnboardingConstants.strictnessMedium; // Medium strictness for transition
     }
   }
 
@@ -356,7 +416,7 @@ class PersonaDataService {
   static String _getPersonaGender(PersonaDefinition persona) {
     if (persona.name.contains("Samuel") || persona.name.contains("Norman")) {
       return "male";
-    } else if (persona.name.contains("Deirdre") || persona.name.contains("Molly")) {
+    } else if (persona.name.contains("Deirdre") || persona.name.contains("Molly") || persona.name.contains("Sarah")) {
       return "female";
     }
     return "other";
@@ -386,6 +446,19 @@ class PersonaDataService {
         }
         // Sometimes drinks on off-days
         return _random.nextDouble() < 0.2;
+        
+      case DrinkingSchedule.costSavingsTransition:
+        // Sarah: Heavy drinking first 20 days, light drinking last 10 days
+        final startDate = DateTime.now().subtract(Duration(days: persona.days));
+        final dayNumber = date.difference(startDate).inDays + 1; // 1-based day number
+        
+        if (dayNumber <= 20) {
+          // First 20 days: drink heavily (5-6 days per week)
+          return _random.nextDouble() < 0.8;
+        } else {
+          // Last 10 days: drink lightly (1-2 days per week)
+          return _random.nextDouble() < 0.25;
+        }
     }
   }
 
@@ -406,6 +479,10 @@ class PersonaDataService {
       case DrinkingPattern.regular:
         // Norman: 1-2 drinks per day
         return _random.nextInt(2) + 1;
+        
+      case DrinkingPattern.heavyToLight:
+        // Sarah: This will be handled in the main loop based on day number
+        return 1; // Default, will be overridden in the generation loop
     }
   }
 
@@ -476,6 +553,7 @@ enum DrinkingSchedule {
   weekendsOnly,
   socialOccasions,
   custom,
+  costSavingsTransition, // Heavy drinking transitioning to light drinking
 }
 
 enum DrinkingPattern {
@@ -483,4 +561,5 @@ enum DrinkingPattern {
   minimal,
   moderate,
   regular,
+  heavyToLight, // Heavy first 20 days, light last 10 days
 }

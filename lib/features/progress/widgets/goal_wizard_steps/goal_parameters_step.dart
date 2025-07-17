@@ -25,9 +25,15 @@ class _GoalParametersStepState extends State<GoalParametersStep> {
   final _primaryController = TextEditingController();
   final _durationController = TextEditingController();
   
+  // Cost savings baseline drinking pattern
+  final _weeklyDrinksController = TextEditingController();
+  final _drinksPerOccasionController = TextEditingController();
+  final _costPerDrinkController = TextEditingController();
+  
   Map<String, dynamic> _baseline = {};
   bool _isLoading = true;
   String? _selectedDurationUnit = 'Weeks';
+  String? _drinkingFrequency = 'once_week'; // Default frequency
   
   @override
   void initState() {
@@ -42,25 +48,77 @@ class _GoalParametersStepState extends State<GoalParametersStep> {
     _descriptionController.dispose();
     _primaryController.dispose();
     _durationController.dispose();
+    _weeklyDrinksController.dispose();
+    _drinksPerOccasionController.dispose();
+    _costPerDrinkController.dispose();
     super.dispose();
   }
   
   Future<void> _loadBaseline() async {
     try {
       final analytics = DrinkTrackingService.instance;
-      setState(() {
-        _baseline = {
-          'weeklyAverage': _calculateWeeklyAverage(analytics),
-          'dailyAverage': analytics.calculateAverageDrinksPerDay(),
-        };
-        _isLoading = false;
-      });
+      
+      // Calculate baseline drinking data from last 3 months
+      if (widget.goalType == GoalType.costSavings) {
+        await _loadCostSavingsBaseline(analytics);
+      } else {
+        // For other goal types, use existing logic
+        setState(() {
+          _baseline = {
+            'weeklyAverage': _calculateWeeklyAverage(analytics),
+            'dailyAverage': analytics.calculateAverageDrinksPerDay(),
+          };
+          _isLoading = false;
+        });
+      }
     } catch (e) {
       setState(() {
         _baseline = {'weeklyAverage': 7.0, 'dailyAverage': 1.0};
         _isLoading = false;
       });
     }
+  }
+
+  Future<void> _loadCostSavingsBaseline(DrinkTrackingService analytics) async {
+    // For now, use existing analytics methods and set reasonable defaults
+    // This can be enhanced later with more sophisticated period-based calculations
+    
+    final weeklyAverage = _calculateWeeklyAverage(analytics);
+    final dailyAverage = analytics.calculateAverageDrinksPerDay();
+    
+    // Round up to whole numbers for better user experience
+    final roundedWeeklyDrinks = weeklyAverage.ceil();
+    final roundedDrinksPerOccasion = (dailyAverage * 1.5).ceil();
+    
+    // Set default values in controllers with rounded values
+    _weeklyDrinksController.text = roundedWeeklyDrinks.toString();
+    _drinksPerOccasionController.text = roundedDrinksPerOccasion.toString();
+    _costPerDrinkController.text = '8.00'; // Default cost per drink estimate
+    
+    // Determine drinking frequency based on weekly average
+    if (weeklyAverage >= 28) {
+      _drinkingFrequency = 'daily';
+    } else if (weeklyAverage >= 14) {
+      _drinkingFrequency = 'few_times_week';
+    } else if (weeklyAverage >= 7) {
+      _drinkingFrequency = 'twice_week';
+    } else if (weeklyAverage >= 3) {
+      _drinkingFrequency = 'once_week';
+    } else {
+      _drinkingFrequency = 'few_times_month';
+    }
+    
+    setState(() {
+      _baseline = {
+        'weeklyAverage': roundedWeeklyDrinks.toDouble(),
+        'dailyAverage': roundedDrinksPerOccasion.toDouble() / 1.5, // Back-calculate daily from occasion
+        'drinksPerOccasion': roundedDrinksPerOccasion.toDouble(),
+        'estimatedFromData': true,
+        'baselinePeriod': 'available_data',
+        'roundedUp': true,
+      };
+      _isLoading = false;
+    });
   }
 
   double _calculateWeeklyAverage(DrinkTrackingService analytics) {
@@ -213,6 +271,18 @@ class _GoalParametersStepState extends State<GoalParametersStep> {
       case GoalType.costSavings:
         params['targetSavings'] = primaryValue;
         params['durationMonths'] = duration;
+        
+        // Add drinking pattern parameters for cost savings calculation
+        if (_weeklyDrinksController.text.isNotEmpty) {
+          params['baselineWeeklyDrinks'] = double.tryParse(_weeklyDrinksController.text) ?? 0.0;
+        }
+        if (_drinksPerOccasionController.text.isNotEmpty) {
+          params['baselineDrinksPerOccasion'] = double.tryParse(_drinksPerOccasionController.text) ?? 0.0;
+        }
+        if (_costPerDrinkController.text.isNotEmpty) {
+          params['avgCostPerDrink'] = double.tryParse(_costPerDrinkController.text) ?? 0.0; // Match service parameter name
+        }
+        params['baselineDrinkingFrequency'] = _drinkingFrequency;
         break;
       case GoalType.streakMaintenance:
         params['streakDays'] = primaryValue.toInt();
@@ -350,6 +420,11 @@ class _GoalParametersStepState extends State<GoalParametersStep> {
                 ),
               ],
             ),
+            
+            // Drinking Pattern section (only for cost savings goals)
+            if (widget.goalType == GoalType.costSavings)
+              _buildDrinkingPatternSection(),
+            
           ],
         ),
       ),
@@ -363,6 +438,142 @@ class _GoalParametersStepState extends State<GoalParametersStep> {
           child: const Text('Continue'),
         ),
       ),
+    );
+  }
+
+  Widget _buildDrinkingPatternSection() {
+    return GoalFormComponents.buildFormSection(
+      title: 'Your Current Drinking Pattern',
+      subtitle: 'Help us calculate your potential savings by telling us about your current habits',
+      children: [
+        // Info card showing baseline data
+        if (!_isLoading && _baseline.isNotEmpty)
+          Container(
+            margin: const EdgeInsets.only(bottom: 16),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.blue.shade200),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Based on your drinking history:',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Weekly average: ${(_baseline['weeklyAverage'] as double?)?.ceil() ?? 0} drinks',
+                  style: const TextStyle(fontSize: 14),
+                ),
+                Text(
+                  'Daily average: ${(_baseline['dailyAverage'] as double?)?.ceil() ?? 0} drinks',
+                  style: const TextStyle(fontSize: 14),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Values have been rounded up to whole numbers. You can adjust these values below to match your typical drinking pattern.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        
+        // Drinking frequency dropdown
+        DropdownButtonFormField<String>(
+          value: _drinkingFrequency,
+          decoration: const InputDecoration(
+            labelText: 'How often do you typically drink?',
+            border: OutlineInputBorder(),
+          ),
+          items: const [
+            DropdownMenuItem(value: 'daily', child: Text('Daily')),
+            DropdownMenuItem(value: 'few_times_week', child: Text('A few times a week')),
+            DropdownMenuItem(value: 'twice_week', child: Text('Twice a week')),
+            DropdownMenuItem(value: 'once_week', child: Text('Once a week')),
+            DropdownMenuItem(value: 'few_times_month', child: Text('A few times a month')),
+          ],
+          onChanged: (value) {
+            setState(() {
+              _drinkingFrequency = value;
+            });
+          },
+        ),
+        
+        const SizedBox(height: 16),
+        
+        // Weekly drinks input
+        TextFormField(
+          controller: _weeklyDrinksController,
+          decoration: const InputDecoration(
+            labelText: 'Drinks per week',
+            hintText: 'e.g., 10',
+            border: OutlineInputBorder(),
+            suffixText: 'drinks',
+          ),
+          keyboardType: TextInputType.number,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please enter drinks per week';
+            }
+            final parsed = double.tryParse(value);
+            if (parsed == null || parsed < 0) {
+              return 'Please enter a valid number';
+            }
+            return null;
+          },
+        ),
+        
+        const SizedBox(height: 16),
+        
+        // Drinks per occasion input
+        TextFormField(
+          controller: _drinksPerOccasionController,
+          decoration: const InputDecoration(
+            labelText: 'Drinks per drinking occasion',
+            hintText: 'e.g., 3',
+            border: OutlineInputBorder(),
+            suffixText: 'drinks',
+          ),
+          keyboardType: TextInputType.number,
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return 'Please enter drinks per occasion';
+            }
+            final parsed = double.tryParse(value);
+            if (parsed == null || parsed < 0) {
+              return 'Please enter a valid number';
+            }
+            return null;
+          },
+        ),
+        
+        const SizedBox(height: 16),
+        
+        // Cost per drink input
+        GoalFormComponents.buildMoneyField(
+          controller: _costPerDrinkController,
+          label: 'Average cost per drink',
+          isRequired: true,
+        ),
+        
+        const SizedBox(height: 12),
+        
+        // Helper text
+        const Text(
+          'Tip: Include the cost of drinks at bars, restaurants, and retail. Consider tips and taxes for a realistic estimate.',
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+      ],
     );
   }
 }

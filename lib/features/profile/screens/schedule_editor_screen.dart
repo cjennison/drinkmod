@@ -77,6 +77,34 @@ class _ScheduleEditorScreenState extends State<ScheduleEditorScreen> {
     return validLimits;
   }
 
+  /// Get the current daily limit, ensuring it's valid for the dropdown
+  int get _validatedDailyLimit {
+    final validLimits = _validDailyLimits;
+    
+    // If the current selected daily limit is not in the valid options,
+    // adjust it to the closest valid option
+    if (!validLimits.contains(selectedDailyLimit)) {
+      return validLimits.reduce((a, b) => 
+        (a - selectedDailyLimit).abs() < (b - selectedDailyLimit).abs() ? a : b);
+    }
+    
+    return selectedDailyLimit;
+  }
+
+  /// Get the current weekly limit, ensuring it's valid for the dropdown
+  int get _validatedWeeklyLimit {
+    final validLimits = OnboardingConstants.weeklyLimitOptions;
+    
+    // If the current selected weekly limit is not in the valid options,
+    // adjust it to the closest valid option
+    if (!validLimits.contains(selectedWeeklyLimit)) {
+      return validLimits.reduce((a, b) => 
+        (a - selectedWeeklyLimit).abs() < (b - selectedWeeklyLimit).abs() ? a : b);
+    }
+    
+    return selectedWeeklyLimit;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -84,14 +112,36 @@ class _ScheduleEditorScreenState extends State<ScheduleEditorScreen> {
     selectedDailyLimit = widget.currentDailyLimit ?? 2;
     selectedWeeklyLimit = widget.currentWeeklyLimit ?? 4;
     
+    // Validate and adjust initial values to ensure they're in valid ranges
+    _validateAndAdjustLimits();
+    
     // Load current weekly pattern if it exists
     _loadCurrentWeeklyPattern();
+  }
+
+  /// Validate and adjust daily/weekly limits to ensure they're within valid ranges
+  void _validateAndAdjustLimits() {
+    // Ensure weekly limit is in valid options
+    if (!OnboardingConstants.weeklyLimitOptions.contains(selectedWeeklyLimit)) {
+      selectedWeeklyLimit = OnboardingConstants.weeklyLimitOptions.reduce((a, b) => 
+        (a - selectedWeeklyLimit).abs() < (b - selectedWeeklyLimit).abs() ? a : b);
+    }
     
-    // Ensure daily limit doesn't exceed half of weekly limit for open schedules
+    // Ensure daily limit is in valid options and doesn't exceed half of weekly limit for open schedules
     if (_isOpenSchedule) {
       final maxDaily = (selectedWeeklyLimit / 2).floor();
-      if (selectedDailyLimit > maxDaily) {
-        selectedDailyLimit = maxDaily;
+      final validDailyLimits = OnboardingConstants.drinkLimitOptions
+          .where((limit) => limit <= maxDaily)
+          .toList();
+      
+      if (validDailyLimits.isNotEmpty && !validDailyLimits.contains(selectedDailyLimit)) {
+        selectedDailyLimit = validDailyLimits.reduce((a, b) => 
+          (a - selectedDailyLimit).abs() < (b - selectedDailyLimit).abs() ? a : b);
+      }
+    } else {
+      if (!OnboardingConstants.drinkLimitOptions.contains(selectedDailyLimit)) {
+        selectedDailyLimit = OnboardingConstants.drinkLimitOptions.reduce((a, b) => 
+          (a - selectedDailyLimit).abs() < (b - selectedDailyLimit).abs() ? a : b);
       }
     }
   }
@@ -278,7 +328,7 @@ class _ScheduleEditorScreenState extends State<ScheduleEditorScreen> {
                       ),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<int>(
-                        value: selectedDailyLimit,
+                        value: _validatedDailyLimit,
                         decoration: const InputDecoration(
                           labelText: 'Drinks per day',
                         ),
@@ -324,7 +374,7 @@ class _ScheduleEditorScreenState extends State<ScheduleEditorScreen> {
                         ),
                         const SizedBox(height: 12),
                         DropdownButtonFormField<int>(
-                          value: selectedWeeklyLimit,
+                          value: _validatedWeeklyLimit,
                           decoration: const InputDecoration(
                             labelText: 'Drinks per week',
                           ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/models/user_goal.dart';
 import '../../../core/services/goal_management_service.dart';
+import '../../../core/services/goal_progress_service.dart';
 import '../../../core/services/user_data_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../widgets/goal_wizard_steps/welcome_step.dart';
@@ -70,8 +71,8 @@ class _GoalSetupWizardState extends State<GoalSetupWizard> {
         _existingGoal = existingGoal;
       });
       
-      // Check if the existing goal is completed (no days remaining)
-      if (_isGoalCompleted(existingGoal)) {
+      // Check if the existing goal is completed (no days remaining or 100% achievement)
+      if (await _isGoalCompleted(existingGoal)) {
         // Goal is completed, proceed directly without replacement dialog
         return;
       }
@@ -81,13 +82,30 @@ class _GoalSetupWizardState extends State<GoalSetupWizard> {
     }
   }
 
-  /// Check if a goal is completed based on days remaining
-  bool _isGoalCompleted(Map<String, dynamic> goalData) {
+  /// Check if a goal is completed based on days remaining OR percentage completion
+  Future<bool> _isGoalCompleted(Map<String, dynamic> goalData) async {
     final startDate = DateTime.tryParse(goalData['startDate'] ?? '');
     if (startDate == null) return false;
     
     final parameters = goalData['parameters'] as Map<String, dynamic>? ?? {};
     final goalType = goalData['goalType']?.toString();
+    
+    // Check percentage completion first for certain goal types
+    if (_shouldCheckPercentageCompletion(goalType)) {
+      try {
+        final progressService = GoalProgressService.instance;
+        final progressData = await progressService.calculateGoalProgress(goalData);
+        final percentage = progressData['percentage'] as double? ?? 0.0;
+        
+        // If goal has reached 100% completion, consider it completed
+        if (percentage >= 1.0) {
+          return true;
+        }
+      } catch (e) {
+        // If progress calculation fails, fall back to time-based completion
+        print('Error calculating goal progress for completion check: $e');
+      }
+    }
     
     // Calculate end date based on goal type and duration
     DateTime endDate;
@@ -97,6 +115,9 @@ class _GoalSetupWizardState extends State<GoalSetupWizard> {
     } else if (goalType?.contains('weekly') == true || goalType?.contains('cost') == true) {
       final months = parameters['durationMonths'] as int? ?? 3;
       endDate = DateTime(startDate.year, startDate.month + months, startDate.day);
+    } else if (goalType?.contains('intervention') == true) {
+      final weeks = parameters['durationWeeks'] as int? ?? 4;
+      endDate = startDate.add(Duration(days: weeks * 7));
     } else {
       // Default to 30 days
       endDate = startDate.add(const Duration(days: 30));
@@ -106,6 +127,17 @@ class _GoalSetupWizardState extends State<GoalSetupWizard> {
     final now = DateTime.now();
     final difference = endDate.difference(now).inDays;
     return difference <= 0; // Goal is completed if no days remaining
+  }
+
+  /// Determine if a goal type should check percentage completion in addition to time
+  bool _shouldCheckPercentageCompletion(String? goalType) {
+    if (goalType == null) return false;
+    
+    // Goal types that can reach 100% completion before time expires
+    return goalType.contains('cost') ||           // Cost savings goals
+           goalType.contains('weekly') ||         // Weekly reduction goals  
+           goalType.contains('intervention') ||   // Intervention wins goals
+           goalType.contains('alcohol');          // Alcohol-free days goals
   }
 
   Future<void> _showGoalReplacementDialog() async {

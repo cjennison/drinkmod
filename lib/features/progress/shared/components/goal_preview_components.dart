@@ -413,6 +413,17 @@ class GoalPreviewComponents {
       case GoalType.costSavings:
         items.add({'label': 'Target Savings', 'value': '\$${params['targetSavings'] ?? 'N/A'}'});
         items.add({'label': 'Duration', 'value': '${params['durationMonths'] ?? 'N/A'} months'});
+        
+        // Add drinking pattern baseline information
+        if (params['baselineWeeklyDrinks'] != null) {
+          items.add({'label': 'Current weekly drinks', 'value': '${params['baselineWeeklyDrinks']} drinks'});
+        }
+        if (params['baselineDrinksPerOccasion'] != null) {
+          items.add({'label': 'Drinks per occasion', 'value': '${params['baselineDrinksPerOccasion']} drinks'});
+        }
+        if (params['avgCostPerDrink'] != null) {
+          items.add({'label': 'Cost per drink', 'value': '\$${params['avgCostPerDrink']}'});
+        }
         break;
       case GoalType.streakMaintenance:
         items.add({'label': 'Streak Days', 'value': '${params['streakDays'] ?? 'N/A'}'});

@@ -32,6 +32,11 @@ class DateUtils {
     return formatAmericanDate(date);
   }
 
+  /// Formats a date in short format (M/D) without year
+  static String formatShortDate(DateTime date) {
+    return DateFormat('M/d').format(date);
+  }
+
   /// Parse a date string in various formats
   static DateTime? parseDate(String dateString) {
     try {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/date_utils.dart' as date_utils;
 import '../shared/components/adaptive_goal_card.dart';
 import '../shared/components/goal_card_components.dart';
 import '../shared/types/goal_display_types.dart';
@@ -352,17 +353,6 @@ class _GoalProgressCardState extends AdaptiveGoalCardState<GoalProgressCard> {
     return now.difference(startDate).inDays + 1; // +1 to include start day
   }
   
-  String _formatShortDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date).inDays;
-    
-    if (difference == 0) return 'Today';
-    if (difference == 1) return 'Yesterday';
-    if (difference < 7) return '${difference}d ago';
-    
-    return '${date.month}/${date.day}';
-  }
-
   String _getTimelineText() {
     final endDate = _calculateEndDate();
     final daysRemaining = _calculateDaysRemaining(endDate);
@@ -441,9 +431,9 @@ class _GoalProgressCardState extends AdaptiveGoalCardState<GoalProgressCard> {
                 Builder(
                   builder: (context) {
                     final endDate = _calculateEndDate();
-                    final endDateText = endDate != null ? _formatShortDate(endDate) : 'Ongoing';
+                    final endDateText = endDate != null ? date_utils.DateUtils.formatShortDate(endDate) : 'Ongoing';
                     return Text(
-                      '${_formatShortDate(startDate)} - $endDateText',
+                      '${date_utils.DateUtils.formatShortDate(startDate)} - $endDateText',
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
