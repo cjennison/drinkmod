@@ -261,6 +261,8 @@ class _GoalSetupWizardState extends State<GoalSetupWizard> {
   Future<void> _createGoal() async {
     if (_selectedGoalType == null) return;
     
+    print('🎯 GoalSetupWizard: Creating goal - Title: $_goalTitle, Type: $_selectedGoalType');
+    
     setState(() {
       // Show loading state in UI
     });
@@ -279,6 +281,8 @@ class _GoalSetupWizardState extends State<GoalSetupWizard> {
         priorityLevel: 1,
       );
       
+      print('🎯 GoalSetupWizard: Goal created successfully');
+      
       // Mark that user has completed goal setup
       await _userService.updateUserData({
         'hasSetupGoals': true,
@@ -287,6 +291,7 @@ class _GoalSetupWizardState extends State<GoalSetupWizard> {
       
       _nextStep(); // Go to confirmation step
     } catch (e) {
+      print('❌ GoalSetupWizard: Error creating goal: $e');
       _showErrorDialog('Failed to create goal: $e');
     } finally {
       setState(() {

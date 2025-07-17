@@ -1,4 +1,5 @@
 import 'dart:developer' as developer;
+import '../achievements/achievement_helper.dart';
 import 'hive_database_service.dart';
 
 /// Service to manage onboarding completion status and user data
@@ -21,6 +22,9 @@ class OnboardingService {
     try {
       await _hiveService.initialize();
       await _hiveService.completeOnboarding(userData);
+      
+      // Check for account milestone achievements
+      AchievementHelper.checkAccountMilestones();
     } catch (e) {
       developer.log('Error completing onboarding: $e', name: 'OnboardingService');
     }

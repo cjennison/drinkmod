@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 import '../models/user_goal.dart';
 import '../utils/map_utils.dart';
 import 'hive_core.dart';
+import 'real_progress_service.dart';
 
 /// Service for managing user goals and progress tracking
 class GoalManagementService {
@@ -56,6 +57,7 @@ class GoalManagementService {
     
     await _hiveCore.goalsBox.put(goalId, goal);
     developer.log('Created goal: $goalId - $title', name: 'GoalManagementService');
+    
     return goalId;
   }
 
@@ -115,6 +117,7 @@ class GoalManagementService {
     // Archive current active goal if it exists
     final currentActive = await getActiveGoal();
     if (currentActive != null) {
+      print('🏁 GoalManagementService: Archiving current goal: ${currentActive['title']}');
       await _archiveGoal(currentActive['id']);
     }
     
@@ -131,8 +134,29 @@ class GoalManagementService {
 
   /// Archive a goal (move from active to completed)
   Future<void> _archiveGoal(String goalId) async {
+    await _hiveCore.ensureInitialized();
+    
+    final goal = _hiveCore.goalsBox.get(goalId);
+    if (goal == null) return;
+    
+    // Calculate real progress at completion time
+    final realProgressService = RealProgressService.instance;
+    final goalData = Map<String, dynamic>.from(goal);
+    final realProgress = await realProgressService.calculateRealGoalProgress(goalData);
+    final finalProgress = realProgress['progressPercentage'] as double? ?? 0.0;
+    
+    // Update goal status
     await updateGoalStatus(goalId, GoalStatus.completed);
-    developer.log('Goal archived: $goalId', name: 'GoalManagementService');
+    
+    // Set completion fields that achievements need
+    final completionTimestamp = DateTime.now().toIso8601String();
+    goal['completedAt'] = completionTimestamp;
+    goal['finalProgress'] = finalProgress;
+    goal['updatedAt'] = completionTimestamp;
+    
+    await _hiveCore.goalsBox.put(goalId, goal);
+    
+    developer.log('Goal archived: $goalId with ${(finalProgress * 100).round()}% real completion', name: 'GoalManagementService');
   }
 
   /// Complete the current active goal

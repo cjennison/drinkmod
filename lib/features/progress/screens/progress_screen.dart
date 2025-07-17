@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/services/goal_management_service.dart';
+import '../../../core/achievements/achievement_helper.dart';
 import '../widgets/goal_card.dart';
 import '../widgets/goal_history_modal.dart';
 import 'goal_setup_wizard.dart';
@@ -18,11 +19,21 @@ class _ProgressScreenState extends State<ProgressScreen> {
   bool _hasActiveGoals = false;
   bool _hasGoalHistory = false;
   Map<String, dynamic>? _activeGoalData;
+  
+  // Key for the achievements section to allow refreshing
+  final GlobalKey<AchievementsSectionState> _achievementsSectionKey = GlobalKey<AchievementsSectionState>();
 
   @override
   void initState() {
     super.initState();
     _checkUserGoals();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Check achievements asynchronously when returning to this screen
+    _checkAchievementsAsync();
   }
 
   Future<void> _checkUserGoals() async {
@@ -32,12 +43,16 @@ class _ProgressScreenState extends State<ProgressScreen> {
       final goalHistory = GoalManagementService.instance.getGoalHistory();
       print('ProgressScreen: Active goal: $activeGoal');
       print('ProgressScreen: Goal history count: ${goalHistory.length}');
+      
       setState(() {
         _hasActiveGoals = activeGoal != null;
         _hasGoalHistory = goalHistory.isNotEmpty;
         _activeGoalData = activeGoal;
         _isLoading = false;
       });
+      
+      // Check for achievements fully async after UI is updated
+      _checkAchievementsAsync();
     } catch (e) {
       print('ProgressScreen: Error checking goals: $e');
       setState(() {
@@ -49,7 +64,27 @@ class _ProgressScreenState extends State<ProgressScreen> {
     }
   }
 
-  void _onGoalCreated() {
+  /// Check achievements asynchronously with delay to ensure UI doesn't block
+  Future<void> _checkAchievementsAsync() async {
+    // Run achievement checking in background with delay
+    Future.delayed(const Duration(milliseconds: 500), () async {
+      print('🏆 ProgressScreen: Checking achievements asynchronously');
+      await AchievementHelper.checkMultiple([
+        'first_goal',
+        'first_goal_completed', 
+        'first_goal_finished'
+      ]);
+      
+      // Refresh achievements section after checking
+      print('🔄 ProgressScreen: Refreshing achievements section');
+      _achievementsSectionKey.currentState?.refreshAchievements();
+    });
+  }
+
+  void _onGoalCreated() async {
+    // Add delay to ensure goal is fully saved before reloading
+    await Future.delayed(const Duration(milliseconds: 500));
+    
     // Reload goal data after creation
     _checkUserGoals();
   }
@@ -219,8 +254,11 @@ class _ProgressScreenState extends State<ProgressScreen> {
           // Additional sections coming soon
           _buildComingSoonSection('Weekly Insights', Icons.analytics_outlined),
           const SizedBox(height: 16),
-          _buildComingSoonSection('Achievement Badges', Icons.emoji_events_outlined),
+          
+          // Achievement Badges Section
+          AchievementsSection(key: _achievementsSectionKey),
           const SizedBox(height: 16),
+          
           _buildComingSoonSection('Progress Charts', Icons.show_chart_outlined),
         ],
       ),

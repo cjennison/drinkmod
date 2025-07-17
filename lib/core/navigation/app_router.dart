@@ -4,6 +4,8 @@ import '../../features/onboarding/screens/onboarding_classic_screen.dart';
 import '../../features/main/screens/main_layout.dart';
 import '../../features/profile/screens/schedule_editor_screen.dart';
 import '../../core/services/onboarding_service.dart';
+import '../achievements/ui/achievements_list_view.dart';
+import '../../main.dart';
 
 /// Screen that checks onboarding status and redirects accordingly
 class OnboardingCheckScreen extends StatefulWidget {
@@ -96,8 +98,10 @@ class AppRouter {
   static const String analytics = '/analytics';
   static const String milestones = '/milestones';
   static const String settings = '/settings';
+  static const String achievements = '/achievements';
 
   static final GoRouter router = GoRouter(
+    navigatorKey: DrinkmodApp.navigatorKey,
     initialLocation: home,
     routes: [
       // Home route - checks onboarding status and redirects accordingly
@@ -133,6 +137,13 @@ class AppRouter {
             currentWeeklyLimit: extra?['currentWeeklyLimit'],
           );
         },
+      ),
+      
+      // Achievements page
+      GoRoute(
+        path: '/achievements',
+        name: 'achievements',
+        builder: (context, state) => const AchievementsListView(),
       ),
     ],
     
