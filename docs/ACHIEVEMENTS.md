@@ -69,9 +69,22 @@ await AchievementHelper.checkGoalMilestones();
 
 ### Achievement Triggers
 - **Account Creation**: Automatically triggers account milestone assessments
-- **Goal Creation**: Triggers "first_goal" achievement check
+- **Goal Creation**: Triggers "first_goal" achievement check  
 - **Goal Completion**: Triggers goal completion achievement checks
-- **Daily App Usage**: Could trigger account milestone checks (future enhancement)
+- **Screen Navigation**: Async checks when returning to Progress or Home screens
+- **Persona Generation**: Account age achievements work correctly with backdated personas
+
+### Account Age Achievement Details
+The account age achievements (`1_day_down`, `3_days_down`, `7_days_down`) are calculated based on:
+- **Storage Field**: `accountCreatedDate` (millisecond timestamp)
+- **Assessment Method**: `UserDataService.getAccountCreatedDate()` 
+- **Calculation**: `DateTime.now().difference(creationDate).inDays`
+- **Persona Support**: PersonaDataService correctly backdates account creation for testing
+
+**Example Persona Timeline**:
+- "Mostly Sober Samuel" (90 days): Account created 90 days ago → Should trigger all account age achievements
+- "Normal Norman" (60 days): Account created 60 days ago → Should trigger 1-day, 3-day, and 7-day achievements
+- "Drunk Deirdre" (15 days): Account created 15 days ago → Should trigger 1-day, 3-day, and 7-day achievements
 
 ## Data Storage
 - Uses Hive for local storage of granted achievements
@@ -93,13 +106,89 @@ await AchievementHelper.checkGoalMilestones();
    - Push notifications for achievements
    - Weekly/monthly achievement summaries
 
+## Troubleshooting & Fixes
+
+### Critical Issues Resolved
+
+#### 1. Achievement Modal Display Issue
+**Problem**: Achievements were being granted but modals weren't displaying to users.
+**Root Cause**: `GoRouter` was creating its own navigator key instead of using the shared one from `main.dart`.
+**Solution**: Modified `app_router.dart` to use `DrinkmodApp.navigatorKey` for proper modal overlay.
+
+#### 2. Account Age Assessment Bug
+**Problem**: Account age achievements (1-day, 3-day, 7-day) weren't triggering for personas with older creation dates.
+**Root Cause**: `BaseAssessor.getAccountCreationDate()` was looking for a `createdAt` string field instead of using the proper `UserDataService.getAccountCreatedDate()` method.
+**Fields Involved**:
+- ✅ **UserDataService**: Stores `accountCreatedDate` as millisecond timestamp
+- ✅ **PersonaDataService**: Correctly sets `accountCreatedDate` when creating test personas
+- ❌ **BaseAssessor**: Was incorrectly looking for `createdAt` string field
+**Solution**: Fixed `BaseAssessor` to use `_userService.getAccountCreatedDate()` method.
+
+#### 3. Achievement Badge UI Alignment
+**Problem**: Achievement badge text was pushing circular icons out of alignment.
+**Solution**: Implemented fixed container sizing in `achievement_badge.dart`:
+- Fixed width: 64px for badge containers
+- Fixed height: 88px total (64px circle + 24px text)
+- Consistent 8px spacing between badges
+
+#### 4. Race Conditions in Achievement Checking
+**Problem**: Achievement checks were running before user data was fully loaded.
+**Solution**: Implemented async achievement checking with 500ms delays:
+- `_checkAchievementsAsync()` method with `Future.delayed()`
+- Integrated into `didChangeDependencies()` for screen transitions
+- Applied to both `ProgressScreen` and `HomeScreen`
+
+### Debugging Tools Used
+- Comprehensive logging in `AchievementManager` for modal display
+- Debug output in assessors showing account creation dates and calculations
+- Storage verification logging to confirm achievements are being saved
+- UI refresh mechanisms using `GlobalKey` for achievement sections
+
+### Integration Patterns
+
+#### Async Achievement Checking Pattern
+```dart
+Future<void> _checkAchievementsAsync() async {
+  Future.delayed(const Duration(milliseconds: 500), () async {
+    print('🏆 Checking achievements asynchronously');
+    await AchievementHelper.checkMultiple([
+      '1_day_down',
+      '3_days_down', 
+      '7_days_down',
+      'first_goal',
+    ]);
+  });
+}
+```
+
+#### Screen Integration Pattern
+```dart
+@override
+void didChangeDependencies() {
+  super.didChangeDependencies();
+  _checkAchievementsAsync(); // Check when returning to screen
+}
+```
+
+### Data Flow Verification
+1. **Account Creation**: `UserDataService.completeOnboarding()` sets `accountCreatedDate` timestamp
+2. **Persona Generation**: `PersonaDataService._updateAccountCreationDate()` backdate accounts correctly
+3. **Achievement Assessment**: `BaseAssessor.getDaysSinceAccountCreation()` calculates from proper field
+4. **Achievement Granting**: `AchievementManager._grantAchievement()` stores with context
+5. **Modal Display**: Uses shared navigator key for proper overlay presentation
+6. **UI Refresh**: Achievement sections refresh after granting new achievements
+
 ## Implementation Status
 ✅ Core architecture implemented
 ✅ Six initial achievements defined
-✅ Assessment system working
-✅ UI components created
+✅ Assessment system working and debugged
+✅ UI components created with proper alignment
 ✅ Integration with main app completed
-✅ Data storage implemented
+✅ Data storage implemented and verified
 ✅ Modal notification system functional
+✅ Navigator key sharing fixed
+✅ Account age assessment corrected
+✅ Race condition handling implemented
+✅ Async achievement checking on multiple screens
 
-The achievement system is now fully functional and ready for users to start earning achievements as they use the app!
+The achievement system is now fully functional and properly debugged. All critical issues have been resolved, and the system reliably grants and displays achievements to users!
