@@ -30,11 +30,6 @@ class GoalPreviewStep extends StatelessWidget {
                   const SizedBox(height: 20),
                   GoalPreviewComponents.buildGoalPreviewCard(goal: goal),
                   const SizedBox(height: 20),
-                  GoalPreviewComponents.buildProgressPreview(
-                    goal: goal,
-                    mockProgress: 0.0,
-                  ),
-                  const SizedBox(height: 20),
                 ],
               ),
             ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/models/user_goal.dart';
+import '../../../../core/utils/date_utils.dart' as date_utils;
 
 /// Shared components for goal preview displays
 class GoalPreviewComponents {
@@ -425,7 +426,7 @@ class GoalPreviewComponents {
   }
 
   static String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
+    return date_utils.DateUtils.formatTimelineDate(date);
   }
 
   static DateTime _calculateTargetDate(UserGoal goal) {

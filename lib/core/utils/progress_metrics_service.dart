@@ -231,7 +231,7 @@ class ProgressMetricsService {
             ? 'Great progress for your first weeks!'
             : 'Great progress - you\'re on the right track!';
       } else {
-        return 'Good progress - stay focused on your goals.';
+        return 'Remember to stay focused on your goals.';
       }
     } else if (adherence >= 0.5) {
       if (trend == TrendDirection.improving) {

@@ -389,7 +389,7 @@ class GoalProgressService {
           : '${wins}/${totalInterventions} interventions won (${(currentSuccessRate * 100).round()}% vs ${(targetSuccessRate * 100).round()}% target)',
       'currentMetric': totalInterventions == 0 
           ? 'No interventions' 
-          : '${(currentSuccessRate * 100).round()}% success ($totalInterventions total)',
+          : '${(currentSuccessRate * 100).round()}% ($totalInterventions total)',
       'targetMetric': '${(targetSuccessRate * 100).round()}% target',
       'bonusMetric': totalInterventions > 5 && currentSuccessRate >= targetSuccessRate 
           ? 'Target achieved!' 

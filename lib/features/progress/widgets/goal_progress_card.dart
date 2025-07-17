@@ -60,6 +60,9 @@ class _GoalProgressCardState extends AdaptiveGoalCardState<GoalProgressCard> {
 
   Widget _buildCompactContent(Map<String, dynamic> data, Map<String, dynamic> goalTypeInfo) {
     final percentage = ((data['percentage'] as num).toDouble() * 100).clamp(0.0, 100.0);
+    final endDate = _calculateEndDate();
+    final daysRemaining = _calculateDaysRemaining(endDate);
+    final isFinished = daysRemaining <= 0 || percentage >= 100.0;
     
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -93,13 +96,59 @@ class _GoalProgressCardState extends AdaptiveGoalCardState<GoalProgressCard> {
             valueColor: AlwaysStoppedAnimation<Color>(goalTypeInfo['color']),
           ),
           const SizedBox(height: 4),
-          Text(
-            '${percentage.toStringAsFixed(0)}% Complete',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${percentage.toStringAsFixed(0)}% Complete',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+              if (isFinished)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: percentage >= 100.0 ? Colors.green : Colors.grey,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    percentage >= 100.0 ? 'Complete' : 'Finished',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+            ],
           ),
+          if (isFinished) ...[
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: widget.onTap,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: goalTypeInfo['color'],
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  elevation: 1,
+                ),
+                child: const Text(
+                  'View Details',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -188,7 +237,10 @@ class _GoalProgressCardState extends AdaptiveGoalCardState<GoalProgressCard> {
               if (isTimeUp || isPercentComplete) {
                 return Column(
                   children: [
-                    _buildGoalCompleteSection(),
+                    _buildGoalCompleteSection(
+                      isActuallyComplete: isPercentComplete,
+                      isTimeUp: isTimeUp,
+                    ),
                     const SizedBox(height: 16),
                   ],
                 );
@@ -379,19 +431,25 @@ class _GoalProgressCardState extends AdaptiveGoalCardState<GoalProgressCard> {
             child: Column(
               children: [
                 Text(
-                  'Started',
+                  'Timeline',
                   style: TextStyle(
                     fontSize: 10,
                     color: Colors.grey[600],
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                Text(
-                  _formatShortDate(startDate),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Builder(
+                  builder: (context) {
+                    final endDate = _calculateEndDate();
+                    final endDateText = endDate != null ? _formatShortDate(endDate) : 'Ongoing';
+                    return Text(
+                      '${_formatShortDate(startDate)} - $endDateText',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -400,35 +458,67 @@ class _GoalProgressCardState extends AdaptiveGoalCardState<GoalProgressCard> {
     );
   }
 
-  Widget _buildGoalCompleteSection() {
+  Widget _buildGoalCompleteSection({
+    required bool isActuallyComplete,
+    required bool isTimeUp,
+  }) {
+    // Determine messaging based on completion state
+    String title;
+    String subtitle;
+    Color backgroundColor;
+    Color borderColor;
+    Color iconColor;
+    Color textColor;
+    IconData icon;
+    
+    if (isActuallyComplete) {
+      // Goal was actually completed (100%)
+      title = 'Goal Complete! 🎉';
+      subtitle = 'Ready to set your next challenge?';
+      backgroundColor = Colors.green[50]!;
+      borderColor = Colors.green[200]!;
+      iconColor = Colors.green[600]!;
+      textColor = Colors.green[700]!;
+      icon = Icons.celebration;
+    } else {
+      // Time is up but goal not fully completed
+      title = 'Goal Period Ended';
+      subtitle = 'Ready to start fresh with a new goal?';
+      backgroundColor = Colors.blue[50]!;
+      borderColor = Colors.blue[200]!;
+      iconColor = Colors.blue[600]!;
+      textColor = Colors.blue[700]!;
+      icon = Icons.schedule;
+    }
+    
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.green[50],
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.green[200]!),
+        border: Border.all(color: borderColor),
       ),
       child: Row(
         children: [
-          Icon(Icons.celebration, color: Colors.green[600], size: 24),
+          Icon(icon, color: iconColor, size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Goal Complete! 🎉',
+                  title,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.green[700],
+                    color: textColor,
                   ),
                 ),
                 Text(
-                  'Ready to set your next challenge?',
+                  subtitle,
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.green[600],
+                    color: iconColor,
                   ),
                 ),
               ],
@@ -440,7 +530,7 @@ class _GoalProgressCardState extends AdaptiveGoalCardState<GoalProgressCard> {
               widget.onGoalCompleted?.call();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green[600],
+              backgroundColor: iconColor,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -524,7 +614,7 @@ class _GoalProgressCardState extends AdaptiveGoalCardState<GoalProgressCard> {
     } else if (daysRemaining > 0) {
       return daysRemaining.toString();
     } else {
-      return 'Time Up';
+      return 'Finished';
     }
   }
   

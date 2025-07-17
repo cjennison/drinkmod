@@ -202,7 +202,7 @@ class GoalFormComponents {
       case GoalType.interventionWins:
         icon = Icons.psychology;
         min = 1;
-        max = 30;
+        max = 100;
         defaultHint = 'Enter intervention wins';
         break;
       case GoalType.moodImprovement:
