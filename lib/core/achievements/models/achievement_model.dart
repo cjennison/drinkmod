@@ -79,6 +79,8 @@ class GrantedAchievement {
 enum AchievementCategory {
   account,
   goals,
+  tracking,
+  interventions,
   streaks,
   milestones,
   special,

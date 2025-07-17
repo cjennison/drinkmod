@@ -1,7 +1,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../../core/models/drink_entry.dart';
+import '../../../core/models/app_event.dart';
 import '../../../core/services/hive_database_service.dart';
+import '../../../core/services/app_events_service.dart';
 
 // States
 abstract class DrinkLoggingState extends Equatable {
@@ -34,6 +36,7 @@ class DrinkLoggingError extends DrinkLoggingState {
 // Cubit
 class DrinkLoggingCubit extends Cubit<DrinkLoggingState> {
   final HiveDatabaseService _databaseService;
+  final AppEventsService _eventsService = AppEventsService.instance;
 
   DrinkLoggingCubit(this._databaseService) : super(DrinkLoggingInitial());
 
@@ -86,6 +89,24 @@ class DrinkLoggingCubit extends Cubit<DrinkLoggingState> {
       
       // Update the entry with the database-generated ID
       final finalEntry = updatedEntry.copyWith(id: databaseEntryId);
+      
+      // Record app event for achievement tracking
+      await _eventsService.recordEvent(AppEvent.drinkLogged(
+        timestamp: finalEntry.timestamp,
+        drinkId: databaseEntryId,
+        drinkName: finalEntry.drinkName,
+        standardDrinks: finalEntry.standardDrinks,
+        isScheduleCompliant: isScheduleCompliant,
+        isWithinLimit: isWithinLimit,
+        wasIntervention: finalEntry.interventionData != null,
+        interventionType: finalEntry.interventionData?.interventionType.toString(),
+        additionalData: {
+          'timeOfDay': finalEntry.timeOfDay,
+          'location': finalEntry.location,
+          'socialContext': finalEntry.socialContext,
+          'moodBefore': finalEntry.moodBefore,
+        },
+      ));
       
       emit(DrinkLoggingSuccess(finalEntry));
     } catch (e) {

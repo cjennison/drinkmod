@@ -1,6 +1,8 @@
 import 'dart:developer' as developer;
 import '../models/intervention_event.dart';
+import '../models/app_event.dart';
 import 'hive_core.dart';
+import 'app_events_service.dart';
 
 /// Service for managing intervention events and therapeutic analytics
 class InterventionService {
@@ -10,6 +12,7 @@ class InterventionService {
   InterventionService._();
   
   final HiveCore _hiveCore = HiveCore.instance;
+  final AppEventsService _eventsService = AppEventsService.instance;
   
   /// Record an intervention event
   Future<String> recordInterventionEvent({
@@ -32,6 +35,25 @@ class InterventionService {
     };
     
     await _hiveCore.interventionEventsBox.put(eventId, event);
+    
+    // Also record as app event for achievement tracking
+    if (decision == InterventionDecision.declined) {
+      await _eventsService.recordEvent(AppEvent.interventionWin(
+        timestamp: DateTime.now(),
+        interventionType: interventionType.toString(),
+        reason: context?['reason'] as String?,
+        additionalData: context,
+      ));
+    } else if (decision == InterventionDecision.proceeded) {
+      await _eventsService.recordEvent(AppEvent.interventionLoss(
+        timestamp: DateTime.now(),
+        interventionType: interventionType.toString(),
+        drinkId: drinkEntryId ?? 'unknown',
+        reason: context?['reason'] as String?,
+        additionalData: context,
+      ));
+    }
+    
     developer.log('Recorded intervention event: $eventId - $decision', name: 'InterventionService');
     return eventId;
   }

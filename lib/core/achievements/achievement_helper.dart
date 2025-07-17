@@ -125,9 +125,33 @@ class AchievementHelper {
     await checkMultiple(['first_goal', 'first_goal_completed', 'first_goal_finished']);
   }
 
+  static Future<void> checkTrackingMilestones() async {
+    await checkMultiple([
+      'first_drink_logged',
+      '5_drinks_logged', 
+      '10_drinks_logged',
+      '25_drinks_logged',
+      '50_drinks_logged',
+      'week_of_logging',
+      'compliant_logger',
+    ]);
+  }
+
+  static Future<void> checkInterventionMilestones() async {
+    await checkMultiple([
+      'first_intervention_win',
+      '5_intervention_wins',
+      '10_intervention_wins',
+      'intervention_champion',
+      'streak_saver',
+    ]);
+  }
+
   static Future<void> checkAllCommonAchievements() async {
     await checkAccountMilestones();
     await checkGoalMilestones();
+    await checkTrackingMilestones();
+    await checkInterventionMilestones();
   }
 
   /// Get achievement statistics

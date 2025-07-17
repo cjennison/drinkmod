@@ -19,6 +19,7 @@ class HiveCore {
   static const String goalsBoxName = 'user_goals';
   static const String interventionEventsBoxName = 'intervention_events';
   static const String achievementsBoxName = 'achievements';
+  static const String appEventsBoxName = 'app_events';
   
   // Hive boxes - accessible to other services
   late Box<Map> userBox;
@@ -28,6 +29,7 @@ class HiveCore {
   late Box<Map> goalsBox;
   late Box<Map> interventionEventsBox;
   late Box<Map> achievementsBox;
+  late Box<Map> appEventsBox;
   
   bool _isInitialized = false;
   bool get isInitialized => _isInitialized;
@@ -53,6 +55,7 @@ class HiveCore {
       goalsBox = await Hive.openBox<Map>(goalsBoxName);
       interventionEventsBox = await Hive.openBox<Map>(interventionEventsBoxName);
       achievementsBox = await Hive.openBox<Map>(achievementsBoxName);
+      appEventsBox = await Hive.openBox<Map>(appEventsBoxName);
       
       _isInitialized = true;
       developer.log('HiveCore initialized successfully', name: 'HiveCore');
@@ -73,6 +76,7 @@ class HiveCore {
     await goalsBox.close();
     await interventionEventsBox.close();
     await achievementsBox.close();
+    await appEventsBox.close();
     
     _isInitialized = false;
     developer.log('HiveCore closed', name: 'HiveCore');
@@ -89,6 +93,7 @@ class HiveCore {
     await goalsBox.clear();
     await interventionEventsBox.clear();
     await achievementsBox.clear();
+    await appEventsBox.clear();
     
     developer.log('All Hive data cleared', name: 'HiveCore');
   }

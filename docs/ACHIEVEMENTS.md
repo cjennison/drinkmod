@@ -14,18 +14,40 @@ The Drinkmod app now has a complete achievement system that rewards users for re
 
 2. **Achievement Registry** (`achievement_registry.dart`)
    - Central definition of all available achievements
-   - Currently includes 6 initial achievements:
-     - First Goal: Creating your first goal
-     - 1 Day Down: Account active for 1 day
-     - 3 Days Down: Account active for 3 days  
-     - 7 Days Down: Account active for 7 days
-     - First Goal Completed: Completing a goal at 100%
-     - First Goal Finished: Finishing a goal (any percentage)
+   - Currently includes 17 achievements across 4 categories:
+     
+     **Account Milestones (4):**
+     - First Step: Creating your first goal
+     - Day One: Account active for 1 day
+     - Three Day Warrior: Account active for 3 days  
+     - Week Strong: Account active for 7 days
+     
+     **Goal Achievements (2):**
+     - Goal Crusher: Completing a goal at 100%
+     - Goal Finisher: Finishing a goal (any percentage)
+     
+     **Tracking Achievements (7):**
+     - Mindful Start: Logged first drink
+     - Early Tracker: Logged 5 drinks total
+     - Consistent Logger: Logged 10 drinks total
+     - Tracking Veteran: Logged 25 drinks total
+     - Data Master: Logged 50 drinks total
+     - Week Tracker: Logged drinks for 7 consecutive days
+     - Mindful Logger: 80% of drinks within schedule and limits
+     
+     **Intervention Achievements (5):**
+     - Self-Control: Declined a drink when prompted
+     - Strong Will: Won 5 interventions
+     - Iron Will: Won 10 interventions
+     - Champion: 80% intervention win rate
+     - Streak Saver: Avoided drinking on an alcohol-free day
 
 3. **Assessment System**
    - **Base Assessor**: Common functionality for all assessors
    - **Account Assessor**: Evaluates account milestone achievements
    - **Goal Assessor**: Evaluates goal-related achievements
+   - **Tracking Assessor**: Evaluates drink logging milestones and compliance
+   - **Intervention Assessor**: Evaluates intervention wins and success rates
    - Modular design allows easy addition of new achievement types
 
 4. **Achievement Manager** (`achievement_manager.dart`)
@@ -65,13 +87,17 @@ await AchievementHelper.checkMultiple(['1_day_down', '3_days_down', '7_days_down
 // Common milestone checks
 await AchievementHelper.checkAccountMilestones();
 await AchievementHelper.checkGoalMilestones();
+await AchievementHelper.checkTrackingMilestones();
+await AchievementHelper.checkInterventionMilestones();
 ```
 
 ### Achievement Triggers
 - **Account Creation**: Automatically triggers account milestone assessments
 - **Goal Creation**: Triggers "first_goal" achievement check  
 - **Goal Completion**: Triggers goal completion achievement checks
-- **Screen Navigation**: Async checks when returning to Progress or Home screens
+- **Drink Logging**: Records event and triggers tracking milestone checks
+- **Intervention Decisions**: Records win/loss events and triggers intervention achievements
+- **Screen Navigation**: Async checks when visiting Home or Tracking screens
 - **Persona Generation**: Account age achievements work correctly with backdated personas
 
 ### Account Age Achievement Details
@@ -197,10 +223,44 @@ The achievements list now displays both unlocked and locked achievements, helpin
 - Motivation to work towards specific goals
 - Understanding of achievement progression and requirements
 
+## Event Tracking System
+
+### App Events Model
+To properly track achievements without relying on schedule violations, the app now includes a comprehensive event tracking system:
+
+**AppEvent Model** (`app_event.dart`):
+- Tracks all significant user actions for achievement assessment
+- Stored in dedicated Hive box with metadata for context
+- Event types: `drinkLogged`, `interventionWin`, `interventionLoss`, `goalCreated`, `goalCompleted`, `accountCreated`
+
+**AppEventsService** (`app_events_service.dart`):
+- Records events with rich metadata for achievement calculation
+- Provides filtering and statistics for assessors
+- Tracks compliance rates, intervention success, and logging patterns
+
+### Event Recording Integration
+
+**Drink Logging Events:**
+- Recorded in `DrinkLoggingCubit.logDrinkEntry()`
+- Includes schedule compliance and limit adherence metadata
+- Tracks intervention context when applicable
+
+**Intervention Events:**
+- Recorded in `InterventionService.recordInterventionEvent()`
+- Distinguishes between wins (declined) and losses (proceeded)
+- Links to specific drink entries when applicable
+
+**Benefits:**
+- Achievement assessment independent of current app state
+- Historical tracking for complex achievements like compliance rates
+- Rich context for debugging and analytics
+- Separation of concerns between tracking and assessment
+
 ## Implementation Status
 ✅ Core architecture implemented
-✅ Six initial achievements defined
+✅ Seventeen achievements across four categories defined
 ✅ Assessment system working and debugged
+✅ Event tracking system implemented
 ✅ UI components created with proper alignment
 ✅ Integration with main app completed
 ✅ Data storage implemented and verified
@@ -209,5 +269,7 @@ The achievements list now displays both unlocked and locked achievements, helpin
 ✅ Account age assessment corrected
 ✅ Race condition handling implemented
 ✅ Async achievement checking on multiple screens
+✅ Tracking achievements with compliance assessment
+✅ Intervention achievements with win rate calculation
 
-The achievement system is now fully functional and properly debugged. All critical issues have been resolved, and the system reliably grants and displays achievements to users!
+The achievement system now provides comprehensive coverage of user actions and milestones. Users can earn achievements for account longevity, goal management, mindful tracking habits, and successful self-control interventions. The event-driven architecture ensures reliable achievement assessment independent of current app state.

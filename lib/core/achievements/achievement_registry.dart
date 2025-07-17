@@ -65,6 +65,128 @@ class AchievementRegistry {
       category: AchievementCategory.goals,
       prerequisites: ['first_goal'],
     ),
+
+    // Tracking achievements
+    'first_drink_logged': Achievement(
+      id: 'first_drink_logged',
+      name: 'Mindful Start',
+      description: 'Logged your first drink',
+      icon: Icons.create,
+      color: Colors.lightBlue,
+      category: AchievementCategory.tracking,
+    ),
+
+    '5_drinks_logged': Achievement(
+      id: '5_drinks_logged',
+      name: 'Early Tracker',
+      description: 'Logged 5 drinks total',
+      icon: Icons.trending_up,
+      color: Colors.blue,
+      category: AchievementCategory.tracking,
+      chainPosition: 5,
+      prerequisites: ['first_drink_logged'],
+    ),
+
+    '10_drinks_logged': Achievement(
+      id: '10_drinks_logged',
+      name: 'Consistent Logger',
+      description: 'Logged 10 drinks total',
+      icon: Icons.analytics,
+      color: Colors.indigo,
+      category: AchievementCategory.tracking,
+      chainPosition: 10,
+      prerequisites: ['5_drinks_logged'],
+    ),
+
+    '25_drinks_logged': Achievement(
+      id: '25_drinks_logged',
+      name: 'Tracking Veteran',
+      description: 'Logged 25 drinks total',
+      icon: Icons.insights,
+      color: Colors.deepPurple,
+      category: AchievementCategory.tracking,
+      chainPosition: 25,
+      prerequisites: ['10_drinks_logged'],
+    ),
+
+    '50_drinks_logged': Achievement(
+      id: '50_drinks_logged',
+      name: 'Data Master',
+      description: 'Logged 50 drinks total',
+      icon: Icons.storage,
+      color: Colors.purple,
+      category: AchievementCategory.tracking,
+      chainPosition: 50,
+      prerequisites: ['25_drinks_logged'],
+    ),
+
+    'week_of_logging': Achievement(
+      id: 'week_of_logging',
+      name: 'Week Tracker',
+      description: 'Logged drinks for 7 consecutive days',
+      icon: Icons.calendar_view_week,
+      color: Colors.cyan,
+      category: AchievementCategory.tracking,
+    ),
+
+    'compliant_logger': Achievement(
+      id: 'compliant_logger',
+      name: 'Mindful Logger',
+      description: '80% of drinks within schedule and limits',
+      icon: Icons.verified,
+      color: Colors.green,
+      category: AchievementCategory.tracking,
+    ),
+
+    // Intervention achievements
+    'first_intervention_win': Achievement(
+      id: 'first_intervention_win',
+      name: 'Self-Control',
+      description: 'Declined a drink when prompted',
+      icon: Icons.block,
+      color: Colors.red,
+      category: AchievementCategory.interventions,
+    ),
+
+    '5_intervention_wins': Achievement(
+      id: '5_intervention_wins',
+      name: 'Strong Will',
+      description: 'Won 5 interventions',
+      icon: Icons.security,
+      color: Colors.deepOrange,
+      category: AchievementCategory.interventions,
+      chainPosition: 5,
+      prerequisites: ['first_intervention_win'],
+    ),
+
+    '10_intervention_wins': Achievement(
+      id: '10_intervention_wins',
+      name: 'Iron Will',
+      description: 'Won 10 interventions',
+      icon: Icons.shield,
+      color: Colors.red,
+      category: AchievementCategory.interventions,
+      chainPosition: 10,
+      prerequisites: ['5_intervention_wins'],
+    ),
+
+    'intervention_champion': Achievement(
+      id: 'intervention_champion',
+      name: 'Champion',
+      description: '80% intervention win rate',
+      icon: Icons.military_tech,
+      color: Colors.amber,
+      category: AchievementCategory.interventions,
+    ),
+
+    'streak_saver': Achievement(
+      id: 'streak_saver',
+      name: 'Streak Saver',
+      description: 'Avoided drinking on an alcohol-free day',
+      icon: Icons.save,
+      color: Colors.lightGreen,
+      category: AchievementCategory.interventions,
+    ),
   };
 
   /// Get achievement by ID

@@ -6,6 +6,8 @@ import 'achievement_registry.dart';
 import 'models/achievement_model.dart';
 import 'assessors/account_assessor.dart';
 import 'assessors/goal_assessor.dart';
+import 'assessors/tracking_assessor.dart';
+import 'assessors/intervention_assessor.dart';
 import 'ui/achievement_modal.dart';
 
 /// Main achievement management service
@@ -23,6 +25,8 @@ class AchievementManager {
   // Assessors for different achievement categories
   final AccountAssessor _accountAssessor = AccountAssessor();
   final GoalAssessor _goalAssessor = GoalAssessor();
+  final TrackingAssessor _trackingAssessor = TrackingAssessor();
+  final InterventionAssessor _interventionAssessor = InterventionAssessor();
 
   /// Check and potentially grant an achievement
   /// Usage: await AchievementManager.instance.checkAchievement('1_day_down');
@@ -193,6 +197,10 @@ class AchievementManager {
         return await _accountAssessor.assess(achievementId, context: context);
       case AchievementCategory.goals:
         return await _goalAssessor.assess(achievementId, context: context);
+      case AchievementCategory.tracking:
+        return await _trackingAssessor.assess(achievementId, context: context);
+      case AchievementCategory.interventions:
+        return await _interventionAssessor.assess(achievementId, context: context);
       default:
         return const AssessmentResult.skip(reason: 'No assessor for category');
     }

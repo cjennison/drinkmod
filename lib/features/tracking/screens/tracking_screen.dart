@@ -5,6 +5,7 @@ import '../../../core/models/drink_entry.dart';
 import '../../../core/services/hive_database_service.dart';
 import '../../../core/utils/drink_calculator.dart';
 import '../../../core/utils/drink_intervention_utils.dart';
+import '../../../core/achievements/achievement_helper.dart';
 import '../../../shared/widgets/before_journey_banner.dart';
 import '../widgets/drink_item_view_modal.dart';
 import '../widgets/tracking_date_header.dart';
@@ -40,6 +41,38 @@ class _TrackingScreenState extends State<TrackingScreen> {
     _baseDate = DateTime.now();
     _currentDate = _baseDate;
     _loadData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Check achievements when returning to tracking screen
+    _checkAchievementsAsync();
+  }
+
+  /// Check tracking-related achievements asynchronously
+  Future<void> _checkAchievementsAsync() async {
+    // Run achievement checking in background with delay
+    Future.delayed(const Duration(milliseconds: 500), () async {
+      print('🏆 TrackingScreen: Checking tracking achievements asynchronously');
+      await AchievementHelper.checkMultiple([
+        // Tracking achievements
+        'first_drink_logged',
+        '5_drinks_logged',
+        '10_drinks_logged',
+        '25_drinks_logged',
+        '50_drinks_logged',
+        '100_drinks_logged',
+        'week_of_logging',
+        'compliant_logger',
+        // Intervention achievements
+        'first_intervention_win',
+        '5_intervention_wins',
+        '10_intervention_wins',
+        'intervention_champion',
+        'streak_saver',
+      ]);
+    });
   }
 
   Future<void> _loadData() async {
@@ -126,6 +159,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
     return RefreshIndicator(
       onRefresh: () async {
         await _loadData();
+        // Check achievements after manual refresh
+        _checkAchievementsAsync();
       },
       child: CustomScrollView(
         slivers: [
@@ -329,8 +364,9 @@ class _TrackingScreenState extends State<TrackingScreen> {
     );
     
     if (result == true && mounted) {
-     
       _loadData();
+      // Check achievements after returning from drink logging
+      _checkAchievementsAsync();
     }
   }
 
@@ -718,6 +754,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
       await cubit.logDrinkEntry(drinkEntry);
       
       _loadData();
+      // Check achievements after quick logging
+      _checkAchievementsAsync();
     
     } catch (e) {
       if (mounted) {
@@ -754,6 +792,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
         ),
       );
       _loadData();
+      // Check achievements after editing a drink
+      _checkAchievementsAsync();
     }
   }
 
@@ -780,6 +820,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
       try {
         await _databaseService.deleteDrinkEntry(entry['id']);
         _loadData();
+        // Check achievements after deleting a drink (may affect counts)
+        _checkAchievementsAsync();
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
