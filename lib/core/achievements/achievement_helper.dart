@@ -127,7 +127,6 @@ class AchievementHelper {
       '10_drinks_logged',
       '25_drinks_logged',
       '50_drinks_logged',
-      'week_of_logging',
       'compliant_logger',
     ]);
   }

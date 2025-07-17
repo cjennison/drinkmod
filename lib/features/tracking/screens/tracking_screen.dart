@@ -62,7 +62,6 @@ class _TrackingScreenState extends State<TrackingScreen> {
         '25_drinks_logged',
         '50_drinks_logged',
         '100_drinks_logged',
-        'week_of_logging',
         'compliant_logger',
         // Intervention achievements
         'first_intervention_win',

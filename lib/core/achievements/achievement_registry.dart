@@ -120,15 +120,6 @@ class AchievementRegistry {
       prerequisites: ['25_drinks_logged'],
     ),
 
-    'week_of_logging': Achievement(
-      id: 'week_of_logging',
-      name: 'Week Tracker',
-      description: 'Logged drinks for 7 consecutive days',
-      icon: Icons.calendar_view_week,
-      color: Colors.cyan,
-      category: AchievementCategory.tracking,
-    ),
-
     'compliant_logger': Achievement(
       id: 'compliant_logger',
       name: 'Mindful Logger',

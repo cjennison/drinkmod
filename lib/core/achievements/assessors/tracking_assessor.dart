@@ -20,8 +20,6 @@ class TrackingAssessor extends BaseAssessor {
         return await _assess25DrinksLogged();
       case '50_drinks_logged':
         return await _assess50DrinksLogged();
-      case 'week_of_logging':
-        return await _assessWeekOfLogging();
       case 'compliant_logger':
         return await _assessCompliantLogger();
       default:
@@ -114,59 +112,6 @@ class TrackingAssessor extends BaseAssessor {
     return AssessmentResult.skip(
       context: {'totalDrinksLogged': count},
       reason: 'User has only logged $count drinks',
-    );
-  }
-
-  /// Check if user has logged drinks for 7 consecutive days
-  Future<AssessmentResult> _assessWeekOfLogging() async {
-    final events = _eventsService.getEventsByType(AppEventType.drinkLogged);
-    
-    if (events.isEmpty) {
-      return const AssessmentResult.skip(
-        reason: 'No drinks logged yet',
-      );
-    }
-
-    // Group events by date
-    final eventsByDate = <String, List<AppEvent>>{};
-    for (final event in events) {
-      final dateKey = '${event.timestamp.year}-${event.timestamp.month.toString().padLeft(2, '0')}-${event.timestamp.day.toString().padLeft(2, '0')}';
-      eventsByDate.putIfAbsent(dateKey, () => []).add(event);
-    }
-
-    // Check for 7 consecutive days
-    final dates = eventsByDate.keys.toList()..sort();
-    int consecutiveDays = 1;
-    int maxConsecutiveDays = 1;
-
-    for (int i = 1; i < dates.length; i++) {
-      final currentDate = DateTime.parse(dates[i]);
-      final previousDate = DateTime.parse(dates[i - 1]);
-      
-      if (currentDate.difference(previousDate).inDays == 1) {
-        consecutiveDays++;
-        maxConsecutiveDays = maxConsecutiveDays > consecutiveDays ? maxConsecutiveDays : consecutiveDays;
-      } else {
-        consecutiveDays = 1;
-      }
-    }
-
-    if (maxConsecutiveDays >= 7) {
-      return AssessmentResult.grant(
-        context: {
-          'maxConsecutiveDays': maxConsecutiveDays,
-          'uniqueDaysLogged': eventsByDate.length,
-        },
-        reason: 'User logged drinks for $maxConsecutiveDays consecutive days',
-      );
-    }
-
-    return AssessmentResult.skip(
-      context: {
-        'maxConsecutiveDays': maxConsecutiveDays,
-        'uniqueDaysLogged': eventsByDate.length,
-      },
-      reason: 'User has only logged drinks for $maxConsecutiveDays consecutive days',
     );
   }
 
