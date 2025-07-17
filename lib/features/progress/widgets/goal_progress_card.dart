@@ -269,32 +269,36 @@ class _GoalProgressCardState extends AdaptiveGoalCardState<GoalProgressCard> {
     Color color = Colors.blue;
     String subtitle = 'Track your progress';
 
-    // Customize based on goal type
+    // Customize based on goal type with clear explanations
     if (goalTypeString != null) {
       if (goalTypeString.contains('daily')) {
         icon = Icons.today;
         color = Colors.green;
-        subtitle = 'Daily tracking goal';
+        subtitle = 'Keep your daily drinks under your target';
       } else if (goalTypeString.contains('weekly')) {
         icon = Icons.calendar_view_week;
         color = Colors.orange;
-        subtitle = 'Weekly progress goal';
-      } else if (goalTypeString.contains('streak') || goalTypeString.contains('dry')) {
+        subtitle = 'Stay within your weekly drink limit';
+      } else if (goalTypeString.contains('alcoholFree') || goalTypeString.contains('dry')) {
+        icon = Icons.flag;
+        color = Colors.blue;
+        subtitle = 'Complete alcohol-free days in your timeline';
+      } else if (goalTypeString.contains('streak')) {
         icon = Icons.local_fire_department;
         color = Colors.red;
-        subtitle = 'Streak maintenance goal';
+        subtitle = 'Maintain consecutive alcohol-free days';
       } else if (goalTypeString.contains('intervention')) {
         icon = Icons.psychology;
         color = Colors.purple;
-        subtitle = 'Intervention success goal';
+        subtitle = 'Resist urges when the app offers interventions';
       } else if (goalTypeString.contains('mood')) {
         icon = Icons.sentiment_satisfied;
         color = Colors.teal;
-        subtitle = 'Mood improvement goal';
+        subtitle = 'Improve your mood through reduced drinking';
       } else if (goalTypeString.contains('cost')) {
         icon = Icons.savings;
         color = Colors.amber;
-        subtitle = 'Cost savings goal';
+        subtitle = 'Save money by reducing alcohol spending';
       }
     }
 
@@ -463,7 +467,7 @@ class _GoalProgressCardState extends AdaptiveGoalCardState<GoalProgressCard> {
     
     if (isActuallyComplete) {
       // Goal was actually completed (100%)
-      title = 'Goal Complete! 🎉';
+      title = 'Goal Complete!';
       subtitle = 'Ready to set your next challenge?';
       backgroundColor = Colors.green[50]!;
       borderColor = Colors.green[200]!;

@@ -247,24 +247,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Current Goal',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Track your progress and achievements',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.grey.shade600,
-            ),
-          ),
-          const SizedBox(height: 24),
-          
           // Goal Card
           GoalCard(
             key: ValueKey(_activeGoalData!['id']),
@@ -272,11 +254,11 @@ class _ProgressScreenState extends State<ProgressScreen> {
             onGoalCompleted: _navigateToNewGoalWizard,
           ),
           
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
           
           // Achievement Badges Section
           AchievementsSection(key: _achievementsSectionKey),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
           
           // Progress Charts Section
           _buildProgressChartsSection(),
@@ -295,198 +277,120 @@ class _ProgressScreenState extends State<ProgressScreen> {
             Icon(
               Icons.show_chart_outlined,
               color: Theme.of(context).primaryColor,
-              size: 24,
+              size: 20,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
             Text(
-              'Progress Charts',
+              'Progress Analytics',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
+                fontSize: 20,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
         
-        // Charts Grid
+        // Charts - Mobile Vertical Layout
         Column(
           children: [
-            // Weekly Adherence Trend Chart
-            Card(
-              elevation: 2,
-              margin: EdgeInsets.zero,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.trending_up,
-                          color: Colors.green.shade600,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Weekly Goal Adherence',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Track your progress over the last 12 weeks',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    WeeklyAdherenceChart(data: _weeklyAdherenceData),
-                  ],
-                ),
-              ),
+            // Weekly Adherence Chart
+            _buildChartCard(
+              icon: Icons.trending_up,
+              iconColor: Colors.green.shade600,
+              title: 'Weekly Goal Adherence',
+              description: 'Your progress over the last 12 weeks',
+              chart: WeeklyAdherenceChart(data: _weeklyAdherenceData),
             ),
             
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
             
-            // Daily Pattern Chart
-            Card(
-              elevation: 2,
-              margin: EdgeInsets.zero,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.bar_chart,
-                          color: Colors.blue.shade600,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Weekly Drinking Pattern',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Average drinks consumed by day of week',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    WeeklyDrinkingPatternChart(data: _weeklyPatternData),
-                  ],
-                ),
-              ),
+            // Weekly Pattern Chart
+            _buildChartCard(
+              icon: Icons.bar_chart,
+              iconColor: Colors.blue.shade600,
+              title: 'Weekly Drinking Pattern',
+              description: 'Average drinks by day of week',
+              chart: WeeklyDrinkingPatternChart(data: _weeklyPatternData),
             ),
             
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+            
+            // Time of Day Chart
+            _buildChartCard(
+              icon: Icons.access_time,
+              iconColor: Colors.orange.shade600,
+              title: 'Time of Day Patterns',
+              description: 'When you typically drink',
+              chart: TimeOfDayPatternChart(data: _timeOfDayData),
+            ),
+            
+            const SizedBox(height: 16),
             
             // Intervention Success Chart
-            Card(
-              elevation: 2,
-              margin: EdgeInsets.zero,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.shield_outlined,
-                          color: Colors.purple.shade600,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Intervention Success Rate',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'How often you resist urges and stay on track',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    InterventionSuccessChart(data: _interventionData),
-                  ],
-                ),
-              ),
-            ),
-            
-            const SizedBox(height: 20),
-            
-            // Time of Day Pattern Chart
-            Card(
-              elevation: 2,
-              margin: EdgeInsets.zero,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.access_time,
-                          color: Colors.orange.shade600,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Time of Day Patterns',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'When you\'re most likely to drink throughout the day',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    TimeOfDayPatternChart(data: _timeOfDayData),
-                  ],
-                ),
-              ),
+            _buildChartCard(
+              icon: Icons.shield_outlined,
+              iconColor: Colors.purple.shade600,
+              title: 'Intervention Success',
+              description: 'How often you resist urges',
+              chart: InterventionSuccessChart(data: _interventionData),
             ),
           ],
         ),
       ],
+    );
+  }
+
+  Widget _buildChartCard({
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String description,
+    required Widget chart,
+  }) {
+    return Card(
+      elevation: 2,
+      margin: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  icon,
+                  color: iconColor,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              description,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Colors.grey.shade600,
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 16),
+            chart,
+          ],
+        ),
+      ),
     );
   }
 

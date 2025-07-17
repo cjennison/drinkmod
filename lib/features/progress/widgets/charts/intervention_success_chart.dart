@@ -18,7 +18,7 @@ class InterventionSuccessChart extends StatelessWidget {
     }
 
     return SizedBox(
-      height: 200,
+      height: 180,
       child: LineChart(
         LineChartData(
           gridData: FlGridData(
@@ -148,7 +148,7 @@ class InterventionSuccessChart extends StatelessWidget {
 
   Widget _buildEmptyState() {
     return Container(
-      height: 200,
+      height: 180,
       decoration: BoxDecoration(
         color: Colors.grey.shade50,
         borderRadius: BorderRadius.circular(8),

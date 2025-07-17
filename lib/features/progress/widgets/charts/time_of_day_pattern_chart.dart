@@ -21,7 +21,7 @@ class TimeOfDayPatternChart extends StatelessWidget {
     final chartMaxY = maxY > 0 ? (maxY * 1.2).ceil().toDouble() : 10.0;
 
     return SizedBox(
-      height: 200,
+      height: 180,
       child: BarChart(
         BarChartData(
           alignment: BarChartAlignment.spaceAround,
@@ -180,7 +180,7 @@ class TimeOfDayPatternChart extends StatelessWidget {
 
   Widget _buildEmptyState() {
     return Container(
-      height: 200,
+      height: 180,
       decoration: BoxDecoration(
         color: Colors.grey.shade50,
         borderRadius: BorderRadius.circular(8),
