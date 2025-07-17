@@ -22,6 +22,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic>? userData;
   bool isLoading = true;
+  bool _showDeveloperTools = false;
 
   @override
   void initState() {
@@ -168,184 +169,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         },
       ),
     );
-  }
-
-  Future<void> _showCurrentGoals() async {
-    try {
-      final activeGoal = await GoalManagementService.instance.getActiveGoal();
-      
-      if (!mounted) return;
-      
-      if (activeGoal == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No active goal found'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-        return;
-      }
-
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Current Active Goal'),
-          content: SingleChildScrollView(
-            child: Card(
-              margin: EdgeInsets.zero,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      activeGoal['title'] ?? 'Untitled Goal',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Type: ${activeGoal['goalType'] ?? 'Unknown'}',
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                    if (activeGoal['parameters'] != null) ...[
-                      Text(
-                        'Target: ${activeGoal['parameters']['targetValue'] ?? 'N/A'} ${activeGoal['parameters']['targetUnit'] ?? ''}',
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                      Text(
-                        'Duration: ${activeGoal['parameters']['targetPeriodDays'] ?? 'N/A'} days',
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                    ],
-                    if (activeGoal['description'] != null && activeGoal['description'].toString().isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        'Description: ${activeGoal['description']}',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontStyle: FontStyle.italic,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                    if (activeGoal['metrics'] != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        'Progress: ${((activeGoal['metrics']['currentProgress'] ?? 0.0) * 100).toStringAsFixed(1)}%',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Colors.blue,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Close'),
-            ),
-          ],
-        ),
-      );
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error loading goal: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _showGoalHistory() async {
-    try {
-      final goalHistory = GoalManagementService.instance.getGoalHistory();
-      
-      if (!mounted) return;
-
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text('Goal History (${goalHistory.length})'),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: goalHistory.isEmpty
-                  ? [
-                      const Text(
-                        'No completed goals yet. Keep working on your current goal!',
-                        style: TextStyle(
-                          fontStyle: FontStyle.italic,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ]
-                  : goalHistory.map((goal) {
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                goal['title'] ?? 'Completed Goal',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Type: ${goal['goalType'] ?? 'Unknown'}',
-                                style: const TextStyle(fontSize: 14),
-                              ),
-                              if (goal['updatedAt'] != null) ...[
-                                Text(
-                                  'Completed: ${DateTime.parse(goal['updatedAt']).toLocal().toString().split(' ')[0]}',
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.green,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                      );
-                    }).toList(),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Close'),
-            ),
-          ],
-        ),
-      );
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error loading goal history: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
   }
 
   Future<void> _clearActiveGoals() async {
@@ -615,9 +438,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return '$displayFrequency, $displayAmount';
   }
 
-  Widget _buildEditableInfoCard(String title, String? value, VoidCallback onEdit) {
+  Widget _buildEditableInfoCard(String title, String? value, VoidCallback onEdit, {IconData? icon}) {
     return Card(
       child: ListTile(
+        leading: icon != null ? Icon(icon, color: Colors.grey[600]) : null,
         title: Text(
           title,
           style: const TextStyle(fontWeight: FontWeight.w600),
@@ -625,11 +449,84 @@ class _ProfileScreenState extends State<ProfileScreen> {
         subtitle: Text(
           value ?? 'Not set',
           style: TextStyle(
-            color: value != null ? null : Colors.grey,
+            color: value != null ? null : Colors.grey[600],
           ),
         ),
-        trailing: const Icon(Icons.edit),
+        trailing: const Icon(Icons.chevron_right),
         onTap: onEdit,
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, String subtitle, IconData icon, Color color) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFeatureCard(String title, String subtitle, IconData icon, Color color, String status, VoidCallback onTap) {
+    return Card(
+      child: ListTile(
+        leading: Icon(icon, color: color),
+        title: Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        subtitle: Text(subtitle),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                status,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: color,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(Icons.chevron_right),
+          ],
+        ),
+        onTap: onTap,
       ),
     );
   }
@@ -668,6 +565,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     
     return Card(
       child: ListTile(
+        leading: const Icon(Icons.schedule, color: Colors.orange),
         title: const Text(
           'Drinking Schedule & Limits',
           style: TextStyle(fontWeight: FontWeight.w600),
@@ -679,7 +577,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Text(
               scheduleText,
               style: TextStyle(
-                color: schedule != null ? null : Colors.grey,
+                color: schedule != null ? null : Colors.grey[600],
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -687,15 +585,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 4),
               ...limitInfo.map((info) => Text(
                 info,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey,
+                  color: Colors.grey[600],
                 ),
               )),
             ],
           ],
         ),
-        trailing: const Icon(Icons.edit),
+        trailing: const Icon(Icons.chevron_right),
         onTap: _editSchedule,
       ),
     );
@@ -711,163 +609,214 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: const Text('Profile & Settings'),
         automaticallyImplyLeading: false,
+        actions: [
+          // Developer toggle (tap 7 times on version to reveal)
+          PopupMenuButton(
+            icon: const Icon(Icons.more_vert),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                child: ListTile(
+                  leading: Icon(_showDeveloperTools ? Icons.visibility_off : Icons.developer_mode),
+                  title: Text(_showDeveloperTools ? 'Hide Dev Tools' : 'Show Dev Tools'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+                onTap: () {
+                  setState(() {
+                    _showDeveloperTools = !_showDeveloperTools;
+                  });
+                },
+              ),
+            ],
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // User Info Section
-            const Text(
-              'Personal Information',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+            // Profile Section
+            _buildSectionHeader(
+              'Your Profile',
+              'Personal information and motivation',
+              Icons.person,
+              Colors.blue,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             
             _buildEditableInfoCard('Name & Gender', 
               userData?['name'] != null && userData?['gender'] != null
                 ? '${userData!['name']} (${_formatGender(userData!['gender'])})'
                 : 'Not set', 
-              _editNameAndGender),
-            _buildEditableInfoCard('Motivation', _formatMotivation(userData?['motivation']), _editMotivation),
-            _buildEditableInfoCard('Limit Strictness', _formatStrictnessLevel(userData?['strictnessLevel']), _editStrictnessLevel),
-            _buildEditableInfoCard('Old Drinking Patterns', 
-              _formatDrinkingPatterns(userData), 
-              _editDrinkingPatterns),
+              _editNameAndGender,
+              icon: Icons.badge),
+            _buildEditableInfoCard('Motivation', _formatMotivation(userData?['motivation']), _editMotivation,
+              icon: Icons.psychology),
             
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
             
-            // Drinking Schedule Section
-            const Text(
-              'Drinking Schedule & Limits',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+            // Behavior Settings Section
+            _buildSectionHeader(
+              'Behavior Settings',
+              'Configure your drinking patterns and limits',
+              Icons.tune,
+              Colors.orange,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             
             _buildScheduleCard(),
+            _buildEditableInfoCard('Limit Strictness', _formatStrictnessLevel(userData?['strictnessLevel']), _editStrictnessLevel,
+              icon: Icons.security),
+            _buildEditableInfoCard('Previous Patterns', 
+              _formatDrinkingPatterns(userData), 
+              _editDrinkingPatterns,
+              icon: Icons.history),
             
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
             
-            // Favorite Drinks Section
-            const Text(
-              'Favorite Drinks',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+            // Smart Features Section
+            _buildSectionHeader(
+              'Smart Features',
+              'Intelligent tools to support your goals',
+              Icons.psychology,
+              Colors.purple,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
+            
+            _buildFeatureCard(
+              'Smart Reminders',
+              'Get nudged at the right moments',
+              Icons.notifications_active,
+              Colors.purple,
+              '0 active', // TODO: Replace with actual count
+              () {
+                // TODO: Navigate to reminders setup
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Smart Reminders coming soon!')),
+                );
+              },
+            ),
+            _buildFeatureCard(
+              'Intervention Tracking',
+              'Monitor your resistance to urges',
+              Icons.shield,
+              Colors.teal,
+              'Active', // TODO: Replace with actual status
+              () {
+                // TODO: Navigate to intervention settings
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Intervention settings coming soon!')),
+                );
+              },
+            ),
+            
+            const SizedBox(height: 32),
+            
+            // Preferences Section
+            _buildSectionHeader(
+              'Preferences',
+              'Customize your app experience',
+              Icons.settings,
+              Colors.green,
+            ),
+            const SizedBox(height: 12),
             
             Card(
               child: ListTile(
-                title: const Text(
-                  'Favorite Drinks',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
+                leading: const Icon(Icons.wine_bar, color: Colors.amber),
+                title: const Text('Favorite Drinks'),
                 subtitle: Text(
                   userData?['favoriteDrinks'] != null 
                     ? (userData!['favoriteDrinks'] as List).join(', ')
                     : 'None selected',
                   style: TextStyle(
-                    color: userData?['favoriteDrinks'] != null ? null : Colors.grey,
+                    color: userData?['favoriteDrinks'] != null ? null : Colors.grey[600],
                   ),
                 ),
-                trailing: const Icon(Icons.edit),
+                trailing: const Icon(Icons.chevron_right),
                 onTap: _editFavoriteDrinks,
               ),
             ),
             
             const SizedBox(height: 32),
             
-            // Settings Section
-            const Text(
-              'Settings',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+            // Developer Tools Section (conditionally shown)
+            if (_showDeveloperTools) ...[
+              _buildSectionHeader(
+                'Developer Tools',
+                'Debug and testing utilities',
+                Icons.developer_mode,
+                Colors.red,
               ),
-            ),
-            const SizedBox(height: 16),
-
-            // Goal Management Section
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.visibility, color: Colors.blue),
-                title: const Text('View Current Goal'),
-                subtitle: const Text('See your active goal and progress'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: _showCurrentGoals,
+              const SizedBox(height: 12),
+              
+              Card(
+                color: Colors.red[50],
+                child: ListTile(
+                  leading: const Icon(Icons.bug_report, color: Colors.purple),
+                  title: const Text('Test Goal Loading'),
+                  subtitle: const Text('Test goal data persistence and loading'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: _debugGoalLoading,
+                ),
               ),
-            ),
-            
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.history, color: Colors.green),
-                title: const Text('Goal History'),
-                subtitle: const Text('View your completed goals'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: _showGoalHistory,
+              
+              Card(
+                color: Colors.red[50],
+                child: ListTile(
+                  leading: const Icon(Icons.science, color: Colors.purple),
+                  title: const Text('Generate Test Persona Data'),
+                  subtitle: const Text('Load personas for testing goals'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: _showPersonaSelector,
+                ),
               ),
-            ),
-            
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.bug_report, color: Colors.purple),
-                title: const Text('Debug: Test Goal Loading'),
-                subtitle: const Text('Test goal data persistence and loading'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: _debugGoalLoading,
+              
+              Card(
+                color: Colors.red[50],
+                child: ListTile(
+                  leading: const Icon(Icons.clear_all, color: Colors.red),
+                  title: const Text('Clear Active Goal'),
+                  subtitle: const Text('Remove current goal (for development/testing)'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: _clearActiveGoals,
+                ),
               ),
-            ),
-            
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.science, color: Colors.purple),
-                title: const Text('Generate Test Persona Data'),
-                subtitle: const Text('Load personas for testing goals'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: _showPersonaSelector,
+              
+              Card(
+                color: Colors.red[50],
+                child: ListTile(
+                  leading: const Icon(Icons.refresh, color: Colors.orange),
+                  title: const Text('Reset Onboarding'),
+                  subtitle: const Text('Start over with fresh settings'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: _resetOnboarding,
+                ),
               ),
-            ),
-            
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.clear_all, color: Colors.red),
-                title: const Text('Clear Active Goal'),
-                subtitle: const Text('Remove current goal (for development/testing)'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: _clearActiveGoals,
-              ),
-            ),
-            
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.refresh, color: Colors.orange),
-                title: const Text('Reset Onboarding'),
-                subtitle: const Text('Start over with fresh settings'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: _resetOnboarding,
-              ),
-            ),
-            
-            const SizedBox(height: 24),
+              
+              const SizedBox(height: 32),
+            ],
             
             // App Info
+            _buildSectionHeader(
+              'About',
+              'App information and support',
+              Icons.info,
+              Colors.grey,
+            ),
+            const SizedBox(height: 12),
+            
             Card(
               child: const ListTile(
-                leading: Icon(Icons.info_outline),
+                leading: Icon(Icons.info_outline, color: Colors.grey),
                 title: Text('App Version'),
                 subtitle: Text('1.0.0 - Stage 2.5'),
               ),
             ),
+            
+            const SizedBox(height: 32),
           ],
         ),
       ),
