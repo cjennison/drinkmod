@@ -54,7 +54,7 @@ class DrinkStatusUtils {
       case DrinkStatus.alcoholFreeViolation:
         return Colors.red.shade400;
       case DrinkStatus.unused:
-        return Colors.grey.shade300;
+        return Colors.grey.shade600;
       case DrinkStatus.future:
         return Colors.grey.shade200;
     }
