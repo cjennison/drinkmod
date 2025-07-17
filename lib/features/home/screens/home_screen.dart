@@ -4,6 +4,7 @@ import '../../../core/services/onboarding_service.dart';
 import '../../../core/services/hive_database_service.dart';
 import '../../../core/services/goal_management_service.dart';
 import '../../../core/utils/progress_metrics_service.dart';
+import '../../../core/achievements/achievement_helper.dart';
 import '../../tracking/screens/drink_logging_screen.dart';
 import '../../tracking/screens/drink_logging_cubit.dart';
 import '../../tracking/screens/tracking_screen.dart';
@@ -47,6 +48,13 @@ class _HomeScreenState extends State<HomeScreen> {
     _initializeServices();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Check achievements asynchronously when returning to this screen
+    _checkAchievementsAsync();
+  }
+
   Future<void> _initializeServices() async {
     try {
       print('Starting service initialization...');
@@ -67,6 +75,9 @@ class _HomeScreenState extends State<HomeScreen> {
       // Check for active goal
       await _checkActiveGoal();
       print('Active goal check completed');
+      
+      // Check for achievements after all data is loaded
+      _checkAchievementsAsync();
     } catch (e) {
       debugPrint('Error initializing services: $e');
       // Show error message to user
@@ -173,6 +184,20 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
   
+  /// Check account-related achievements asynchronously
+  Future<void> _checkAchievementsAsync() async {
+    // Run achievement checking in background with delay
+    Future.delayed(const Duration(milliseconds: 500), () async {
+      print('🏆 HomeScreen: Checking account achievements asynchronously');
+      await AchievementHelper.checkMultiple([
+        '1_day_down',  // 1 day since account creation
+        '3_days_down', // 3 days since account creation  
+        '7_days_down', // 7 days since account creation
+        'first_goal',  // User has created their first goal
+      ]);
+    });
+  }
+
   void _handleDetailedLog() async {
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute(

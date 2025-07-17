@@ -13,11 +13,7 @@ abstract class BaseAssessor {
 
   /// Helper: Get account creation date
   Future<DateTime?> getAccountCreationDate() async {
-    final userData = _userService.getUserData();
-    if (userData == null) return null;
-    
-    final createdAtString = userData['createdAt'] as String?;
-    return createdAtString != null ? DateTime.tryParse(createdAtString) : null;
+    return _userService.getAccountCreatedDate();
   }
 
   /// Helper: Get days since account creation
