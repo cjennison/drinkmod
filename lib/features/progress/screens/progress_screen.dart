@@ -38,11 +38,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
   Future<void> _checkUserGoals() async {
     try {
-      print('ProgressScreen: Checking user goals...');
       final activeGoal = await GoalManagementService.instance.getActiveGoal();
       final goalHistory = GoalManagementService.instance.getGoalHistory();
-      print('ProgressScreen: Active goal: $activeGoal');
-      print('ProgressScreen: Goal history count: ${goalHistory.length}');
       
       setState(() {
         _hasActiveGoals = activeGoal != null;
@@ -54,7 +51,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
       // Check for achievements fully async after UI is updated
       _checkAchievementsAsync();
     } catch (e) {
-      print('ProgressScreen: Error checking goals: $e');
       setState(() {
         _hasActiveGoals = false;
         _hasGoalHistory = false;
@@ -68,7 +64,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
   Future<void> _checkAchievementsAsync() async {
     // Run achievement checking in background with delay
     Future.delayed(const Duration(milliseconds: 500), () async {
-      print('🏆 ProgressScreen: Checking achievements asynchronously');
       await AchievementHelper.checkMultiple([
         'first_goal',
         'first_goal_completed', 
@@ -76,7 +71,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
       ]);
       
       // Refresh achievements section after checking
-      print('🔄 ProgressScreen: Refreshing achievements section');
       _achievementsSectionKey.currentState?.refreshAchievements();
     });
   }

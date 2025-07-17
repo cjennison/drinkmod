@@ -1,6 +1,5 @@
 import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
-
 import '../services/hive_core.dart';
 import 'achievement_registry.dart';
 import 'models/achievement_model.dart';
@@ -31,12 +30,9 @@ class AchievementManager {
   /// Check and potentially grant an achievement
   /// Usage: await AchievementManager.instance.checkAchievement('1_day_down');
   Future<bool> checkAchievement(String achievementId, {Map<String, dynamic>? context, bool showModal = true}) async {
-    print('🏆 AchievementManager: Checking achievement "$achievementId"');
-    
     try {
       // Check if already granted
       if (await hasGrantedAchievement(achievementId)) {
-        print('⚠️ AchievementManager: Achievement "$achievementId" already granted');
         developer.log('Achievement $achievementId already granted', name: 'AchievementManager');
         return false;
       }
@@ -44,7 +40,6 @@ class AchievementManager {
       // Get achievement definition
       final achievement = AchievementRegistry.getAchievement(achievementId);
       if (achievement == null) {
-        print('❌ AchievementManager: Achievement "$achievementId" not found in registry');
         developer.log('Achievement $achievementId not found in registry', name: 'AchievementManager');
         return false;
       }
@@ -52,40 +47,29 @@ class AchievementManager {
       // Check prerequisites
       final grantedIds = await getGrantedAchievementIds();
       if (!AchievementRegistry.canUnlock(achievementId, grantedIds)) {
-        print('🔒 AchievementManager: Achievement "$achievementId" prerequisites not met');
         developer.log('Achievement $achievementId prerequisites not met', name: 'AchievementManager');
         return false;
       }
 
-      print('🔍 AchievementManager: Assessing achievement "$achievementId"');
-      
       // Assess achievement
       final result = await _assessAchievement(achievementId, context: context);
-      
-      print('📊 AchievementManager: Assessment result for "$achievementId": ${result.shouldGrant ? "GRANT" : "SKIP"}');
-      print('📝 AchievementManager: Reason: ${result.reason}');
       
       if (result.shouldGrant) {
         // Grant the achievement
         await _grantAchievement(achievement, result.context);
         
-        print('✅ AchievementManager: Achievement "${achievement.name}" granted successfully!');
-        
         // Show modal if requested
         if (showModal) {
-          print('🎉 AchievementManager: Showing achievement modal for "${achievement.name}"');
           await _showAchievementModal(achievement);
         }
         
         developer.log('Achievement granted: ${achievement.name}', name: 'AchievementManager');
         return true;
       } else {
-        print('⏭️ AchievementManager: Achievement "$achievementId" not granted: ${result.reason}');
         developer.log('Achievement not granted: ${result.reason}', name: 'AchievementManager');
         return false;
       }
     } catch (e) {
-      print('💥 AchievementManager: Error checking achievement "$achievementId": $e');
       developer.log('Error checking achievement $achievementId: $e', name: 'AchievementManager');
       return false;
     }
@@ -110,12 +94,10 @@ class AchievementManager {
     await _hiveCore.ensureInitialized();
     
     final grantedData = _hiveCore.achievementsBox.values.toList();
-    print('📦 AchievementManager: Found ${grantedData.length} stored achievements');
     
     final granted = <GrantedAchievement>[];
     
     for (final data in grantedData) {
-      print('🔍 AchievementManager: Processing achievement data: $data');
       final achievementId = data['achievementId'] as String;
       final achievement = AchievementRegistry.getAchievement(achievementId);
       
@@ -124,16 +106,12 @@ class AchievementManager {
           Map<String, dynamic>.from(data),
           achievement,
         ));
-        print('✅ AchievementManager: Successfully loaded achievement: ${achievement.name}');
-      } else {
-        print('❌ AchievementManager: Achievement not found in registry: $achievementId');
       }
     }
     
     // Sort by granted date (most recent first)
     granted.sort((a, b) => b.grantedAt.compareTo(a.grantedAt));
     
-    print('🏆 AchievementManager: Returning ${granted.length} granted achievements');
     return granted;
   }
 
@@ -218,13 +196,7 @@ class AchievementManager {
       'metadata': context,
     };
     
-    print('💾 AchievementManager: Storing achievement data: $grantedData');
     await _hiveCore.achievementsBox.put(grantedId, grantedData);
-    print('✅ AchievementManager: Achievement stored successfully');
-    
-    // Verify storage
-    final stored = _hiveCore.achievementsBox.get(grantedId);
-    print('🔍 AchievementManager: Verification - stored data: $stored');
   }
 
   /// Show achievement modal

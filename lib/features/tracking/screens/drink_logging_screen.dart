@@ -450,15 +450,13 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
             // Record intervention event - user declined (intervention win)
             await _recordInterventionDecision(interventionResult, proceeded: false);
             
-            // User chose to stick to their goal - clear state and go back
+            // User chose to stick to their goal - clear state and go back to home
             _clearFormState();
-            Navigator.of(context).pop(null);
-            // Navigate back to home, clearing the drink logging screen
+            
+            // Navigate back to home, clearing all screens including the intervention screen
             if (mounted) {
               Navigator.of(context).popUntil((route) => route.isFirst);
-              // Show positive reinforcement based on intervention type
-              final message = _getPositiveReinforcementMessage(interventionResult);
-              AppSnackBar.showSuccess(context, message);
+              
             }
           },
         ),
@@ -500,19 +498,6 @@ class _DrinkLoggingScreenState extends State<DrinkLoggingScreen> {
       );
     } catch (e) {
       developer.log('Failed to record intervention event: $e', name: 'DrinkLoggingScreen');
-    }
-  }
-
-  /// Get appropriate positive reinforcement message based on intervention type
-  String _getPositiveReinforcementMessage(DrinkInterventionResult interventionResult) {
-    if (interventionResult.isScheduleViolation) {
-      return 'Great choice! You\'re honoring your alcohol-free day commitment.';
-    } else if (interventionResult.isLimitExceeded) {
-      return 'Excellent decision! You\'re staying within your daily limits.';
-    } else if (interventionResult.isApproachingLimit) {
-      return 'Wise choice! You\'re staying in control of your drinking.';
-    } else {
-      return 'Great choice! You\'re staying on track with your goals.';
     }
   }
 

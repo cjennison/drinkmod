@@ -1,11 +1,11 @@
 import '../models/achievement_model.dart';
-import '../../services/user_data_service.dart';
+import '../../services/hive_database_service.dart';
 import '../../services/goal_management_service.dart';
 
 /// Base class for achievement assessors with common functionality
 abstract class BaseAssessor {
   /// Service dependencies
-  final UserDataService _userService = UserDataService.instance;
+  final HiveDatabaseService _databaseService = HiveDatabaseService.instance;
   final GoalManagementService _goalService = GoalManagementService.instance;
 
   /// Assess if achievement should be granted
@@ -13,7 +13,7 @@ abstract class BaseAssessor {
 
   /// Helper: Get account creation date
   Future<DateTime?> getAccountCreationDate() async {
-    return _userService.getAccountCreatedDate();
+    return _databaseService.getAccountCreatedDate();
   }
 
   /// Helper: Get days since account creation
@@ -55,19 +55,7 @@ abstract class BaseAssessor {
         .where((goal) => goal['status'] == 'GoalStatus.completed')
         .toList();
     
-    print('🎯 BaseAssessor: Found ${completedGoals.length} completed goals');
-    
     if (completedGoals.isEmpty) return null;
-    
-    // Debug: Print details of completed goals
-    for (int i = 0; i < completedGoals.length; i++) {
-      final goal = completedGoals[i];
-      print('🎯 BaseAssessor: Completed goal $i: ${goal['title']}');
-      print('🎯 BaseAssessor: - Status: ${goal['status']}');
-      print('🎯 BaseAssessor: - CompletedAt: ${goal['completedAt']}');
-      print('🎯 BaseAssessor: - FinalProgress: ${goal['finalProgress']}');
-      print('🎯 BaseAssessor: - EndDate: ${goal['endDate']}');
-    }
     
     // Sort by completion date
     completedGoals.sort((a, b) {

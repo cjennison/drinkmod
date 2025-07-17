@@ -54,7 +54,6 @@ class _TrackingScreenState extends State<TrackingScreen> {
   Future<void> _checkAchievementsAsync() async {
     // Run achievement checking in background with delay
     Future.delayed(const Duration(milliseconds: 500), () async {
-      print('🏆 TrackingScreen: Checking tracking achievements asynchronously');
       await AchievementHelper.checkMultiple([
         // Tracking achievements
         'first_drink_logged',

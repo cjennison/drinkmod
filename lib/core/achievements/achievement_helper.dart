@@ -30,19 +30,15 @@ class AchievementsSectionState extends State<AchievementsSection> {
 
   Future<void> _loadRecentAchievements() async {
     try {
-      print('🔄 AchievementsSection: Loading recent achievements...');
       final achievements = await _manager.getRecentAchievements(limit: 5);
-      print('🎖️ AchievementsSection: Loaded ${achievements.length} achievements');
       
       if (mounted) {
         setState(() {
           _recentAchievements = achievements;
           _isLoading = false;
         });
-        print('🔄 AchievementsSection: State updated with ${achievements.length} achievements');
       }
     } catch (e) {
-      print('❌ AchievementsSection: Error loading achievements: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -53,7 +49,6 @@ class AchievementsSectionState extends State<AchievementsSection> {
 
   /// Refresh achievements (call after new achievements are granted)
   void refreshAchievements() {
-    print('🔄 AchievementsSection: Refreshing achievements...');
     _loadRecentAchievements();
   }
 

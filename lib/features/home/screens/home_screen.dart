@@ -29,7 +29,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   String? userName;
   bool isLoading = true;
   Map<String, dynamic>? dashboardStats;
@@ -45,7 +45,22 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _metricsService = ProgressMetricsService(_databaseService);
+    WidgetsBinding.instance.addObserver(this);
     _initializeServices();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Check achievements when app resumes
+      _checkAchievementsAsync();
+    }
   }
 
   @override
@@ -186,29 +201,13 @@ class _HomeScreenState extends State<HomeScreen> {
   
   /// Check account-related achievements asynchronously
   Future<void> _checkAchievementsAsync() async {
-    // Run achievement checking in background with delay
-    Future.delayed(const Duration(milliseconds: 1000), () async {
-      print('🏆 HomeScreen: Checking achievements asynchronously');
-      await AchievementHelper.checkMultiple([
-        '1_day_down',  // 1 day since account creation
-        '3_days_down', // 3 days since account creation  
-        '7_days_down', // 7 days since account creation
-        'first_goal',  // User has created their first goal
-        // Tracking achievements
-        'first_drink_logged',
-        '5_drinks_logged',
-        '10_drinks_logged',
-        '25_drinks_logged',
-        '50_drinks_logged',
-        'week_of_logging',
-        'compliant_logger',
-        // Intervention achievements
-        'first_intervention_win',
-        '5_intervention_wins',
-        '10_intervention_wins',
-        'intervention_champion',
-        'streak_saver',
-      ]);
+    // Use post-frame callback to ensure widget tree is stable before checking achievements
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      try {
+        await AchievementHelper.checkAllCommonAchievements();
+      } catch (e) {
+        print('Error checking achievements: $e');
+      }
     });
   }
 

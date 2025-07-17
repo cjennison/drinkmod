@@ -21,26 +21,18 @@ class GoalAssessor extends BaseAssessor {
 
   /// Check if user has created their first goal
   Future<AssessmentResult> _assessFirstGoal() async {
-    print('🎯 GoalAssessor: Assessing first goal achievement');
-    
     final hasGoals = await hasAnyGoals();
-    print('🎯 GoalAssessor: User has goals: $hasGoals');
     
     if (hasGoals) {
       // Check both all goals and active goal for completeness
       final allGoals = _goalService.getAllGoals();
       final activeGoal = await _goalService.getActiveGoal();
       
-      print('🎯 GoalAssessor: Found ${allGoals.length} total goals');
-      print('🎯 GoalAssessor: Active goal: ${activeGoal != null ? activeGoal['title'] : 'none'}');
-      
       // Use active goal as first goal if available, otherwise first from all goals
       final firstGoal = activeGoal ?? (allGoals.isNotEmpty ? allGoals.first : null);
       final totalGoalCount = allGoals.length + (activeGoal != null ? 1 : 0);
       
       if (firstGoal != null) {
-        print('🎯 GoalAssessor: First goal: ${firstGoal['title']} (${firstGoal['goalType']})');
-        
         return AssessmentResult.grant(
           context: {
             'goalCount': totalGoalCount,
@@ -52,7 +44,6 @@ class GoalAssessor extends BaseAssessor {
       }
     }
     
-    print('🎯 GoalAssessor: No goals found');
     return const AssessmentResult.skip(
       reason: 'User has not created any goals yet',
     );

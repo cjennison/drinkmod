@@ -31,7 +31,6 @@ class _AchievementsSectionState extends State<AchievementsSection> {
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading achievements: $e');
       setState(() {
         _achievements = [];
         _isLoading = false;
