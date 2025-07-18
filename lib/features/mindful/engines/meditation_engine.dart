@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/meditation_config.dart';
 import '../engines/script_engine.dart';
-import '../engines/breathing_engine.dart';
 import '../../../core/models/mindfulness_session.dart';
 import '../../../core/repositories/mindfulness_repository.dart';
 
@@ -17,6 +16,7 @@ class MeditationEngine extends ChangeNotifier {
   
   bool _isActive = false;
   bool _isPaused = false;
+  bool _isCompleting = false; // Prevent multiple completion calls
   Duration _elapsed = Duration.zero;
 
   MeditationEngine({
@@ -27,6 +27,7 @@ class MeditationEngine extends ChangeNotifier {
       script: config.script,
       displayDuration: const Duration(seconds: 4),
       fadeDuration: const Duration(milliseconds: 800),
+      totalDuration: Duration(minutes: config.durationMinutes), // Pass total duration
     );
     
     _scriptEngine.addListener(_onScriptChanged);
@@ -42,7 +43,17 @@ class MeditationEngine extends ChangeNotifier {
       ? _elapsed.inMilliseconds / totalDuration.inMilliseconds 
       : 0.0;
   MindfulnessSession? get currentSession => _currentSession;
-  bool get isComplete => _elapsed >= totalDuration || _scriptEngine.isComplete;
+  bool get isComplete {
+    final timeComplete = _elapsed >= totalDuration;
+    final scriptComplete = _scriptEngine.isComplete;
+    final result = timeComplete || scriptComplete;
+    
+    if (result) {
+      print('📊 isComplete=true: timeComplete=$timeComplete (${_elapsed.inSeconds}s/${totalDuration.inSeconds}s), scriptComplete=$scriptComplete');
+    }
+    
+    return result;
+  }
 
   /// Start the meditation session
   Future<void> start({
@@ -104,13 +115,20 @@ class MeditationEngine extends ChangeNotifier {
     int? urgeIntensityAfter,
     String? notes,
   }) async {
-    if (!_isActive) return;
+    print('🛑 STOP METHOD CALLED! isActive: $_isActive');
+    if (!_isActive) {
+      print('🛑 Stop called but not active, returning early');
+      return;
+    }
 
+    print('🛑 Cancelling session timer');
     _sessionTimer?.cancel();
+    print('🛑 Stopping script engine');
     _scriptEngine.stop();
     
     // Complete session in repository if it exists
     if (_currentSession != null) {
+      print('🛑 Completing session in repository');
       final completed = await _repository.completeSession(
         _currentSession!.id,
         postMood: postMood,
@@ -118,12 +136,17 @@ class MeditationEngine extends ChangeNotifier {
         notes: notes,
       );
       _currentSession = completed;
+      print('🛑 Session completed in repository');
     }
     
+    print('🛑 Setting isActive=false, isPaused=false');
     _isActive = false;
     _isPaused = false;
+    _isCompleting = false; // Reset completion flag
     
+    print('🛑 Calling notifyListeners()');
     notifyListeners();
+    print('🛑 Stop method finished');
   }
 
   /// Force complete the meditation
@@ -132,12 +155,23 @@ class MeditationEngine extends ChangeNotifier {
     int? urgeIntensityAfter,
     String? notes,
   }) async {
+    print('🏁 COMPLETE METHOD CALLED! _isCompleting: $_isCompleting, _isActive: $_isActive');
+    
+    if (_isCompleting || !_isActive) {
+      print('🏁 COMPLETE BLOCKED - Already completing or not active');
+      return;
+    }
+    
+    _isCompleting = true;
+    print('🏁 COMPLETE PROCEEDING - Setting elapsed to total duration');
     _elapsed = totalDuration;
+    print('🏁 Calling stop() method');
     await stop(
       postMood: postMood,
       urgeIntensityAfter: urgeIntensityAfter,
       notes: notes,
     );
+    print('🏁 Complete method finished');
   }
 
   /// Reset the meditation engine
@@ -161,8 +195,10 @@ class MeditationEngine extends ChangeNotifier {
   }
 
   void _onScriptChanged() {
-    // Auto-complete when script finishes
-    if (_scriptEngine.isComplete && _isActive) {
+    print('📜 _onScriptChanged called - scriptComplete: ${_scriptEngine.isComplete}, isActive: $_isActive, elapsed: ${_elapsed.inSeconds}s');
+    // Auto-complete when script finishes - but only if we're still actively running
+    if (_scriptEngine.isComplete && _isActive && _elapsed < totalDuration) {
+      print('📜 Script completed before time limit - calling complete()');
       complete();
     }
     notifyListeners();
@@ -170,17 +206,34 @@ class MeditationEngine extends ChangeNotifier {
 
   void _startSessionTimer() {
     _sessionTimer?.cancel();
+    print('🕒 Starting session timer - total duration: ${totalDuration.inSeconds} seconds');
     _sessionTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_isActive && !_isPaused) {
         _elapsed = _elapsed + const Duration(seconds: 1);
         
-        // Auto-complete when time limit reached
+        final elapsedSeconds = _elapsed.inSeconds;
+        final totalSeconds = totalDuration.inSeconds;
+        final progress = (elapsedSeconds / totalSeconds * 100).toStringAsFixed(1);
+        
+        print('🕒 Timer tick: ${elapsedSeconds}s/${totalSeconds}s (${progress}%) - isComplete: $isComplete');
+        
+        // Check for completion
         if (_elapsed >= totalDuration) {
+          print('⏰ TIME LIMIT REACHED! Calling complete()');
+          complete();
+          return;
+        }
+        
+        // Check script engine completion
+        if (_scriptEngine.isComplete) {
+          print('📜 SCRIPT ENGINE COMPLETE! Calling complete()');
           complete();
           return;
         }
         
         notifyListeners();
+      } else {
+        print('🕒 Timer tick skipped - isActive: $_isActive, isPaused: $_isPaused');
       }
     });
   }
@@ -224,398 +277,5 @@ class MeditationEngine extends ChangeNotifier {
     _scriptEngine.removeListener(_onScriptChanged);
     _scriptEngine.dispose();
     super.dispose();
-  }
-}
-
-/// Meditation session screen with full Headspace-inspired experience
-class MeditationSessionScreen extends StatefulWidget {
-  final MeditationConfig config;
-  final MoodRating? preMood;
-  final int? urgeIntensityBefore;
-
-  const MeditationSessionScreen({
-    super.key,
-    required this.config,
-    this.preMood,
-    this.urgeIntensityBefore,
-  });
-
-  @override
-  State<MeditationSessionScreen> createState() => _MeditationSessionScreenState();
-}
-
-class _MeditationSessionScreenState extends State<MeditationSessionScreen>
-    with TickerProviderStateMixin {
-  late MeditationEngine _engine;
-  late AnimationController _progressController;
-  late Animation<double> _progressAnimation;
-  bool _showControls = true;
-  Timer? _controlsTimer;
-  bool _isUpdatingControls = false; // Prevent concurrent state updates
-  bool _completionDialogShown = false; // Prevent multiple completion dialogs
-
-  @override
-  void initState() {
-    super.initState();
-    _engine = MeditationEngine(config: widget.config);
-    _engine.addListener(_onEngineChanged);
-    
-    // Create progress animation controller for continuous progress bar
-    _progressController = AnimationController(
-      duration: Duration(minutes: widget.config.durationMinutes),
-      vsync: this,
-    );
-    
-    _progressAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _progressController,
-      curve: Curves.linear,
-    ));
-    
-    // Auto-start the meditation
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _engine.start(
-        preMood: widget.preMood,
-        urgeIntensityBefore: widget.urgeIntensityBefore,
-      );
-      // Start the continuous progress animation
-      _progressController.forward();
-    });
-    
-    _hideControlsAfterDelay();
-  }
-
-  void _onEngineChanged() {
-    if (_engine.isComplete && !_completionDialogShown) {
-      _completionDialogShown = true; // Prevent multiple dialogs
-      // Stop the progress animation when meditation completes
-      _progressController.stop();
-      // Set progress to 100% to ensure visual completion
-      _progressController.value = 1.0;
-      _showCompletionDialog();
-    }
-  }
-
-  void _hideControlsAfterDelay() {
-    print('⏰ _hideControlsAfterDelay called');
-    _controlsTimer?.cancel();
-    
-    // Wait for one complete breathing cycle before hiding controls
-    final breathingCycleDuration = widget.config.breathingCycleDuration;
-    print('⏰ Waiting ${breathingCycleDuration.inSeconds} seconds (one breathing cycle) before hiding controls');
-    
-    _controlsTimer = Timer(breathingCycleDuration, () {
-      print('⏰ Timer fired - checking if should hide controls');
-      if (mounted && _showControls && !_isUpdatingControls) { // Only hide if currently showing and not updating
-        print('⏰ Timer fired - hiding controls');
-        _isUpdatingControls = true;
-        setState(() {
-          _showControls = false;
-        });
-        _isUpdatingControls = false;
-        print('⏰ Controls hidden - _showControls: $_showControls');
-      }
-    });
-  }
-
-  void _toggleControls() {
-    print('🔄 _toggleControls called - current _showControls: $_showControls');
-    
-    // Prevent rapid-fire toggles that could cause setState conflicts
-    if (!mounted || _isUpdatingControls) return;
-    
-    _controlsTimer?.cancel(); // Cancel any existing timer first
-    _isUpdatingControls = true;
-    
-    setState(() {
-      _showControls = !_showControls;
-    });
-    _isUpdatingControls = false;
-    print('🔄 _toggleControls after setState - new _showControls: $_showControls');
-    
-    // Only start timer if controls are now visible
-    if (_showControls) {
-      print('⏰ Starting hide controls timer');
-      _hideControlsAfterDelay();
-    }
-  }
-
-  @override
-  void dispose() {
-    _engine.removeListener(_onEngineChanged);
-    _controlsTimer?.cancel();
-    _progressController.dispose();
-    _engine.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    print('🔨 Build called - _showControls: $_showControls');
-    return Scaffold(
-      backgroundColor: Color(widget.config.colorValue),
-      body: GestureDetector(
-        onTap: () {
-          print('👆 GestureDetector onTap triggered!');
-          _toggleControls();
-        },
-        behavior: HitTestBehavior.opaque, // Ensure the entire area is tappable
-        child: SafeArea(
-          child: Stack(
-            children: [
-              // Main meditation content
-              Column(
-                children: [
-                  // Top controls
-                  IgnorePointer(
-                    ignoring: !_showControls,
-                    child: AnimatedOpacity(
-                      opacity: _showControls ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut, // Add smooth curve
-                      child: _buildTopControls(),
-                    ),
-                  ),
-                  
-                  // Breathing circle with overlaid instructions
-                  Expanded(
-                    flex: 2,
-                    child: Center(
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          // Breathing circle
-                          AnimatedBuilder(
-                            animation: _engine,
-                            builder: (context, child) {
-                              return BreathingCircle(
-                                cycleDuration: widget.config.breathingCycleDuration,
-                                color: Colors.white,
-                                size: 160,
-                                opacity: 0.4,
-                                pattern: widget.config.breathingPattern,
-                                isActive: _engine.isActive && !_engine.isPaused,
-                                showControls: _showControls,
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  
-                  // Script display
-                  Expanded(
-                    flex: 1,
-                    child: MeditationScriptDisplay(
-                      scriptEngine: _engine.scriptEngine,
-                      height: 150,
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 20),
-                  
-                  // Bottom controls
-                  IgnorePointer(
-                    ignoring: !_showControls,
-                    child: AnimatedOpacity(
-                      opacity: _showControls ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut, // Add smooth curve
-                      child: _buildBottomControls(),
-                    ),
-                  ),
-                ],
-              ),
-              
-              // Progress indicator
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                child: AnimatedBuilder(
-                  animation: _progressAnimation,
-                  builder: (context, child) {
-                    return LinearProgressIndicator(
-                      value: _progressAnimation.value,
-                      backgroundColor: Colors.white.withValues(alpha: 0.2),
-                      valueColor: const AlwaysStoppedAnimation(Colors.white),
-                      minHeight: 2,
-                    );
-                  },
-                ),
-              ),
-              
-              // Tap hint (shows briefly at start)
-              if (_showControls)
-                Positioned(
-                  bottom: 100,
-                  left: 0,
-                  right: 0,
-                  child: AnimatedOpacity(
-                    opacity: _showControls ? 0.7 : 0.0,
-                    duration: const Duration(milliseconds: 500),
-                    curve: Curves.easeInOut, // Add smooth curve
-                    child: const Center(
-                      child: Text(
-                        'Tap anywhere to show/hide controls',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w300,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTopControls() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: _exitMeditation,
-            icon: const Icon(Icons.close, color: Colors.white),
-          ),
-          const Spacer(),
-          Text(
-            widget.config.title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const Spacer(),
-          AnimatedBuilder(
-            animation: _engine,
-            builder: (context, child) {
-              final minutes = _engine.elapsed.inMinutes;
-              final seconds = _engine.elapsed.inSeconds % 60;
-              return Text(
-                '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w300,
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBottomControls() {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          // Play/Pause button
-          AnimatedBuilder(
-            animation: _engine,
-            builder: (context, child) {
-              return IconButton(
-                onPressed: _togglePlayPause,
-                icon: Icon(
-                  _engine.isPaused ? Icons.play_arrow : Icons.pause,
-                  color: Colors.white,
-                  size: 48,
-                ),
-              );
-            },
-          ),
-          
-          // Stop button
-          IconButton(
-            onPressed: _exitMeditation,
-            icon: const Icon(Icons.stop, color: Colors.white, size: 32),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _togglePlayPause() {
-    if (_engine.isPaused) {
-      _engine.resume();
-      // Resume progress animation from current position
-      _progressController.forward();
-    } else {
-      _engine.pause();
-      // Pause progress animation
-      _progressController.stop();
-    }
-  }
-
-  void _exitMeditation() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('End Meditation?'),
-        content: const Text(
-          'Are you sure you want to end this meditation session? Your progress will be saved.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Continue Meditation'),
-          ),
-          TextButton(
-            onPressed: () {
-              // Stop progress animation
-              _progressController.stop();
-              Navigator.of(context).pop();
-              _engine.stop();
-              Navigator.of(context).pop();
-            },
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red,
-            ),
-            child: const Text('End Session'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showCompletionDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('Meditation Complete'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.check_circle, color: Colors.green, size: 48),
-            const SizedBox(height: 16),
-            const Text('Well done! You\'ve completed your meditation session.'),
-            const SizedBox(height: 16),
-            const Text('How are you feeling now?'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).pop();
-            },
-            child: const Text('Done'),
-          ),
-        ],
-      ),
-    );
   }
 }

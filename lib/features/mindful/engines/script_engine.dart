@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 /// Manages the meditation script display with fade in/out animations
 class ScriptEngine extends ChangeNotifier {
   final List<String> _fullScript;
-  final Duration _displayDuration;
+  Duration _displayDuration;
   final Duration _fadeDuration;
+  final Duration _totalDuration; // Total meditation duration
   
   List<String> _currentGroup = [];
   int _currentGroupIndex = 0;
@@ -18,9 +19,14 @@ class ScriptEngine extends ChangeNotifier {
     required List<String> script,
     Duration displayDuration = const Duration(seconds: 4),
     Duration fadeDuration = const Duration(milliseconds: 800),
+    Duration? totalDuration,
   })  : _fullScript = script,
         _displayDuration = displayDuration,
-        _fadeDuration = fadeDuration;
+        _fadeDuration = fadeDuration,
+        _totalDuration = totalDuration ?? Duration(minutes: 5) {
+    // Calculate optimal display duration to fit the total meditation time
+    _calculateOptimalTiming();
+  }
 
   // Getters
   List<String> get currentGroup => _currentGroup;
@@ -29,6 +35,40 @@ class ScriptEngine extends ChangeNotifier {
   bool get isComplete => _isComplete;
   int get totalGroups => (_fullScript.length / 3).ceil();
   int get currentGroupIndex => _currentGroupIndex;
+  Duration get displayDuration => _displayDuration;
+
+  /// Calculate optimal timing to fit the entire script within the total duration
+  void _calculateOptimalTiming() {
+    if (_fullScript.isEmpty) return;
+    
+    final totalGroups = (_fullScript.length / 3).ceil();
+    final totalFadeTime = totalGroups * _fadeDuration.inMilliseconds;
+    final availableTimeForDisplay = _totalDuration.inMilliseconds - totalFadeTime;
+    
+    // Each sentence gets equal time from the available display time
+    final totalSentences = _fullScript.length;
+    final optimalDisplayTimeMs = (availableTimeForDisplay / totalSentences).floor();
+    
+    // Ensure minimum 2 seconds, maximum 8 seconds per sentence
+    final clampedTimeMs = optimalDisplayTimeMs.clamp(2000, 8000);
+    
+    _displayDuration = Duration(milliseconds: clampedTimeMs);
+    
+    print('📊 Script timing calculated:');
+    print('  Total script items: ${_fullScript.length}');
+    print('  Total groups: $totalGroups');
+    print('  Total meditation duration: ${_totalDuration.inSeconds}s');
+    print('  Calculated display duration per sentence: ${_displayDuration.inSeconds}s');
+    print('  Expected script completion: ${_getExpectedScriptDuration().inSeconds}s');
+  }
+
+  /// Get the expected total duration for the script to complete
+  Duration _getExpectedScriptDuration() {
+    final totalGroups = (_fullScript.length / 3).ceil();
+    final totalDisplayTime = _fullScript.length * _displayDuration.inMilliseconds;
+    final totalFadeTime = totalGroups * _fadeDuration.inMilliseconds;
+    return Duration(milliseconds: totalDisplayTime + totalFadeTime);
+  }
 
   /// Start the script engine
   void start() {

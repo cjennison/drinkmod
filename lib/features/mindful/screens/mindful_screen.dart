@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/meditation_config.dart';
-import '../engines/meditation_engine.dart';
+import 'meditation_session_screen.dart';
 
 /// Mindful page - Therapeutic mindfulness hub for alcohol moderation
 class MindfulScreen extends StatefulWidget {
