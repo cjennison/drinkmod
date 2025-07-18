@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../models/meditation_config.dart';
+import '../engines/meditation_engine.dart';
 
 /// Mindful page - Therapeutic mindfulness hub for alcohol moderation
 class MindfulScreen extends StatefulWidget {
@@ -388,8 +390,8 @@ class _MindfulScreenState extends State<MindfulScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () {
-            // TODO: Navigate to urge surfing exercises
-            _showUrgeSurfingOptions(context);
+            // Navigate to urge surfing meditation
+            _startUrgeSurfingMeditation(context);
           },
           child: Padding(
             padding: const EdgeInsets.all(20),
@@ -555,8 +557,8 @@ class _MindfulScreenState extends State<MindfulScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: () {
-            // TODO: Navigate to specific exercise
-            _showExerciseDialog(context, title);
+            // Navigate to specific meditation
+            _startMeditation(context, title);
           },
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -761,27 +763,16 @@ class _MindfulScreenState extends State<MindfulScreen> {
     );
   }
 
-  // Placeholder dialog methods
-  void _showSOSDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('SOS - Urge Support'),
-        content: const Text('Quick access to urge surfing exercises would appear here.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showUrgeSurfingOptions(BuildContext context) {
+  // Navigation methods for meditation experiences
+  void _startUrgeSurfingMeditation(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.transparent,
       builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -793,23 +784,38 @@ class _MindfulScreenState extends State<MindfulScreen> {
             const SizedBox(height: 16),
             const Text('Select a visual metaphor that resonates with you:'),
             const SizedBox(height: 20),
+            
+            // Wave option
             ListTile(
               leading: Icon(Icons.waves, color: Colors.blue, size: 24),
               title: const Text('Wave'),
               subtitle: const Text('30-60 seconds - Rise, peak, and recede'),
-              onTap: () => Navigator.of(context).pop(),
+              onTap: () {
+                Navigator.of(context).pop();
+                _launchMeditation(context, 'urge_surfing_wave');
+              },
             ),
+            
+            // Candle option
             ListTile(
               leading: Icon(Icons.local_fire_department, color: Colors.orange, size: 24),
               title: const Text('Candle'),
               subtitle: const Text('45-90 seconds - Burn bright and extinguish'),
-              onTap: () => Navigator.of(context).pop(),
+              onTap: () {
+                Navigator.of(context).pop();
+                _launchMeditation(context, 'urge_surfing_candle');
+              },
             ),
+            
+            // Bubble option
             ListTile(
               leading: Icon(Icons.bubble_chart, color: Colors.purple, size: 24),
               title: const Text('Bubble'),
               subtitle: const Text('30-45 seconds - Form, expand, and pop'),
-              onTap: () => Navigator.of(context).pop(),
+              onTap: () {
+                Navigator.of(context).pop();
+                _launchMeditation(context, 'urge_surfing_bubble');
+              },
             ),
           ],
         ),
@@ -817,18 +823,43 @@ class _MindfulScreenState extends State<MindfulScreen> {
     );
   }
 
-  void _showExerciseDialog(BuildContext context, String title) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text('The $title exercise would start here with guided instructions.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
-          ),
-        ],
+  void _startMeditation(BuildContext context, String title) {
+    String? meditationId;
+    
+    switch (title) {
+      case 'Body Scan':
+        meditationId = 'body_scan';
+        break;
+      case 'Loving-Kindness':
+        meditationId = 'loving_kindness';
+        break;
+      case 'Quick Check-In':
+      case 'RAIN Technique':
+        meditationId = 'basic_mindfulness';
+        break;
+      default:
+        meditationId = 'basic_mindfulness';
+    }
+    
+    _launchMeditation(context, meditationId);
+  }
+
+  void _launchMeditation(BuildContext context, String meditationId) {
+    final config = MeditationRegistry.getMeditationById(meditationId);
+    
+    if (config == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Meditation not found')),
+      );
+      return;
+    }
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => MeditationSessionScreen(
+          config: config,
+          // TODO: Add mood/urge intensity inputs
+        ),
       ),
     );
   }
@@ -838,11 +869,34 @@ class _MindfulScreenState extends State<MindfulScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(title),
-        content: Text('Reflection prompt: "$prompt"\n\nJournal interface would appear here.'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Reflection prompt: "$prompt"'),
+            const SizedBox(height: 16),
+            TextField(
+              decoration: const InputDecoration(
+                hintText: 'Write your thoughts...',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 3,
+              onChanged: (value) {
+                // TODO: Save reflection entry
+              },
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              // TODO: Save and close
+              Navigator.of(context).pop();
+            },
+            child: const Text('Save'),
           ),
         ],
       ),
@@ -856,6 +910,29 @@ class _MindfulScreenState extends State<MindfulScreen> {
         title: Text(title),
         content: Text('$title insights and analytics would appear here.'),
         actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSOSDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('SOS - Urge Support'),
+        content: const Text('Quick access to urge surfing exercises.'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _startUrgeSurfingMeditation(context);
+            },
+            child: const Text('Start Urge Surfing'),
+          ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Close'),
