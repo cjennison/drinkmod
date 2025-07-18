@@ -11,6 +11,7 @@ class BreathingCircle extends StatefulWidget {
   final double opacity;
   final String pattern; // 'standard', 'calm', 'energize'
   final bool isActive;
+  final bool showControls; // Show countdown when controls are visible
 
   const BreathingCircle({
     super.key,
@@ -20,6 +21,7 @@ class BreathingCircle extends StatefulWidget {
     this.opacity = 0.3,
     this.pattern = 'standard',
     this.isActive = true,
+    this.showControls = false,
   });
 
   @override
@@ -31,6 +33,10 @@ class _BreathingCircleState extends State<BreathingCircle>
   late AnimationController _breathingController;
   late Animation<double> _breathingAnimation;
   late Animation<double> _pulseAnimation;
+  
+  String _currentPhase = 'Breathe in';
+  int _countdown = 0;
+  Timer? _countdownTimer;
 
   @override
   void initState() {
@@ -45,8 +51,12 @@ class _BreathingCircleState extends State<BreathingCircle>
     _breathingAnimation = _createBreathingAnimation();
     _pulseAnimation = _createPulseAnimation();
 
+    // Listen to animation progress to update phase and countdown
+    _breathingController.addListener(_updateBreathingState);
+
     if (widget.isActive) {
       _breathingController.repeat();
+      _startCountdown();
     }
   }
 
@@ -116,6 +126,99 @@ class _BreathingCircleState extends State<BreathingCircle>
     ]).animate(_breathingController);
   }
 
+  void _updateBreathingState() {
+    final progress = _breathingController.value;
+    String newPhase = '';
+
+    switch (widget.pattern) {
+      case 'calm':
+        if (progress < 0.25) {
+          newPhase = 'Breathe in slowly';
+        } else if (progress < 0.5) {
+          newPhase = 'Hold gently';
+        } else if (progress < 0.875) {
+          newPhase = 'Breathe out slowly';
+        } else {
+          newPhase = 'Rest';
+        }
+        break;
+
+      case 'energize':
+        if (progress < 0.5) {
+          newPhase = 'Breathe in';
+        } else {
+          newPhase = 'Breathe out';
+        }
+        break;
+
+      case 'standard':
+      default:
+        if (progress < 0.5) {
+          newPhase = 'Breathe in';
+        } else {
+          newPhase = 'Breathe out';
+        }
+        break;
+    }
+
+    if (newPhase != _currentPhase) {
+      setState(() {
+        _currentPhase = newPhase;
+      });
+      // Always restart countdown when phase changes, regardless of showControls
+      _startCountdown();
+    }
+  }
+
+  void _startCountdown() {
+    _countdownTimer?.cancel();
+    
+    // Calculate phase duration based on pattern and current phase
+    // MUST match the exact animation weights to be accurate
+    int phaseDurationSeconds;
+    switch (widget.pattern) {
+      case 'calm':
+        // Total cycle: 12 seconds with weights: 25%, 25%, 37.5%, 12.5%
+        if (_currentPhase.contains('Breathe in')) {
+          phaseDurationSeconds = 3; // 25% of 12 = 3 seconds
+        } else if (_currentPhase.contains('Hold')) {
+          phaseDurationSeconds = 3; // 25% of 12 = 3 seconds  
+        } else if (_currentPhase.contains('Breathe out')) {
+          phaseDurationSeconds = 5; // 37.5% of 12 = 4.5 seconds (rounded to 5)
+        } else { // Rest
+          phaseDurationSeconds = 1; // 12.5% of 12 = 1.5 seconds (rounded to 1)
+        }
+        break;
+      case 'energize':
+        // Total cycle: 8 seconds with weights: 50%, 50%
+        phaseDurationSeconds = 4; // 50% of 8 = 4 seconds each phase
+        break;
+      case 'standard':
+      default:
+        // Total cycle: 10 seconds with weights: 50%, 50% 
+        phaseDurationSeconds = 5; // 50% of 10 = 5 seconds each phase
+        break;
+    }
+    
+    setState(() {
+      _countdown = phaseDurationSeconds;
+    });
+
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          _countdown--;
+        });
+        
+        if (_countdown <= 0) {
+          timer.cancel();
+        }
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
   @override
   void didUpdateWidget(BreathingCircle oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -123,8 +226,10 @@ class _BreathingCircleState extends State<BreathingCircle>
     if (oldWidget.isActive != widget.isActive) {
       if (widget.isActive) {
         _breathingController.repeat();
+        _startCountdown();
       } else {
         _breathingController.stop();
+        _countdownTimer?.cancel();
       }
     }
     
@@ -133,10 +238,13 @@ class _BreathingCircleState extends State<BreathingCircle>
       _breathingAnimation = _createBreathingAnimation();
       _pulseAnimation = _createPulseAnimation();
     }
+
+    // Removed showControls check - timer runs continuously
   }
 
   @override
   void dispose() {
+    _countdownTimer?.cancel();
     _breathingController.dispose();
     super.dispose();
   }
@@ -178,6 +286,35 @@ class _BreathingCircleState extends State<BreathingCircle>
               
               // Breathing guide dots
               ..._buildGuideDots(),
+              
+              // Countdown timer (only visible when controls are shown and not holding breath)
+              if (widget.showControls && _countdown > 0 && !_currentPhase.contains('Hold') && !_currentPhase.contains('Rest'))
+                Text(
+                  '$_countdown',
+                  style: TextStyle(
+                    color: widget.color,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              
+              // Breathing instruction text
+              Positioned(
+                bottom: -40,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  child: Text(
+                    _currentPhase,
+                    key: ValueKey(_currentPhase),
+                    style: TextStyle(
+                      color: widget.color.withValues(alpha: 0.8),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
             ],
           ),
         );

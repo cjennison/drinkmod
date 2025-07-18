@@ -244,10 +244,14 @@ class MeditationSessionScreen extends StatefulWidget {
   State<MeditationSessionScreen> createState() => _MeditationSessionScreenState();
 }
 
-class _MeditationSessionScreenState extends State<MeditationSessionScreen> {
+class _MeditationSessionScreenState extends State<MeditationSessionScreen>
+    with TickerProviderStateMixin {
   late MeditationEngine _engine;
+  late AnimationController _progressController;
+  late Animation<double> _progressAnimation;
   bool _showControls = true;
   Timer? _controlsTimer;
+  bool _isUpdatingControls = false; // Prevent concurrent state updates
 
   @override
   void initState() {
@@ -255,12 +259,28 @@ class _MeditationSessionScreenState extends State<MeditationSessionScreen> {
     _engine = MeditationEngine(config: widget.config);
     _engine.addListener(_onEngineChanged);
     
+    // Create progress animation controller for continuous progress bar
+    _progressController = AnimationController(
+      duration: Duration(minutes: widget.config.durationMinutes),
+      vsync: this,
+    );
+    
+    _progressAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _progressController,
+      curve: Curves.linear,
+    ));
+    
     // Auto-start the meditation
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _engine.start(
         preMood: widget.preMood,
         urgeIntensityBefore: widget.urgeIntensityBefore,
       );
+      // Start the continuous progress animation
+      _progressController.forward();
     });
     
     _hideControlsAfterDelay();
@@ -275,12 +295,20 @@ class _MeditationSessionScreenState extends State<MeditationSessionScreen> {
   void _hideControlsAfterDelay() {
     print('⏰ _hideControlsAfterDelay called');
     _controlsTimer?.cancel();
-    _controlsTimer = Timer(const Duration(seconds: 3), () {
-      print('⏰ Timer fired - hiding controls');
-      if (mounted) {
+    
+    // Wait for one complete breathing cycle before hiding controls
+    final breathingCycleDuration = widget.config.breathingCycleDuration;
+    print('⏰ Waiting ${breathingCycleDuration.inSeconds} seconds (one breathing cycle) before hiding controls');
+    
+    _controlsTimer = Timer(breathingCycleDuration, () {
+      print('⏰ Timer fired - checking if should hide controls');
+      if (mounted && _showControls && !_isUpdatingControls) { // Only hide if currently showing and not updating
+        print('⏰ Timer fired - hiding controls');
+        _isUpdatingControls = true;
         setState(() {
           _showControls = false;
         });
+        _isUpdatingControls = false;
         print('⏰ Controls hidden - _showControls: $_showControls');
       }
     });
@@ -288,12 +316,20 @@ class _MeditationSessionScreenState extends State<MeditationSessionScreen> {
 
   void _toggleControls() {
     print('🔄 _toggleControls called - current _showControls: $_showControls');
+    
+    // Prevent rapid-fire toggles that could cause setState conflicts
+    if (!mounted || _isUpdatingControls) return;
+    
     _controlsTimer?.cancel(); // Cancel any existing timer first
+    _isUpdatingControls = true;
+    
     setState(() {
       _showControls = !_showControls;
     });
+    _isUpdatingControls = false;
     print('🔄 _toggleControls after setState - new _showControls: $_showControls');
     
+    // Only start timer if controls are now visible
     if (_showControls) {
       print('⏰ Starting hide controls timer');
       _hideControlsAfterDelay();
@@ -304,6 +340,7 @@ class _MeditationSessionScreenState extends State<MeditationSessionScreen> {
   void dispose() {
     _engine.removeListener(_onEngineChanged);
     _controlsTimer?.cancel();
+    _progressController.dispose();
     _engine.dispose();
     super.dispose();
   }
@@ -331,6 +368,7 @@ class _MeditationSessionScreenState extends State<MeditationSessionScreen> {
                     child: AnimatedOpacity(
                       opacity: _showControls ? 1.0 : 0.0,
                       duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut, // Add smooth curve
                       child: _buildTopControls(),
                     ),
                   ),
@@ -353,24 +391,9 @@ class _MeditationSessionScreenState extends State<MeditationSessionScreen> {
                                 opacity: 0.4,
                                 pattern: widget.config.breathingPattern,
                                 isActive: _engine.isActive && !_engine.isPaused,
+                                showControls: _showControls,
                               );
                             },
-                          ),
-                          
-                          // Breathing instructions overlaid on top
-                          Positioned(
-                            bottom: -60,
-                            child: AnimatedBuilder(
-                              animation: _engine,
-                              builder: (context, child) {
-                                return BreathingInstructions(
-                                  cycleDuration: widget.config.breathingCycleDuration,
-                                  pattern: widget.config.breathingPattern,
-                                  showInstructions: _engine.isActive && !_engine.isPaused,
-                                  instructionDuration: const Duration(seconds: 15), // Show for 2.5 cycles
-                                );
-                              },
-                            ),
                           ),
                         ],
                       ),
@@ -394,6 +417,7 @@ class _MeditationSessionScreenState extends State<MeditationSessionScreen> {
                     child: AnimatedOpacity(
                       opacity: _showControls ? 1.0 : 0.0,
                       duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut, // Add smooth curve
                       child: _buildBottomControls(),
                     ),
                   ),
@@ -406,10 +430,10 @@ class _MeditationSessionScreenState extends State<MeditationSessionScreen> {
                 left: 0,
                 right: 0,
                 child: AnimatedBuilder(
-                  animation: _engine,
+                  animation: _progressAnimation,
                   builder: (context, child) {
                     return LinearProgressIndicator(
-                      value: _engine.progress,
+                      value: _progressAnimation.value,
                       backgroundColor: Colors.white.withValues(alpha: 0.2),
                       valueColor: const AlwaysStoppedAnimation(Colors.white),
                       minHeight: 2,
@@ -427,6 +451,7 @@ class _MeditationSessionScreenState extends State<MeditationSessionScreen> {
                   child: AnimatedOpacity(
                     opacity: _showControls ? 0.7 : 0.0,
                     duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeInOut, // Add smooth curve
                     child: const Center(
                       child: Text(
                         'Tap anywhere to show/hide controls',
@@ -491,12 +516,6 @@ class _MeditationSessionScreenState extends State<MeditationSessionScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          // Skip button
-          IconButton(
-            onPressed: _engine.isActive ? _engine.skipToNext : null,
-            icon: const Icon(Icons.skip_next, color: Colors.white, size: 32),
-          ),
-          
           // Play/Pause button
           AnimatedBuilder(
             animation: _engine,
@@ -512,7 +531,7 @@ class _MeditationSessionScreenState extends State<MeditationSessionScreen> {
             },
           ),
           
-          // End button
+          // Stop button
           IconButton(
             onPressed: _exitMeditation,
             icon: const Icon(Icons.stop, color: Colors.white, size: 32),
@@ -525,8 +544,12 @@ class _MeditationSessionScreenState extends State<MeditationSessionScreen> {
   void _togglePlayPause() {
     if (_engine.isPaused) {
       _engine.resume();
+      // Resume progress animation from current position
+      _progressController.forward();
     } else {
       _engine.pause();
+      // Pause progress animation
+      _progressController.stop();
     }
   }
 
