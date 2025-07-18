@@ -2,6 +2,7 @@ import 'dart:developer' as developer;
 import 'package:hive/hive.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
+import '../../features/smart_reminders/models/smart_reminder.dart';
 
 /// Core Hive database initialization and management service
 /// Handles only the initialization, connection, and cleanup of Hive boxes
@@ -20,6 +21,7 @@ class HiveCore {
   static const String interventionEventsBoxName = 'intervention_events';
   static const String achievementsBoxName = 'achievements';
   static const String appEventsBoxName = 'app_events';
+  static const String smartRemindersBoxName = 'smart_reminders';
   
   // Hive boxes - accessible to other services
   late Box<Map> userBox;
@@ -30,6 +32,7 @@ class HiveCore {
   late Box<Map> interventionEventsBox;
   late Box<Map> achievementsBox;
   late Box<Map> appEventsBox;
+  late Box<SmartReminder> smartRemindersBox;
   
   bool _isInitialized = false;
   bool get isInitialized => _isInitialized;
@@ -47,6 +50,11 @@ class HiveCore {
         Hive.init(appDocumentDir.path);
       }
       
+      // Register adapters for Smart Reminders
+      Hive.registerAdapter(TimeOfDayAdapter());
+      Hive.registerAdapter(SmartReminderTypeAdapter());
+      Hive.registerAdapter(SmartReminderAdapter());
+      
       // Open all boxes
       userBox = await Hive.openBox<Map>(userDataBoxName);
       drinkEntriesBox = await Hive.openBox<Map>(drinkEntriesBoxName);
@@ -56,6 +64,7 @@ class HiveCore {
       interventionEventsBox = await Hive.openBox<Map>(interventionEventsBoxName);
       achievementsBox = await Hive.openBox<Map>(achievementsBoxName);
       appEventsBox = await Hive.openBox<Map>(appEventsBoxName);
+      smartRemindersBox = await Hive.openBox<SmartReminder>(smartRemindersBoxName);
       
       _isInitialized = true;
       developer.log('HiveCore initialized successfully', name: 'HiveCore');
@@ -77,6 +86,7 @@ class HiveCore {
     await interventionEventsBox.close();
     await achievementsBox.close();
     await appEventsBox.close();
+    await smartRemindersBox.close();
     
     _isInitialized = false;
     developer.log('HiveCore closed', name: 'HiveCore');
@@ -94,6 +104,7 @@ class HiveCore {
     await interventionEventsBox.clear();
     await achievementsBox.clear();
     await appEventsBox.clear();
+    await smartRemindersBox.clear();
     
     developer.log('All Hive data cleared', name: 'HiveCore');
   }

@@ -9,6 +9,7 @@ import '../widgets/motivation_editor_dialog.dart';
 import '../widgets/strictness_level_editor_dialog.dart';
 import '../widgets/favorite_drinks_editor_dialog.dart';
 import '../widgets/drinking_patterns_editor_dialog.dart';
+import '../../smart_reminders/screens/smart_reminders_screen.dart';
 
 /// Profile screen for user data management and settings
 /// Allows users to view and edit their information, and reset onboarding
@@ -692,9 +693,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Colors.purple,
               '0 active', // TODO: Replace with actual count
               () {
-                // TODO: Navigate to reminders setup
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Smart Reminders coming soon!')),
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => SmartRemindersScreen(),
+                  ),
                 );
               },
             ),
