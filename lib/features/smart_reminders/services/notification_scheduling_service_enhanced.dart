@@ -66,15 +66,10 @@ class NotificationSchedulingService {
         final hourOffset = offset.inHours;
         
         String? fallbackTz;
-        if (hourOffset == -8) {
-          fallbackTz = 'America/Los_Angeles';
-        } else if (hourOffset == -5) {
-          fallbackTz = 'America/New_York';
-        } else if (hourOffset == 0) {
-          fallbackTz = 'Europe/London';
-        } else if (hourOffset == 1) {
-          fallbackTz = 'Europe/Berlin';
-        }
+        if (hourOffset == -8) fallbackTz = 'America/Los_Angeles';
+        else if (hourOffset == -5) fallbackTz = 'America/New_York';
+        else if (hourOffset == 0) fallbackTz = 'Europe/London';
+        else if (hourOffset == 1) fallbackTz = 'Europe/Berlin';
         
         if (fallbackTz != null) {
           final location = tz.getLocation(fallbackTz);
@@ -358,63 +353,6 @@ class NotificationSchedulingService {
     } catch (e) {
       developer.log('Error showing test notification: $e', 
           name: 'NotificationSchedulingService', level: 900);
-      rethrow;
-    }
-  }
-  
-  /// Reschedule all active reminders (backward compatibility method)
-  Future<void> rescheduleAllReminders() async {
-    try {
-      developer.log('Rescheduling all active reminders', name: 'NotificationSchedulingService');
-      
-      // This method would ideally get all reminders from storage
-      // For now, we'll log that it's been called
-      developer.log('rescheduleAllReminders called - implementation depends on reminder storage', 
-                   name: 'NotificationSchedulingService');
-      
-      // In a real implementation, you would:
-      // 1. Get all active reminders from storage
-      // 2. Cancel all existing notifications
-      // 3. Reschedule each active reminder
-      
-    } catch (e) {
-      developer.log('Error rescheduling all reminders: $e', 
-                   name: 'NotificationSchedulingService', level: 900);
-      rethrow;
-    }
-  }
-
-  /// Show a simple test notification (backward compatibility method)
-  Future<void> showSimpleTestNotification() async {
-    try {
-      const androidDetails = AndroidNotificationDetails(
-        'test_channel',
-        'Test Notifications',
-        channelDescription: 'Test notifications for Drinkmod reminders',
-        importance: Importance.defaultImportance,
-        priority: Priority.defaultPriority,
-      );
-
-      const iosDetails = DarwinNotificationDetails();
-      const linuxDetails = LinuxNotificationDetails();
-
-      final platformDetails = NotificationDetails(
-        android: androidDetails,
-        iOS: iosDetails,
-        linux: linuxDetails,
-      );
-
-      await _notificationsPlugin.show(
-        999999, // Use a high ID for test notifications
-        'Test Notification',
-        'This is a test notification from Drinkmod Smart Reminders!',
-        platformDetails,
-      );
-
-      developer.log('Test notification sent successfully', name: 'NotificationSchedulingService');
-    } catch (e) {
-      developer.log('Error sending test notification: $e', 
-                   name: 'NotificationSchedulingService', level: 900);
       rethrow;
     }
   }
