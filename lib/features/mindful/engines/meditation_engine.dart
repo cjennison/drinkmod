@@ -252,6 +252,7 @@ class _MeditationSessionScreenState extends State<MeditationSessionScreen>
   bool _showControls = true;
   Timer? _controlsTimer;
   bool _isUpdatingControls = false; // Prevent concurrent state updates
+  bool _completionDialogShown = false; // Prevent multiple completion dialogs
 
   @override
   void initState() {
@@ -287,7 +288,12 @@ class _MeditationSessionScreenState extends State<MeditationSessionScreen>
   }
 
   void _onEngineChanged() {
-    if (_engine.isComplete) {
+    if (_engine.isComplete && !_completionDialogShown) {
+      _completionDialogShown = true; // Prevent multiple dialogs
+      // Stop the progress animation when meditation completes
+      _progressController.stop();
+      // Set progress to 100% to ensure visual completion
+      _progressController.value = 1.0;
       _showCompletionDialog();
     }
   }
@@ -568,6 +574,8 @@ class _MeditationSessionScreenState extends State<MeditationSessionScreen>
           ),
           TextButton(
             onPressed: () {
+              // Stop progress animation
+              _progressController.stop();
               Navigator.of(context).pop();
               _engine.stop();
               Navigator.of(context).pop();
