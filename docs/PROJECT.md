@@ -1816,3 +1816,183 @@ Advanced cross-platform notification system providing personalized, therapeutic 
 - ✅ Comprehensive documentation covers all aspects of the system
 
 ---
+
+## 🧘 **Mindful Page - Therapeutic Mindfulness & Self-Reflection** - 🚧 PLANNED
+
+### **Overview**
+Comprehensive mindfulness hub providing evidence-based therapeutic interventions for alcohol moderation through meditation exercises, urge management, and reflective journaling. Designed as the primary therapeutic support center for real-time coping and long-term self-awareness development.
+
+### **Core Therapeutic Foundation**
+- **Mindfulness-Based Relapse Prevention (MBRP)**: Evidence-based framework for addiction recovery
+- **Urge Surfing**: Jon Kabat-Zinn's technique for riding out cravings without acting
+- **Self-Compassion Integration**: Kristin Neff's approach to reducing shame and building resilience
+- **Acceptance and Commitment Therapy (ACT)**: Values-based behavior change and psychological flexibility
+
+### **Major Feature Categories**
+
+#### 🌊 **Mindfulness Exercises Hub**
+- **Urge Surfing (Primary)**: 3 visual metaphors with animated guidance
+  - The Wave: Ocean wave that builds, crests, and naturally recedes (30-60s)
+  - The Candle: Flame that burns bright and gently extinguishes (45-90s)  
+  - The Bubble: Bubble that forms, expands, and naturally pops (30-45s)
+- **Body Scan for Recovery**: Physical tension release and body awareness (3-10 min)
+- **Loving-Kindness for Self-Compassion**: Reduce shame and build self-acceptance (5-15 min)
+- **Mindful Check-In**: Quick emotional and physical awareness (1-3 min)
+- **RAIN Technique**: Process difficult emotions mindfully (5-10 min)
+
+#### 📝 **Personal Reflection Hub**
+- **Smart Reflection Categories**: Daily check-ins, gratitude practice, trigger awareness, values exploration, progress reflections
+- **Context-Aware Prompting**: 200+ therapeutic prompts triggered by behavior, time, and progress
+- **Privacy-First Design**: Local encryption with optional therapist sharing
+- **Pattern Recognition**: Insights dashboard showing reflection trends and growth indicators
+
+#### 🚨 **Crisis Support Integration**
+- **SOS Button**: Immediate access to urge surfing from anywhere in app
+- **Emergency Contacts**: Quick dial to pre-configured support people
+- **Crisis Resources**: Direct links to helplines and professional support
+- **Safety Planning**: Access to personalized crisis management plan
+
+### **Technical Implementation Plan**
+
+#### 🎨 **Animation & Visual Framework**
+```yaml
+# Recommended Flutter packages for optimal UX/engineering balance
+dependencies:
+  flutter_animate: ^4.5.0           # Simple, performant animations
+  rive: ^0.13.1                     # Interactive state machines for breathing guides
+  audioplayers: ^6.0.0              # Optional nature sounds and audio cues
+  flutter_tts: ^4.0.2               # Text-to-speech for guided meditations
+  lottie: ^3.1.2                    # Complex animations from After Effects
+```
+
+#### 📱 **Urge Surfing Implementation Strategy**
+- **Low Engineering Cost**: Rive animations for breathing guides with state machines
+- **Asset-Based Visuals**: PNG sequences for wave/candle/bubble animations
+- **Interactive Breathing**: Visual prompts synchronized with animation timing
+- **Progressive Completion**: Gentle progress indicators with therapeutic completion messages
+- **Performance Optimized**: Lazy loading, proper disposal, battery-conscious design
+
+#### 🗄️ **Data Architecture**
+```dart
+// Mindfulness session tracking
+class MindfulnessSession {
+  final String id;
+  final MindfulnessType type;          // urgeSurfing, bodyScan, etc.
+  final MindfulnessVisual visual;      // wave, candle, bubble
+  final DateTime startTime;
+  final DateTime endTime;
+  final bool completed;
+  final int stressLevelBefore;         // 1-10 scale
+  final int stressLevelAfter;          // 1-10 scale
+}
+
+// Reflection entry system
+class ReflectionEntry {
+  final String id;
+  final ReflectionCategory category;   // dailyCheckin, gratitude, triggers, etc.
+  final String prompt;
+  final String content;
+  final List<String> tags;
+  final int moodRating;
+  final bool isPrivate;
+  final DateTime createdAt;
+}
+```
+
+### **Page Architecture & Navigation**
+
+#### 🏗️ **Main Layout Structure**
+```
+┌─────────────────────────┐
+│ ⚡ SOS Urge Support     │ ← Always visible emergency access
+├─────────────────────────┤
+│ 🧘 Mindfulness Hub      │
+│ ├─ Urge Surfing         │ ← Primary therapeutic intervention
+│ ├─ Body Scan            │
+│ ├─ Loving-Kindness      │
+│ └─ Quick Check-In       │
+├─────────────────────────┤
+│ 📝 Reflection Space     │
+│ ├─ Daily Check-In       │
+│ ├─ Gratitude Practice   │
+│ ├─ Trigger Awareness    │
+│ └─ Progress Review      │
+├─────────────────────────┤
+│ 📊 Mindfulness Insights │
+│ ├─ Session History      │
+│ ├─ Reflection Patterns  │
+│ └─ Growth Tracking      │
+└─────────────────────────┘
+```
+
+### **Development Phases**
+
+#### **Phase 1: Core Foundation** (2-3 weeks)
+- Bottom navigation "Mindful" page implementation
+- Basic urge surfing with Wave animation
+- Simple note-taking functionality with categories
+- SOS emergency access integration
+
+#### **Phase 2: Animation Enhancement** (2-3 weeks)
+- Candle and Bubble urge surfing visuals
+- Breathing guidance integration with visual cues
+- Audio support for nature sounds and guided prompts
+- Progressive difficulty levels for exercises
+
+#### **Phase 3: Intelligence Layer** (2-3 weeks)
+- Context-aware reflection prompting system
+- Pattern recognition and insights dashboard
+- Exercise personalization based on usage patterns
+- Integration with drinking tracking for trigger correlation
+
+#### **Phase 4: Polish & Accessibility** (1-2 weeks)
+- Performance optimization and battery management
+- Comprehensive accessibility features (VoiceOver, large text, motor accessibility)
+- User testing and therapeutic effectiveness validation
+- Crisis support pathway optimization
+
+### **Therapeutic UX Principles**
+
+#### 🛡️ **Trauma-Informed Design**
+- **Safety First**: Clear exit options from all exercises without shame
+- **User Control**: Pause, skip, or modify exercises at any time
+- **Non-Judgmental Interface**: No negative feedback or completion pressure
+- **Gradual Exposure**: Progressive complexity without overwhelming beginners
+
+#### 🎯 **Engagement Without Addiction**
+- **No Streaks**: Avoid creating new addictive patterns around mindfulness
+- **Quality Over Quantity**: Focus on meaningful engagement rather than frequency
+- **Flexible Scheduling**: User-controlled reminders without guilt mechanisms
+- **Authentic Progress**: Real therapeutic benefits over gamification metrics
+
+### **Success Metrics & Validation**
+
+#### 📊 **Therapeutic Outcomes**
+- **Urge Management**: Correlation between urge surfing usage and drinking episode reduction
+- **Emotional Regulation**: Pre/post stress level changes during mindfulness sessions
+- **Self-Awareness**: Reflection frequency and depth progression over time
+- **Crisis Prevention**: SOS feature usage effectiveness and user satisfaction
+
+#### 🎯 **User Engagement**
+- **Exercise Completion Rates**: Across different mindfulness techniques and difficulty levels
+- **Reflection Consistency**: Pattern analysis of journaling engagement
+- **Feature Adoption**: Usage distribution across mindfulness tools
+- **Long-Term Retention**: Sustained engagement with mindfulness features over months
+
+### **Documentation & Resources**
+- **Complete Feature Specification**: `docs/MINDFUL_PAGE_PLAN.md` - Comprehensive therapeutic and technical requirements
+- **Animation Guidelines**: Visual metaphor implementation standards
+- **Therapeutic Content**: Evidence-based scripts and prompt libraries
+- **Crisis Support Protocols**: Emergency escalation and resource integration procedures
+
+#### ✅ **Planned Acceptance Criteria**:
+- 🔄 Mindful page accessible from bottom navigation with appropriate therapeutic icon
+- 🔄 Three urge surfing animations (Wave, Candle, Bubble) with synchronized breathing guidance
+- 🔄 Comprehensive reflection system with context-aware prompting
+- 🔄 SOS emergency access available from all screens
+- 🔄 Crisis support integration with external resources
+- 🔄 Local data storage with optional therapist sharing capabilities
+- 🔄 Performance optimization ensuring smooth animations without battery drain
+- 🔄 Accessibility compliance for universal usability
+
+---

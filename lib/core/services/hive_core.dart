@@ -22,6 +22,8 @@ class HiveCore {
   static const String achievementsBoxName = 'achievements';
   static const String appEventsBoxName = 'app_events';
   static const String smartRemindersBoxName = 'smart_reminders';
+  static const String mindfulnessSessionsBoxName = 'mindfulness_sessions';
+  static const String dailyReflectionLogsBoxName = 'daily_reflection_logs';
   
   // Hive boxes - accessible to other services
   late Box<Map> userBox;
@@ -33,6 +35,8 @@ class HiveCore {
   late Box<Map> achievementsBox;
   late Box<Map> appEventsBox;
   late Box<SmartReminder> smartRemindersBox;
+  late Box<Map> mindfulnessSessionsBox;
+  late Box<Map> dailyReflectionLogsBox;
   
   bool _isInitialized = false;
   bool get isInitialized => _isInitialized;
@@ -65,6 +69,8 @@ class HiveCore {
       achievementsBox = await Hive.openBox<Map>(achievementsBoxName);
       appEventsBox = await Hive.openBox<Map>(appEventsBoxName);
       smartRemindersBox = await Hive.openBox<SmartReminder>(smartRemindersBoxName);
+      mindfulnessSessionsBox = await Hive.openBox<Map>(mindfulnessSessionsBoxName);
+      dailyReflectionLogsBox = await Hive.openBox<Map>(dailyReflectionLogsBoxName);
       
       _isInitialized = true;
       developer.log('HiveCore initialized successfully', name: 'HiveCore');

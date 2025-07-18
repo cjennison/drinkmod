@@ -8,6 +8,11 @@ enum AppEventType {
   goalCreated,          // User created a new goal
   goalCompleted,        // User completed a goal
   accountCreated,       // User account was created
+  mindfulnessSessionStarted,    // User started a mindfulness session
+  mindfulnessSessionCompleted,  // User completed a mindfulness session
+  urgeSurfingUsed,             // User used urge surfing feature
+  reflectionEntryAdded,        // User added a reflection entry
+  dailyCheckInCompleted,       // User completed daily check-in
 }
 
 /// Represents an event that occurred in the app for tracking achievements
@@ -159,6 +164,110 @@ class AppEvent {
       timestamp: timestamp,
       type: AppEventType.accountCreated,
       metadata: {
+        ...?additionalData,
+      },
+    );
+  }
+
+  /// Create a mindfulness session started event
+  static AppEvent mindfulnessSessionStarted({
+    required DateTime timestamp,
+    required String sessionId,
+    required String exerciseType,
+    String? metaphor,
+    int? plannedDurationSeconds,
+    Map<String, dynamic>? additionalData,
+  }) {
+    return AppEvent(
+      timestamp: timestamp,
+      type: AppEventType.mindfulnessSessionStarted,
+      metadata: {
+        'sessionId': sessionId,
+        'exerciseType': exerciseType,
+        'metaphor': metaphor,
+        'plannedDurationSeconds': plannedDurationSeconds,
+        ...?additionalData,
+      },
+    );
+  }
+
+  /// Create a mindfulness session completed event
+  static AppEvent mindfulnessSessionCompleted({
+    required DateTime timestamp,
+    required String sessionId,
+    required String exerciseType,
+    required int actualDurationSeconds,
+    int? moodImprovement,
+    int? urgeReduction,
+    Map<String, dynamic>? additionalData,
+  }) {
+    return AppEvent(
+      timestamp: timestamp,
+      type: AppEventType.mindfulnessSessionCompleted,
+      metadata: {
+        'sessionId': sessionId,
+        'exerciseType': exerciseType,
+        'actualDurationSeconds': actualDurationSeconds,
+        'moodImprovement': moodImprovement,
+        'urgeReduction': urgeReduction,
+        ...?additionalData,
+      },
+    );
+  }
+
+  /// Create an urge surfing used event
+  static AppEvent urgeSurfingUsed({
+    required DateTime timestamp,
+    required String sessionId,
+    required String metaphor,
+    required int urgeIntensityBefore,
+    int? urgeIntensityAfter,
+    Map<String, dynamic>? additionalData,
+  }) {
+    return AppEvent(
+      timestamp: timestamp,
+      type: AppEventType.urgeSurfingUsed,
+      metadata: {
+        'sessionId': sessionId,
+        'metaphor': metaphor,
+        'urgeIntensityBefore': urgeIntensityBefore,
+        'urgeIntensityAfter': urgeIntensityAfter,
+        ...?additionalData,
+      },
+    );
+  }
+
+  /// Create a reflection entry added event
+  static AppEvent reflectionEntryAdded({
+    required DateTime timestamp,
+    required String entryId,
+    required String category,
+    required int contentLength,
+    Map<String, dynamic>? additionalData,
+  }) {
+    return AppEvent(
+      timestamp: timestamp,
+      type: AppEventType.reflectionEntryAdded,
+      metadata: {
+        'entryId': entryId,
+        'category': category,
+        'contentLength': contentLength,
+        ...?additionalData,
+      },
+    );
+  }
+
+  /// Create a daily check-in completed event
+  static AppEvent dailyCheckInCompleted({
+    required DateTime timestamp,
+    required int checkInLength,
+    Map<String, dynamic>? additionalData,
+  }) {
+    return AppEvent(
+      timestamp: timestamp,
+      type: AppEventType.dailyCheckInCompleted,
+      metadata: {
+        'checkInLength': checkInLength,
         ...?additionalData,
       },
     );
