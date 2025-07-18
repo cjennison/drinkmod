@@ -4,6 +4,7 @@ import '../services/smart_reminder_service.dart';
 import '../services/notification_scheduling_service.dart';
 import '../widgets/reminder_list_item.dart';
 import 'create_reminder_screen.dart';
+import 'edit_reminder_screen.dart';
 
 /// Main screen for managing smart reminders
 class SmartRemindersScreen extends StatefulWidget {
@@ -100,14 +101,17 @@ class _SmartRemindersScreenState extends State<SmartRemindersScreen> {
   Future<void> _toggleReminder(SmartReminder reminder) async {
     final success = await _reminderService.toggleReminderActive(reminder.id);
     if (success) {
-      if (reminder.isActive) {
-        // Reminder was turned off
-        await _notificationService.cancelReminder(reminder.id);
-      } else {
-        // Reminder was turned on
-        if (_notificationsEnabled) {
-          final updatedReminder = reminder.copyWith(isActive: true);
-          await _notificationService.scheduleReminder(updatedReminder);
+      // Get the updated reminder to check its new state
+      final updatedReminder = _reminderService.getSmartReminderById(reminder.id);
+      if (updatedReminder != null) {
+        if (updatedReminder.isActive) {
+          // Reminder was turned on
+          if (_notificationsEnabled) {
+            await _notificationService.scheduleReminder(updatedReminder);
+          }
+        } else {
+          // Reminder was turned off
+          await _notificationService.cancelReminder(reminder.id);
         }
       }
       await _loadReminders();
@@ -455,10 +459,16 @@ class _SmartRemindersScreenState extends State<SmartRemindersScreen> {
                 reminder: reminder,
                 onToggle: () => _toggleReminder(reminder),
                 onEdit: () async {
-                  // TODO: Navigate to edit screen
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Edit functionality coming soon!')),
+                  final result = await Navigator.of(context).push<bool>(
+                    MaterialPageRoute(
+                      builder: (context) => EditReminderScreen(reminder: reminder),
+                    ),
                   );
+                  
+                  // Reload reminders if edit was successful
+                  if (result == true) {
+                    await _loadReminders();
+                  }
                 },
                 onDelete: () => _deleteReminder(reminder),
                 onTest: _notificationsEnabled ? () async {

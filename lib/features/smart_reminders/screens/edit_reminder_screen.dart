@@ -3,8 +3,9 @@ import '../models/smart_reminder.dart';
 import '../services/smart_reminder_service.dart';
 import '../services/notification_scheduling_service.dart';
 import '../widgets/reminder_type_selector.dart';
-import '../widgets/time_picker_field.dart';
-import '../widgets/weekday_selector.dart';
+import '../widgets/reminder_form_fields.dart';
+import '../widgets/reminder_schedule_fields.dart';
+import '../widgets/reminder_preview_card.dart';
 
 /// Screen for editing an existing smart reminder
 class EditReminderScreen extends StatefulWidget {
@@ -30,12 +31,27 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
   late TimeOfDay _selectedTime;
   late List<int> _selectedWeekDays;
   bool _isUpdating = false;
+  bool _hasChanges = false;
 
   @override
   void initState() {
     super.initState();
     _initializeServices();
     _loadReminderData();
+    _setupChangeListeners();
+  }
+
+  void _setupChangeListeners() {
+    _titleController.addListener(_markAsChanged);
+    _messageController.addListener(_markAsChanged);
+  }
+
+  void _markAsChanged() {
+    if (!_hasChanges) {
+      setState(() {
+        _hasChanges = true;
+      });
+    }
   }
 
   Future<void> _initializeServices() async {
@@ -133,253 +149,159 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit Reminder'),
+  Future<bool?> _showUnsavedChangesDialog() {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Unsaved Changes'),
+        content: const Text('You have unsaved changes. Are you sure you want to leave?'),
         actions: [
           TextButton(
-            onPressed: _isUpdating ? null : _updateReminder,
-            child: _isUpdating
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Update'),
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Leave'),
           ),
         ],
       ),
-      body: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Reminder Type Selector
-              const Text(
-                'Reminder Type',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              ReminderTypeSelector(
-                selectedType: _selectedType,
-                onTypeChanged: (type) {
-                  setState(() {
-                    _selectedType = type;
-                    _updateDefaultTitle();
-                  });
-                },
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Title Field
-              const Text(
-                'Title',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _titleController,
-                decoration: const InputDecoration(
-                  hintText: 'Enter reminder title',
-                  border: OutlineInputBorder(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: !_hasChanges,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        
+        final shouldPop = await _showUnsavedChangesDialog();
+        if (shouldPop == true && context.mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Edit Reminder'),
+          actions: [
+            TextButton(
+              onPressed: _isUpdating ? null : _updateReminder,
+              child: _isUpdating
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Update'),
+            ),
+          ],
+        ),
+        body: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Reminder Type Selector
+                const Text(
+                  'Reminder Type',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                maxLength: 50,
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a title';
-                  }
-                  return null;
-                },
-              ),
-              
-              const SizedBox(height: 16),
-              
-              // Custom Message Field
-              const Text(
-                'Custom Message (Optional)',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Leave empty to use smart, personalized messages',
-                style: TextStyle(color: Colors.grey),
-              ),
-              const SizedBox(height: 8),
-              TextFormField(
-                controller: _messageController,
-                decoration: const InputDecoration(
-                  hintText: 'Enter custom notification message',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 12),
+                ReminderTypeSelector(
+                  selectedType: _selectedType,
+                  onTypeChanged: (type) {
+                    setState(() {
+                      _selectedType = type;
+                      _hasChanges = true;
+                      _updateDefaultTitle();
+                    });
+                  },
                 ),
-                maxLines: 3,
-                maxLength: 150,
-              ),
-              
-              const SizedBox(height: 16),
-              
-              // Time Selector
-              const Text(
-                'Time',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              TimePickerField(
-                selectedTime: _selectedTime,
-                onTimeChanged: (time) {
-                  setState(() {
-                    _selectedTime = time;
-                  });
-                },
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Days Selector
-              const Text(
-                'Days of the Week',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              WeekdaySelector(
-                selectedDays: _selectedWeekDays,
-                onDaysChanged: (days) {
-                  setState(() {
-                    _selectedWeekDays = days;
-                  });
-                },
-              ),
-              
-              const SizedBox(height: 32),
-              
-              // Preview Card
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: _selectedType.color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: _selectedType.color.withValues(alpha: 0.3),
+                
+                const SizedBox(height: 24),
+                
+                // Title and Message Fields
+                ReminderFormFields(
+                  titleController: _titleController,
+                  messageController: _messageController,
+                  onChanged: () {
+                    setState(() {
+                      _hasChanges = true;
+                    });
+                  },
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Time and Days Selection
+                ReminderScheduleFields(
+                  selectedTime: _selectedTime,
+                  selectedWeekDays: _selectedWeekDays,
+                  onTimeChanged: (time) {
+                    setState(() {
+                      _selectedTime = time;
+                      _hasChanges = true;
+                    });
+                  },
+                  onDaysChanged: (days) {
+                    setState(() {
+                      _selectedWeekDays = days;
+                      _hasChanges = true;
+                    });
+                  },
+                ),
+                
+                const SizedBox(height: 32),
+                
+                // Preview Card
+                ReminderPreviewCard(
+                  selectedType: _selectedType,
+                  titleController: _titleController,
+                  messageController: _messageController,
+                ),
+                
+                // Update button at bottom
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 20.0),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _isUpdating ? null : _updateReminder,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16.0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 2,
+                      ),
+                      child: _isUpdating
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : const Text(
+                              'Update Reminder',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                    ),
                   ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.preview,
-                          color: _selectedType.color,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Preview',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: _selectedType.color,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            _selectedType.icon,
-                            color: _selectedType.color,
-                            size: 24,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _titleController.text.isEmpty
-                                      ? _selectedType.defaultTitle
-                                      : _titleController.text,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  _messageController.text.isEmpty
-                                      ? 'Smart message based on your current progress'
-                                      : _messageController.text,
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              
-              // Update button at bottom
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 20.0),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _isUpdating ? null : _updateReminder,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16.0),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 2,
-                    ),
-                    child: _isUpdating
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            ),
-                          )
-                        : const Text(
-                            'Update Reminder',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                  ),
-                ),
-              ),
-              
-              const SizedBox(height: 40),
-            ],
+                
+                const SizedBox(height: 40),
+              ],
+            ),
           ),
         ),
       ),

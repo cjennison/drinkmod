@@ -3,8 +3,9 @@ import '../models/smart_reminder.dart';
 import '../services/smart_reminder_service.dart';
 import '../services/notification_scheduling_service.dart';
 import '../widgets/reminder_type_selector.dart';
-import '../widgets/time_picker_field.dart';
-import '../widgets/weekday_selector.dart';
+import '../widgets/reminder_form_fields.dart';
+import '../widgets/reminder_schedule_fields.dart';
+import '../widgets/reminder_preview_card.dart';
 
 /// Screen for creating a new smart reminder
 class CreateReminderScreen extends StatefulWidget {
@@ -175,107 +176,23 @@ class _CreateReminderScreenState extends State<CreateReminderScreen> {
               
               const SizedBox(height: 32),
               
-              // Title field
-              const Text(
-                'Title',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _titleController,
-                decoration: InputDecoration(
-                  hintText: 'Enter reminder title',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 16,
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a title';
-                  }
-                  if (value.trim().length < 3) {
-                    return 'Title must be at least 3 characters';
-                  }
-                  return null;
-                },
-                maxLength: 50,
+              // Title and Message Fields
+              ReminderFormFields(
+                titleController: _titleController,
+                messageController: _messageController,
               ),
               
               const SizedBox(height: 24),
               
-              // Custom message field
-              const Text(
-                'Custom Message (Optional)',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Leave empty to use smart, personalized messages',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: _messageController,
-                decoration: InputDecoration(
-                  hintText: 'Enter custom notification message',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 16,
-                  ),
-                ),
-                maxLines: 3,
-                maxLength: 150,
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Time selection
-              const Text(
-                'Time',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              TimePickerField(
+              // Time and Days Selection
+              ReminderScheduleFields(
                 selectedTime: _selectedTime,
+                selectedWeekDays: _selectedWeekDays,
                 onTimeChanged: (time) {
                   setState(() {
                     _selectedTime = time;
                   });
                 },
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Weekday selection
-              const Text(
-                'Days of the Week',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              WeekdaySelector(
-                selectedDays: _selectedWeekDays,
                 onDaysChanged: (days) {
                   setState(() {
                     _selectedWeekDays = days;
@@ -285,90 +202,11 @@ class _CreateReminderScreenState extends State<CreateReminderScreen> {
               
               const SizedBox(height: 32),
               
-              // Preview card
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: _selectedType.color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: _selectedType.color.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.preview,
-                          color: _selectedType.color,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Preview',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: _selectedType.color,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            _selectedType.icon,
-                            color: _selectedType.color,
-                            size: 24,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _titleController.text.isEmpty
-                                      ? _selectedType.defaultTitle
-                                      : _titleController.text,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  _messageController.text.isEmpty
-                                      ? 'Smart message based on your current progress'
-                                      : _messageController.text,
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+              // Preview Card
+              ReminderPreviewCard(
+                selectedType: _selectedType,
+                titleController: _titleController,
+                messageController: _messageController,
               ),
               
               // Save button at bottom
