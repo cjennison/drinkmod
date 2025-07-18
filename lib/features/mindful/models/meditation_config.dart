@@ -37,7 +37,7 @@ class MeditationConfig {
       id: 'urge_surfing_$metaphor',
       title: title,
       description: description,
-      durationMinutes: 2,
+      durationMinutes: 1, // More realistic for 18 script items
       script: script,
       backgroundColor: backgroundColor,
       lottieAssetPath: lottieAssetPath,
@@ -238,7 +238,7 @@ class MeditationRegistry {
       id: 'body_scan',
       title: 'Body Scan',
       description: 'Release tension and connect with your body',
-      durationMinutes: 8,
+      durationMinutes: 5, // More realistic for 21 script items
       backgroundColor: '#00B894', // Healing green
       breathingPattern: 'calm',
       script: [
@@ -307,6 +307,100 @@ class MeditationRegistry {
         'Return to yourself with this expanded heart.',
         'You are connected to all life through kindness.',
         'Carry this compassion with you.',
+      ],
+    ),
+
+    // RAIN Technique
+    MeditationConfig.mindfulness(
+      id: 'rain_technique',
+      title: 'RAIN Technique',
+      description: 'Process emotions with mindful awareness',
+      durationMinutes: 4,
+      backgroundColor: '#74B9FF', // Calming sky blue
+      breathingPattern: 'calm',
+      script: [
+        'Find a comfortable position and settle in.',
+        'Bring to mind something that\'s troubling you.',
+        'We\'ll use RAIN to work with this difficulty.',
+        
+        'First, RECOGNIZE what\'s happening.',
+        'What emotions are present right now?',
+        'Name them gently: anger, sadness, fear, frustration.',
+        
+        'Simply notice without trying to change anything.',
+        'Recognition is the first step to healing.',
+        'You\'re developing emotional awareness.',
+        
+        'Now, ALLOW the experience to be here.',
+        'Stop fighting or pushing away these feelings.',
+        'Let them exist in your awareness.',
+        
+        'Say to yourself: "This is what\'s here right now."',
+        'Allow doesn\'t mean you like it or agree with it.',
+        'It means you\'re not adding resistance to pain.',
+        
+        'Next, INVESTIGATE with kindness.',
+        'Where do you feel this in your body?',
+        'What thoughts are arising?',
+        
+        'Ask yourself: "What does this part of me need?"',
+        'Investigate like a caring friend would.',
+        'Be curious rather than judgmental.',
+        
+        'Finally, NON-ATTACHMENT or loving presence.',
+        'This experience doesn\'t define who you are.',
+        'You are the awareness that observes these feelings.',
+        
+        'Offer yourself the same compassion you\'d give a friend.',
+        'These difficult moments are part of being human.',
+        'You have the strength to be with whatever arises.',
+        
+        'Take a moment to appreciate your courage.',
+        'You\'ve practiced being present with difficulty.',
+        'This is the path of emotional wisdom.',
+      ],
+    ),
+
+    // Quick Check-In
+    MeditationConfig.mindfulness(
+      id: 'quick_checkin',
+      title: 'Quick Check-In',
+      description: 'A brief moment to connect with yourself',
+      durationMinutes: 2,
+      backgroundColor: '#FDCB6E', // Warm yellow
+      breathingPattern: 'standard',
+      script: [
+        'Take a moment to pause and arrive.',
+        'This is your time to check in with yourself.',
+        'How are you feeling right now?',
+        
+        'Notice your body first.',
+        'Are you holding tension anywhere?',
+        'Breathe into those areas and soften.',
+        
+        'What\'s your energy level?',
+        'High, low, or somewhere in between?',
+        'There\'s no right or wrong answer.',
+        
+        'How is your mind today?',
+        'Busy, calm, scattered, focused?',
+        'Just notice without judgment.',
+        
+        'What emotions are present?',
+        'Happy, stressed, excited, worried?',
+        'All feelings are welcome here.',
+        
+        'What do you need right now?',
+        'Rest, movement, connection, space?',
+        'Trust your inner wisdom.',
+        
+        'Take three deep breaths.',
+        'Thank yourself for taking this moment.',
+        'You are worth checking in with.',
+        
+        'Carry this awareness with you.',
+        'You can return to this check-in anytime.',
+        'Your well-being matters.',
       ],
     ),
   ];

@@ -148,7 +148,7 @@ class _MindfulScreenState extends State<MindfulScreen> {
                 context,
                 'Body Scan',
                 'Release tension',
-                '3-10 min',
+                '3 min',
                 Icons.accessibility_new,
                 Colors.green,
               ),
@@ -159,7 +159,7 @@ class _MindfulScreenState extends State<MindfulScreen> {
                 context,
                 'Loving-Kindness',
                 'Self-compassion',
-                '5-15 min',
+                '3 min',
                 Icons.favorite_outline,
                 Colors.pink,
               ),
@@ -176,7 +176,7 @@ class _MindfulScreenState extends State<MindfulScreen> {
                 context,
                 'Quick Check-In',
                 'How are you feeling?',
-                '1-3 min',
+                '2 min',
                 Icons.mood,
                 Colors.orange,
               ),
@@ -187,7 +187,7 @@ class _MindfulScreenState extends State<MindfulScreen> {
                 context,
                 'RAIN Technique',
                 'Process emotions',
-                '5-10 min',
+                '4 min',
                 Icons.wb_cloudy,
                 Colors.blue,
               ),
@@ -834,8 +834,10 @@ class _MindfulScreenState extends State<MindfulScreen> {
         meditationId = 'loving_kindness';
         break;
       case 'Quick Check-In':
+        meditationId = 'quick_checkin';
+        break;
       case 'RAIN Technique':
-        meditationId = 'basic_mindfulness';
+        meditationId = 'rain_technique';
         break;
       default:
         meditationId = 'basic_mindfulness';
