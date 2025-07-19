@@ -4,6 +4,7 @@ import '../../../core/services/hive_database_service.dart';
 import '../../../core/achievements/achievement_helper.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_theme.dart' as theme;
+import '../../../shared/widgets/page_header.dart';
 import '../widgets/goal_card.dart';
 import '../widgets/goal_history_modal.dart';
 import '../services/chart_data_service.dart';
@@ -155,64 +156,82 @@ class _ProgressScreenState extends State<ProgressScreen> {
     // Show progress screen with CTA for returning users (no active goals but has history)
     if (!_hasActiveGoals && _hasGoalHistory) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Progress'),
-          automaticallyImplyLeading: false,
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.history),
-              onPressed: _showGoalHistory,
-              tooltip: 'Goal History',
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: AppSpacing.screenPadding,
+            child: Column(
+              children: [
+                PageHeader(
+                  title: 'Progress',
+                  subtitle: 'Track your journey and achievements',
+                  actionButton: PageHeaderActionButton(
+                    label: 'History',
+                    icon: Icons.history,
+                    onTap: _showGoalHistory,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                _buildNoActiveGoalContent(),
+              ],
             ),
-          ],
+          ),
         ),
-        body: _buildNoActiveGoalContent(),
       );
     }
 
     // Show main progress screen for users with goals
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Progress'),
-        automaticallyImplyLeading: false,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.swap_horiz),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => Scaffold(
-                    appBar: AppBar(
-                      title: const Text('Change Goal'),
-                    ),
-          body: GoalSetupWizard(
-            onGoalCreated: () {
-              Navigator.of(context).pop();
-              _checkUserGoals();
-            },
-            onSkipped: () {
-              Navigator.of(context).pop();
-              _checkUserGoals(); // This will refresh and show the CTA screen
-            },
-            onShowHistory: () {
-              Future.delayed(const Duration(milliseconds: 300), () {
-                _showGoalHistory();
-              });
-            },
-          ),
-                  ),
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: AppSpacing.screenPadding,
+          child: Column(
+            children: [
+              PageHeader(
+                title: 'Progress',
+                subtitle: 'Track your journey and achievements',
+                actionButton: PageHeaderActionButton(
+                  label: 'Change',
+                  icon: Icons.swap_horiz,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => Scaffold(
+                          appBar: AppBar(
+                            title: const Text('Change Goal'),
+                          ),
+                          body: GoalSetupWizard(
+                            onGoalCreated: () {
+                              Navigator.of(context).pop();
+                              _checkUserGoals();
+                            },
+                            onSkipped: () {
+                              Navigator.of(context).pop();
+                              _checkUserGoals(); // This will refresh and show the CTA screen
+                            },
+                            onShowHistory: () {
+                              Future.delayed(const Duration(milliseconds: 300), () {
+                                _showGoalHistory();
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-            tooltip: 'Change Goal',
+              ),
+              const SizedBox(height: 24),
+              _buildProgressContentWithoutPadding(),
+            ],
           ),
-        ],
+        ),
       ),
-      body: _buildProgressContent(),
     );
   }
 
-  Widget _buildProgressContent() {
+  Widget _buildProgressContentWithoutPadding() {
     if (_activeGoalData == null) {
       return const Center(
         child: Column(
@@ -244,28 +263,25 @@ class _ProgressScreenState extends State<ProgressScreen> {
       );
     }
 
-    return SingleChildScrollView(
-      padding: AppSpacing.screenPadding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Goal Card
-          GoalCard(
-            key: ValueKey(_activeGoalData!['id']),
-            goalData: _activeGoalData!,
-            onGoalCompleted: _navigateToNewGoalWizard,
-          ),
-          
-          const SizedBox(height: 24),
-          
-          // Achievement Badges Section
-          AchievementsSection(key: _achievementsSectionKey),
-          const SizedBox(height: 24),
-          
-          // Progress Charts Section
-          _buildProgressChartsSection(),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Goal Card
+        GoalCard(
+          key: ValueKey(_activeGoalData!['id']),
+          goalData: _activeGoalData!,
+          onGoalCompleted: _navigateToNewGoalWizard,
+        ),
+        
+        const SizedBox(height: 24),
+        
+        // Achievement Badges Section
+        AchievementsSection(key: _achievementsSectionKey),
+        const SizedBox(height: 24),
+        
+        // Progress Charts Section
+        _buildProgressChartsSection(),
+      ],
     );
   }
 

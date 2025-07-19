@@ -4,6 +4,7 @@ import '../models/meditation_config.dart';
 import '../../../core/services/journal_service.dart';
 import '../../../core/models/journal_entry.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../shared/widgets/page_header.dart';
 import 'meditation_session_screen.dart';
 import 'journal_screen.dart';
 import 'sos_screen.dart';
@@ -54,7 +55,13 @@ class _MindfulScreenState extends State<MindfulScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header with SOS button
-              _buildHeader(context),
+              PageHeader(
+                title: 'Mindful',
+                subtitle: 'Take a moment for yourself',
+                actionButton: SOSHeaderButton(
+                  onTap: () => _showSOSDialog(context),
+                ),
+              ),
               
               const SizedBox(height: 24),
               
@@ -69,79 +76,6 @@ class _MindfulScreenState extends State<MindfulScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    final theme = Theme.of(context);
-    
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Mindful',
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Take a moment for yourself',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                ),
-              ),
-            ],
-          ),
-        ),
-        
-        // SOS Emergency Button
-        Container(
-          decoration: BoxDecoration(
-            color: theme.colorScheme.errorContainer,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: theme.colorScheme.error.withValues(alpha: 0.2),
-              width: 1,
-            ),
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () {
-                // TODO: Navigate to emergency urge surfing
-                _showSOSDialog(context);
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.favorite,
-                      color: theme.colorScheme.error,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'SOS',
-                      style: theme.textTheme.labelLarge?.copyWith(
-                        color: theme.colorScheme.error,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
     );
   }
 

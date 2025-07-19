@@ -8,6 +8,7 @@ import '../../../core/utils/drink_intervention_utils.dart';
 import '../../../core/achievements/achievement_helper.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_theme.dart' as theme;
+import '../../../shared/widgets/page_header.dart';
 import '../../../shared/widgets/before_journey_banner.dart';
 import '../widgets/drink_item_view_modal.dart';
 import '../widgets/tracking_date_header.dart';
@@ -99,35 +100,24 @@ class _TrackingScreenState extends State<TrackingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Track'),
-        automaticallyImplyLeading: false,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: IconButton(
-              icon: const Icon(Icons.today),
-              onPressed: _goToToday,
-              tooltip: 'Go to today',
-            ),
-          ),
-        ],
-      ),
-      body: PageView.builder(
-        controller: _pageController,
-        onPageChanged: _onPageChanged,
-        itemBuilder: (context, index) {
-          // Calculate date for this page
-          final offset = index - 1000; // Center point
-          final date = _baseDate.add(Duration(days: offset));
-          
-          // Don't allow future dates beyond today
-          if (date.isAfter(DateTime.now().add(const Duration(days: 0)))) {
-            return _buildFutureDateBlock();
-          }
-          
-          return _buildDayView(date);
-        },
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      body: SafeArea(
+        child: PageView.builder(
+          controller: _pageController,
+          onPageChanged: _onPageChanged,
+          itemBuilder: (context, index) {
+            // Calculate date for this page
+            final offset = index - 1000; // Center point
+            final date = _baseDate.add(Duration(days: offset));
+            
+            // Don't allow future dates beyond today
+            if (date.isAfter(DateTime.now().add(const Duration(days: 0)))) {
+              return _buildFutureDateBlock();
+            }
+            
+            return _buildDayView(date);
+          },
+        ),
       ),
       floatingActionButton: _canLogForDate(_currentDate) 
           ? FloatingActionButton(
@@ -164,7 +154,27 @@ class _TrackingScreenState extends State<TrackingScreen> {
       },
       child: CustomScrollView(
         slivers: [
-          // Fixed header
+          // Page Header
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: AppSpacing.screenPadding,
+              child: Column(
+                children: [
+                  PageHeader(
+                    title: 'Track',
+                    subtitle: 'Monitor your daily consumption',
+                    actionButton: PageHeaderActionButton(
+                      label: 'Today',
+                      icon: Icons.today,
+                      onTap: _goToToday,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+            ),
+          ),
+          // Date header
           SliverAppBar(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             automaticallyImplyLeading: false,
