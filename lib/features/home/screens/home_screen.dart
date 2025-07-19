@@ -6,6 +6,7 @@ import '../../../core/services/goal_management_service.dart';
 import '../../../core/utils/progress_metrics_service.dart';
 import '../../../core/achievements/achievement_helper.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_theme.dart' as theme;
 import '../../tracking/screens/drink_logging_screen.dart';
 import '../../tracking/screens/drink_logging_cubit.dart';
 import '../../tracking/screens/tracking_screen.dart';
@@ -101,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to initialize app: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: theme.AppTheme.errorColor,
           ),
         );
       }

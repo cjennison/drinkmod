@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_theme.dart' as theme;
 
 /// Clean stats cards showing key metrics without trendlines 
 class DashboardStatsCard extends StatelessWidget {
@@ -100,9 +101,9 @@ class DashboardStatsCard extends StatelessWidget {
   }
   
   Color _getAdherenceColor(double adherence) {
-    if (adherence >= 0.8) return Colors.green;
-    if (adherence >= 0.6) return Colors.orange;
-    return Colors.red;
+    if (adherence >= 0.8) return theme.AppTheme.greenColor;
+    if (adherence >= 0.6) return theme.AppTheme.orangeColor;
+    return theme.AppTheme.redColor;
   }
   
   String _getWeeklyPattern() {

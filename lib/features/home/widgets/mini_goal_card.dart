@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/services/goal_management_service.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_theme.dart' as theme;
 import '../../progress/widgets/goal_progress_card.dart';
 import '../../progress/shared/types/goal_display_types.dart';
 
@@ -81,8 +82,8 @@ class _MiniGoalCardState extends State<MiniGoalCard> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Colors.blue.withOpacity(0.05),
-              Colors.purple.withOpacity(0.05),
+              theme.AppTheme.blueLight,
+              theme.AppTheme.purpleLight,
             ],
           ),
         ),
@@ -94,12 +95,12 @@ class _MiniGoalCardState extends State<MiniGoalCard> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
+                    color: theme.AppTheme.blueMedium,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.flag,
-                    color: Colors.blue,
+                    color: theme.AppTheme.blueColor,
                     size: 24,
                   ),
                 ),
@@ -119,7 +120,7 @@ class _MiniGoalCardState extends State<MiniGoalCard> {
                         'Research shows that setting clear goals increases success rates by up to 42%',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey,
+                          color: theme.AppTheme.greyColor,
                         ),
                       ),
                     ],
@@ -132,7 +133,7 @@ class _MiniGoalCardState extends State<MiniGoalCard> {
               'Setting a goal provides structure and accountability on your journey to reduce consumption. When you have a clear target, every small step becomes meaningful progress.',
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey,
+                color: theme.AppTheme.greyColor,
                 height: 1.4,
               ),
             ),
@@ -144,8 +145,8 @@ class _MiniGoalCardState extends State<MiniGoalCard> {
                 icon: const Icon(Icons.trending_up, size: 20),
                 label: const Text('View Progress'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
+                  backgroundColor: theme.AppTheme.blueColor,
+                  foregroundColor: theme.AppTheme.whiteColor,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),

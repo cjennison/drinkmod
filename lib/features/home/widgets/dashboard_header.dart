@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_theme.dart' as appTheme;
 import '../../../core/utils/drink_status_utils.dart';
 import '../../../core/services/hive_database_service.dart';
 
@@ -88,14 +89,14 @@ class DashboardHeader extends StatelessWidget {
                   children: [
                     Icon(
                       Icons.local_fire_department,
-                      color: Colors.white,
+                      color: appTheme.AppTheme.whiteColor,
                       size: 16,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       '$currentStreak',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: appTheme.AppTheme.whiteColor,
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),

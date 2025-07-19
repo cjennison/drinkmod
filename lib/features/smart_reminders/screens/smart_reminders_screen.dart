@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_theme.dart' as theme;
 import '../models/smart_reminder.dart';
 import '../services/smart_reminder_service.dart';
 import '../services/notification_scheduling_service.dart';
@@ -80,18 +81,18 @@ class _SmartRemindersScreenState extends State<SmartRemindersScreen> {
       
       if (granted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Notifications enabled! Your reminders will now work.'),
-            backgroundColor: Colors.green,
+            backgroundColor: theme.AppTheme.greenColor,
           ),
         );
         // Reschedule all reminders now that permissions are granted
         await _notificationService.rescheduleAllReminders();
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Notifications are required for reminders to work.'),
-            backgroundColor: Colors.orange,
+            backgroundColor: theme.AppTheme.orangeColor,
           ),
         );
       }
@@ -132,8 +133,8 @@ class _SmartRemindersScreenState extends State<SmartRemindersScreen> {
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+              backgroundColor: theme.AppTheme.redColor,
+              foregroundColor: theme.AppTheme.whiteColor,
             ),
             child: const Text('Delete'),
           ),
@@ -247,13 +248,13 @@ class _SmartRemindersScreenState extends State<SmartRemindersScreen> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.blue.withValues(alpha: 0.1),
+              color: theme.AppTheme.blueMedium,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.notifications_none,
               size: 80,
-              color: Colors.blue,
+              color: theme.AppTheme.blueColor,
             ),
           ),
           const SizedBox(height: 24),
@@ -266,11 +267,11 @@ class _SmartRemindersScreenState extends State<SmartRemindersScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Get gentle nudges at the right moments to help you stay mindful of your goals. Smart reminders adapt to your schedule and provide personalized support.',
             style: TextStyle(
               fontSize: 16,
-              color: Colors.grey,
+              color: theme.AppTheme.greyColor,
               height: 1.5,
             ),
             textAlign: TextAlign.center,
@@ -295,18 +296,18 @@ class _SmartRemindersScreenState extends State<SmartRemindersScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.orange.withValues(alpha: 0.1),
+                color: theme.AppTheme.orangeTransparent,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+                border: Border.all(color: theme.AppTheme.orangeMediumTransparent),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.info_outline, color: Colors.orange),
+                  Icon(Icons.info_outline, color: theme.AppTheme.orangeColor),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Notifications are required for reminders to work. We\'ll ask for permission when you create your first reminder.',
-                      style: TextStyle(color: Colors.orange),
+                      style: TextStyle(color: theme.AppTheme.orangeColor),
                     ),
                   ),
                 ],
@@ -323,8 +324,8 @@ class _SmartRemindersScreenState extends State<SmartRemindersScreen> {
               icon: const Icon(Icons.add),
               label: const Text('Create Your First Reminder'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
+                backgroundColor: theme.AppTheme.blueColor,
+                foregroundColor: theme.AppTheme.whiteColor,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -371,7 +372,7 @@ class _SmartRemindersScreenState extends State<SmartRemindersScreen> {
                 Text(
                   type.description,
                   style: TextStyle(
-                    color: Colors.grey[600],
+                    color: theme.AppTheme.greyMedium,
                     fontSize: 14,
                   ),
                 ),
@@ -400,15 +401,15 @@ class _SmartRemindersScreenState extends State<SmartRemindersScreen> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
-            color: Colors.orange.withValues(alpha: 0.1),
+            color: theme.AppTheme.orangeTransparent,
             child: Row(
               children: [
-                const Icon(Icons.notifications_off, color: Colors.orange),
+                Icon(Icons.notifications_off, color: theme.AppTheme.orangeColor),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Notifications are disabled. Your reminders won\'t work.',
-                    style: TextStyle(color: Colors.orange),
+                    style: TextStyle(color: theme.AppTheme.orangeColor),
                   ),
                 ),
                 TextButton(
@@ -438,8 +439,8 @@ class _SmartRemindersScreenState extends State<SmartRemindersScreen> {
                 icon: const Icon(Icons.add, size: 20),
                 label: const Text('Add'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
+                  backgroundColor: theme.AppTheme.blueColor,
+                  foregroundColor: theme.AppTheme.whiteColor,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),

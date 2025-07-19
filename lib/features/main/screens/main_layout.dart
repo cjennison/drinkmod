@@ -18,13 +18,30 @@ class _MainLayoutState extends State<MainLayout> {
   int _selectedIndex = 0;
 
   // Main app screens following M3 navigation guidelines (3-5 destinations max)
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const TrackingScreen(),
-    const ProgressScreen(),
-    const MindfulScreen(),
-    const ProfileScreen(),
-  ];
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      HomeScreen(
+        onNavigateToProgress: () {
+          setState(() {
+            _selectedIndex = 2; // Navigate to Progress screen (index 2)
+          });
+        },
+        onNavigateToTracking: () {
+          setState(() {
+            _selectedIndex = 1; // Navigate to Tracking screen (index 1)
+          });
+        },
+      ),
+      const TrackingScreen(),
+      const ProgressScreen(),
+      const MindfulScreen(),
+      const ProfileScreen(),
+    ];
+  }
 
   void _onItemTapped(int index) {
     setState(() {

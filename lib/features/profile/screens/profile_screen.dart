@@ -4,6 +4,7 @@ import '../../../core/services/onboarding_service.dart';
 import '../../../core/services/goal_management_service.dart';
 import '../../../core/services/persona_data_service.dart';
 import '../../../core/constants/onboarding_constants.dart';
+import '../../../core/theme/app_theme.dart' as theme;
 import '../widgets/name_editor_dialog.dart';
 import '../widgets/motivation_editor_dialog.dart';
 import '../widgets/strictness_level_editor_dialog.dart';
@@ -62,8 +63,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+              backgroundColor: theme.AppTheme.redColor,
+              foregroundColor: theme.AppTheme.whiteColor,
             ),
             child: const Text('Reset'),
           ),
@@ -413,6 +414,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return OnboardingConstants.getDisplayText(gender);
   }
 
+  String _formatNameAndGender(String? name, String? gender) {
+    if (name == null || name.trim().isEmpty) {
+      return 'Not set';
+    }
+    
+    if (gender == null || gender.trim().isEmpty) {
+      return name;
+    }
+    
+    final displayGender = OnboardingConstants.getDisplayText(gender);
+    if (displayGender == 'Not set' || displayGender.isEmpty) {
+      return name;
+    }
+    
+    return '$name ($displayGender)';
+  }
+
   String _formatDrinkingPatterns(Map<String, dynamic>? userData) {
     if (userData == null) return 'Not set';
     
@@ -648,9 +666,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 12),
             
             _buildEditableInfoCard('Name & Gender', 
-              userData?['name'] != null && userData?['gender'] != null
-                ? '${userData!['name']} (${_formatGender(userData!['gender'])})'
-                : 'Not set', 
+              _formatNameAndGender(userData?['name'], userData?['gender']), 
               _editNameAndGender,
               icon: Icons.badge),
             _buildEditableInfoCard('Motivation', _formatMotivation(userData?['motivation']), _editMotivation,

@@ -7,6 +7,7 @@ import '../../../core/utils/drink_calculator.dart';
 import '../../../core/utils/drink_intervention_utils.dart';
 import '../../../core/achievements/achievement_helper.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_theme.dart' as theme;
 import '../../../shared/widgets/before_journey_banner.dart';
 import '../widgets/drink_item_view_modal.dart';
 import '../widgets/tracking_date_header.dart';
@@ -242,20 +243,20 @@ class _TrackingScreenState extends State<TrackingScreen> {
             Icon(
               Icons.event_busy,
               size: 64,
-              color: Colors.grey.shade400,
+              color: theme.AppTheme.greyVeryLight,
             ),
             const SizedBox(height: 16),
             Text(
               'Future Date',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                color: Colors.grey.shade600,
+                color: theme.AppTheme.greyMedium,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               'You can only view past and present data.\nSwipe left to go back to today.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.grey.shade600,
+                color: theme.AppTheme.greyMedium,
               ),
               textAlign: TextAlign.center,
             ),
@@ -476,13 +477,13 @@ class _TrackingScreenState extends State<TrackingScreen> {
               padding: AppSpacing.screenPadding,
               decoration: BoxDecoration(
                 color: warning.severity == QuickLogWarningSeverity.error 
-                    ? Colors.red.shade50 
-                    : Colors.orange.shade50,
+                    ? theme.AppTheme.redVeryVeryLight
+                    : theme.AppTheme.orangeVeryLight,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: warning.severity == QuickLogWarningSeverity.error 
-                      ? Colors.red.shade200 
-                      : Colors.orange.shade200
+                      ? theme.AppTheme.orangeLightest
+                      : theme.AppTheme.orangeLightest
                 ),
               ),
               child: Column(
@@ -494,8 +495,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
                             ? Icons.block 
                             : Icons.warning_amber, 
                         color: warning.severity == QuickLogWarningSeverity.error 
-                            ? Colors.red.shade600 
-                            : Colors.orange.shade600, 
+                            ? theme.AppTheme.redMediumDark
+                            : theme.AppTheme.orangeDark, 
                         size: 20
                       ),
                       const SizedBox(width: 8),
@@ -505,8 +506,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
                           style: TextStyle(
                             fontSize: 14,
                             color: warning.severity == QuickLogWarningSeverity.error 
-                                ? Colors.red.shade700 
-                                : Colors.orange.shade700,
+                                ? theme.AppTheme.orangeDarkest
+                                : theme.AppTheme.orangeDarkest,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -519,8 +520,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
                     style: TextStyle(
                       fontSize: 12,
                       color: warning.severity == QuickLogWarningSeverity.error 
-                          ? Colors.red.shade600 
-                          : Colors.orange.shade600,
+                          ? theme.AppTheme.redMediumDark
+                          : theme.AppTheme.orangeDark,
                     ),
                   ),
                   if (warning.severity == QuickLogWarningSeverity.error) ...[
@@ -533,8 +534,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
                           _openDrinkLogging();
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red.shade600,
-                          foregroundColor: Colors.white,
+                          backgroundColor: theme.AppTheme.redMediumDark,
+                          foregroundColor: theme.AppTheme.whiteColor,
                         ),
                         child: Text('Use Full Logging'),
                       ),
@@ -589,7 +590,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: isDisabled 
-                              ? Colors.grey.withValues(alpha: 0.3)
+                              ? theme.AppTheme.greyWithAlpha
                               : Theme.of(context).primaryColor.withValues(alpha: 0.3),
                           width: 1,
                         ),
@@ -614,7 +615,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                                   Icon(
                                     Icons.warning_amber,
                                     size: 14,
-                                    color: Colors.orange.shade600,
+                                    color: theme.AppTheme.orangeDark,
                                   ),
                                   const SizedBox(width: 4),
                                 ],
@@ -623,7 +624,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                                     drink.name,
                                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                                       color: isDisabled 
-                                          ? Colors.grey.shade500 
+                                          ? theme.AppTheme.greyDark
                                           : isFavorite 
                                               ? Theme.of(context).primaryColor 
                                               : null,
@@ -643,10 +644,10 @@ class _TrackingScreenState extends State<TrackingScreen> {
                                     : '${drink.standardDrinks.toStringAsFixed(1)} drinks',
                                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                   color: isDisabled 
-                                      ? Colors.orange.shade600
+                                      ? theme.AppTheme.orangeDark
                                       : isFavorite 
                                           ? Theme.of(context).primaryColor.withValues(alpha: 0.7)
-                                          : Colors.grey.shade600,
+                                          : theme.AppTheme.greyMedium,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -668,7 +669,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                 children: [
                   Icon(
                     Icons.info_outline,
-                    color: Colors.grey.shade400,
+                    color: theme.AppTheme.greyVeryLight,
                     size: 32,
                   ),
                   const SizedBox(height: 12),
@@ -677,7 +678,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade600,
+                      color: theme.AppTheme.greyMedium,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -686,7 +687,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.grey.shade500,
+                      color: theme.AppTheme.greyDark,
                     ),
                   ),
                 ],
@@ -714,8 +715,8 @@ class _TrackingScreenState extends State<TrackingScreen> {
     // If intervention is required, show appropriate message and redirect
     if (interventionResult.requiresIntervention || interventionResult.decision == DrinkInterventionUtils.cannotLog) {
       final color = interventionResult.severity == DrinkInterventionSeverity.error 
-          ? Colors.red 
-          : Colors.orange;
+          ? theme.AppTheme.redColor
+          : theme.AppTheme.orangeColor;
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/utils/drink_status_utils.dart';
 import '../../../core/services/hive_database_service.dart';
 import '../../../core/constants/onboarding_constants.dart';
+import '../../../core/theme/app_theme.dart' as theme;
 
 /// Daily status card showing progress, goal, and drinking day status
 class DailyStatusCard extends StatelessWidget {
@@ -36,11 +37,11 @@ class DailyStatusCard extends StatelessWidget {
       margin: EdgeInsets.zero,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.AppTheme.whiteColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade200,
+            color: theme.AppTheme.greyLight,
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -65,7 +66,7 @@ class DailyStatusCard extends StatelessWidget {
                     Text(
                       'Plan deviation',
                       style: TextStyle(
-                        color: Colors.red.shade600,
+                        color: theme.AppTheme.redMediumDark,
                         fontWeight: FontWeight.w500,
                       ),
                     )
@@ -73,7 +74,7 @@ class DailyStatusCard extends StatelessWidget {
                     Text(
                       'Alcohol-free day',
                       style: TextStyle(
-                        color: Colors.green.shade600,
+                        color: theme.AppTheme.greenDark,
                         fontWeight: FontWeight.w500,
                       ),
                     )
@@ -96,15 +97,15 @@ class DailyStatusCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.1),
+                color: theme.AppTheme.redLight,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
+                border: Border.all(color: theme.AppTheme.redMedium),
               ),
               child: Row(
                 children: [
                   Icon(
                     Icons.info_outline,
-                    color: Colors.red.shade700,
+                    color: theme.AppTheme.redDark,
                     size: 16,
                   ),
                   const SizedBox(width: 8),
@@ -113,7 +114,7 @@ class DailyStatusCard extends StatelessWidget {
                       '${totalDrinks.toStringAsFixed(1)} drink${totalDrinks != 1 ? 's' : ''} logged on alcohol-free day. Remember, setbacks are part of the journey.',
                       style: TextStyle(
                         fontSize: 13,
-                        color: Colors.red.shade700,
+                        color: theme.AppTheme.redDark,
                       ),
                     ),
                   ),
@@ -141,14 +142,14 @@ class DailyStatusCard extends StatelessWidget {
       case DrinkStatus.withinLimit:
       case DrinkStatus.alcoholFreeSuccess:
       case DrinkStatus.unused:
-        return Colors.grey.shade600;
+        return theme.AppTheme.greyMedium;
       case DrinkStatus.overButWithinTolerance:
-        return Colors.orange.shade600;
+        return theme.AppTheme.orangeDark;
       case DrinkStatus.exceeded:
       case DrinkStatus.alcoholFreeViolation:
-        return Colors.red.shade600;
+        return theme.AppTheme.redMediumDark;
       case DrinkStatus.future:
-        return Colors.grey.shade400;
+        return theme.AppTheme.greyVeryLight;
     }
   }
 
@@ -158,12 +159,12 @@ class DailyStatusCard extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.red.shade100,
+            color: theme.AppTheme.redVeryLight,
             shape: BoxShape.circle,
           ),
           child: Icon(
             Icons.error_outline,
-            color: Colors.red.shade600,
+            color: theme.AppTheme.redMediumDark,
             size: 20,
           ),
         );
@@ -172,12 +173,12 @@ class DailyStatusCard extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.green.shade100,
+            color: theme.AppTheme.greenLight,
             shape: BoxShape.circle,
           ),
           child: Icon(
             Icons.check,
-            color: Colors.green.shade600,
+            color: theme.AppTheme.greenDark,
             size: 20,
           ),
         );
@@ -187,12 +188,12 @@ class DailyStatusCard extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.green.shade100,
+            color: theme.AppTheme.greenLight,
             shape: BoxShape.circle,
           ),
           child: Icon(
             Icons.check_circle_outline,
-            color: Colors.green.shade600,
+            color: theme.AppTheme.greenDark,
             size: 20,
           ),
         );
@@ -201,12 +202,12 @@ class DailyStatusCard extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.orange.shade100,
+            color: theme.AppTheme.orangeLight,
             shape: BoxShape.circle,
           ),
           child: Icon(
             Icons.warning_amber,
-            color: Colors.orange.shade600,
+            color: theme.AppTheme.orangeDark,
             size: 20,
           ),
         );
@@ -215,12 +216,12 @@ class DailyStatusCard extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.red.shade100,
+            color: theme.AppTheme.redVeryLight,
             shape: BoxShape.circle,
           ),
           child: Icon(
             Icons.cancel,
-            color: Colors.red.shade600,
+            color: theme.AppTheme.redMediumDark,
             size: 20,
           ),
         );
@@ -229,12 +230,12 @@ class DailyStatusCard extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.grey.shade100,
+            color: theme.AppTheme.greyExtraLight,
             shape: BoxShape.circle,
           ),
           child: Icon(
             Icons.schedule,
-            color: Colors.grey.shade400,
+            color: theme.AppTheme.greyVeryLight,
             size: 20,
           ),
         );
@@ -308,7 +309,7 @@ class DrinkVisualizer extends StatelessWidget {
               child: Container(
                 height: 8,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
+                  color: theme.AppTheme.greyLight,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Stack(
@@ -346,7 +347,7 @@ class DrinkVisualizer extends StatelessWidget {
               '0 drinks',
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.grey.shade500,
+                color: theme.AppTheme.greyDark,
               ),
             ),
             Text(

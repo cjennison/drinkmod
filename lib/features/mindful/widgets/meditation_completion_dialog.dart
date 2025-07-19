@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_theme.dart' as theme;
 import '../../../core/models/app_event.dart';
 
 /// Custom completion dialog that collects user feedback
@@ -20,15 +21,15 @@ class _MeditationCompletionDialogState extends State<MeditationCompletionDialog>
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: Colors.transparent,
+      backgroundColor: theme.AppTheme.transparentColor,
       child: Container(
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.AppTheme.whiteColor,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: theme.AppTheme.blackMediumTransparent,
               blurRadius: 20,
               offset: const Offset(0, 10),
             ),

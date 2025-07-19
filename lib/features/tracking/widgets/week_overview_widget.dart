@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../../core/services/hive_database_service.dart';
 import '../../../core/utils/drink_intervention_utils.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_theme.dart' as theme;
 
 /// Week overview widget showing drinking patterns for the week
 class WeekOverviewWidget extends StatelessWidget {
@@ -26,11 +27,11 @@ class WeekOverviewWidget extends StatelessWidget {
       margin: EdgeInsets.zero, // Remove margin to let parent handle spacing
       padding: AppSpacing.screenPadding, // Use consistent padding
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.AppTheme.whiteColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade200,
+            color: theme.AppTheme.greyLight,
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -43,16 +44,16 @@ class WeekOverviewWidget extends StatelessWidget {
             children: [
               Icon(
                 Icons.calendar_view_week,
-                color: Colors.purple.shade600,
+                color: theme.AppTheme.purpleDark,
                 size: 20,
               ),
               const SizedBox(width: 8),
               Text(
-                'This Week',
+                'Week of ${DateFormat('MMM d').format(weekStart)}',
                 style: TextStyle(
+                  fontWeight: FontWeight.bold,
                   fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.purple.shade700,
+                  color: theme.AppTheme.purpleDark,
                 ),
               ),
             ],
@@ -85,7 +86,7 @@ class WeekOverviewWidget extends StatelessWidget {
             dayName,
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey.shade400,
+              color: theme.AppTheme.greyVeryLight,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -94,7 +95,7 @@ class WeekOverviewWidget extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: Colors.grey.shade100,
+              color: theme.AppTheme.greyExtraLight,
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -103,7 +104,7 @@ class WeekOverviewWidget extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade400,
+                  color: theme.AppTheme.greyVeryLight,
                 ),
               ),
             ),
@@ -113,7 +114,7 @@ class WeekOverviewWidget extends StatelessWidget {
             width: 4,
             height: 16,
             decoration: BoxDecoration(
-              color: Colors.grey.shade200,
+              color: theme.AppTheme.greyLight,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -148,9 +149,9 @@ class WeekOverviewWidget extends StatelessWidget {
       textColor = Theme.of(context).primaryColor.withValues(alpha: 0.8);
     } else {
       // Regular days
-      backgroundColor = Colors.grey.shade50;
+      backgroundColor = theme.AppTheme.greyExtraLight;
       border = null;
-      textColor = Colors.grey.shade700;
+      textColor = theme.AppTheme.greyMedium;
     }
     
     return GestureDetector(
@@ -163,7 +164,7 @@ class WeekOverviewWidget extends StatelessWidget {
               fontSize: 12,
               color: isSelected ? Theme.of(context).primaryColor : 
                      isToday ? Theme.of(context).primaryColor.withValues(alpha: 0.7) : 
-                     Colors.grey.shade600,
+                     theme.AppTheme.greyMedium,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -208,7 +209,7 @@ class WeekOverviewWidget extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade600,
+                      color: theme.AppTheme.greyMedium,
                     ),
                   )
                 : null,

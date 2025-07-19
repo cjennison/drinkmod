@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_theme.dart' as theme;
 import '../../../core/utils/date_utils.dart' as date_utils;
 import '../shared/components/adaptive_goal_card.dart';
 import '../shared/components/goal_card_components.dart';
@@ -93,7 +94,7 @@ class _GoalProgressCardState extends AdaptiveGoalCardState<GoalProgressCard> {
           const SizedBox(height: 8),
           LinearProgressIndicator(
             value: percentage / 100.0,
-            backgroundColor: Colors.grey[200],
+            backgroundColor: theme.AppTheme.greyLight,
             valueColor: AlwaysStoppedAnimation<Color>(goalTypeInfo['color']),
           ),
           const SizedBox(height: 4),
@@ -104,21 +105,21 @@ class _GoalProgressCardState extends AdaptiveGoalCardState<GoalProgressCard> {
                 '${percentage.toStringAsFixed(0)}% Complete',
                 style: TextStyle(
                   fontSize: 12,
-                  color: Colors.grey[600],
+                  color: theme.AppTheme.greyMedium,
                 ),
               ),
               if (isFinished)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: percentage >= 100.0 ? Colors.green : Colors.grey,
+                    color: percentage >= 100.0 ? theme.AppTheme.greenColor : theme.AppTheme.greyColor,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     percentage >= 100.0 ? 'Complete' : 'Finished',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10,
-                      color: Colors.white,
+                      color: theme.AppTheme.whiteColor,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -133,7 +134,7 @@ class _GoalProgressCardState extends AdaptiveGoalCardState<GoalProgressCard> {
                 onPressed: widget.onTap,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: goalTypeInfo['color'],
-                  foregroundColor: Colors.white,
+                  foregroundColor: theme.AppTheme.whiteColor,
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(6),
@@ -192,7 +193,7 @@ class _GoalProgressCardState extends AdaptiveGoalCardState<GoalProgressCard> {
                 _getTimelineText(),
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey[600],
+                  color: theme.AppTheme.greyMedium,
                 ),
               ),
             ],
@@ -201,7 +202,7 @@ class _GoalProgressCardState extends AdaptiveGoalCardState<GoalProgressCard> {
             data['statusText'] ?? 'No status available',
             style: TextStyle(
               fontSize: 14,
-              color: Colors.grey[600],
+              color: theme.AppTheme.greyMedium,
             ),
           ),
         ],
@@ -266,38 +267,38 @@ class _GoalProgressCardState extends AdaptiveGoalCardState<GoalProgressCard> {
     
     // Default values
     IconData icon = Icons.flag;
-    Color color = Colors.blue;
+    Color color = theme.AppTheme.blueColor;
     String subtitle = 'Track your progress';
 
     // Customize based on goal type with clear explanations
     if (goalTypeString != null) {
       if (goalTypeString.contains('daily')) {
         icon = Icons.today;
-        color = Colors.green;
+        color = theme.AppTheme.greenColor;
         subtitle = 'Keep your daily drinks under your target';
       } else if (goalTypeString.contains('weekly')) {
         icon = Icons.calendar_view_week;
-        color = Colors.orange;
+        color = theme.AppTheme.orangeColor;
         subtitle = 'Stay within your weekly drink limit';
       } else if (goalTypeString.contains('alcoholFree') || goalTypeString.contains('dry')) {
         icon = Icons.flag;
-        color = Colors.blue;
+        color = theme.AppTheme.blueColor;
         subtitle = 'Complete alcohol-free days in your timeline';
       } else if (goalTypeString.contains('streak')) {
         icon = Icons.local_fire_department;
-        color = Colors.red;
+        color = theme.AppTheme.redColor;
         subtitle = 'Maintain consecutive alcohol-free days';
       } else if (goalTypeString.contains('intervention')) {
         icon = Icons.psychology;
-        color = Colors.purple;
+        color = theme.AppTheme.purpleColor;
         subtitle = 'Resist urges when the app offers interventions';
       } else if (goalTypeString.contains('mood')) {
         icon = Icons.sentiment_satisfied;
-        color = Colors.teal;
+        color = theme.AppTheme.tealColor;
         subtitle = 'Improve your mood through reduced drinking';
       } else if (goalTypeString.contains('cost')) {
         icon = Icons.savings;
-        color = Colors.amber;
+        color = theme.AppTheme.amberColor;
         subtitle = 'Save money by reducing alcohol spending';
       }
     }
@@ -403,7 +404,7 @@ class _GoalProgressCardState extends AdaptiveGoalCardState<GoalProgressCard> {
                 goalTypeInfo['subtitle'],
                 style: TextStyle(
                   fontSize: 14,
-                  color: Colors.grey[600],
+                  color: theme.AppTheme.greyMedium,
                 ),
               ),
             ],
@@ -413,7 +414,7 @@ class _GoalProgressCardState extends AdaptiveGoalCardState<GoalProgressCard> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.grey[100],
+              color: theme.AppTheme.greyExtraLight,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Column(
@@ -422,7 +423,7 @@ class _GoalProgressCardState extends AdaptiveGoalCardState<GoalProgressCard> {
                   'Timeline',
                   style: TextStyle(
                     fontSize: 10,
-                    color: Colors.grey[600],
+                    color: theme.AppTheme.greyMedium,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -463,19 +464,19 @@ class _GoalProgressCardState extends AdaptiveGoalCardState<GoalProgressCard> {
       // Goal was actually completed (100%)
       title = 'Goal Complete!';
       subtitle = 'Ready to set your next challenge?';
-      backgroundColor = Colors.green[50]!;
-      borderColor = Colors.green[200]!;
-      iconColor = Colors.green[600]!;
-      textColor = Colors.green[700]!;
+      backgroundColor = theme.AppTheme.greenLightShade;
+      borderColor = theme.AppTheme.greenMediumShade;
+      iconColor = theme.AppTheme.greenDark;
+      textColor = theme.AppTheme.greenDarkShade;
       icon = Icons.celebration;
     } else {
       // Time is up but goal not fully completed
       title = 'Goal Period Ended';
       subtitle = 'Ready to start fresh with a new goal?';
-      backgroundColor = Colors.blue[50]!;
-      borderColor = Colors.blue[200]!;
-      iconColor = Colors.blue[600]!;
-      textColor = Colors.blue[700]!;
+      backgroundColor = theme.AppTheme.blueLightShade;
+      borderColor = theme.AppTheme.blueMediumShade;
+      iconColor = theme.AppTheme.blueColor;
+      textColor = theme.AppTheme.blueDarkShade;
       icon = Icons.schedule;
     }
     
@@ -519,7 +520,7 @@ class _GoalProgressCardState extends AdaptiveGoalCardState<GoalProgressCard> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: iconColor,
-              foregroundColor: Colors.white,
+              foregroundColor: theme.AppTheme.whiteColor,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -562,7 +563,7 @@ class _GoalProgressCardState extends AdaptiveGoalCardState<GoalProgressCard> {
           child: GoalCardComponents.buildMetricChip(
             label: 'Current',
             value: data['currentMetric']?.toString() ?? '0',
-            color: Colors.blue,
+            color: theme.AppTheme.blueColor,
             icon: Icons.check_circle_outline,
           ),
         ),
@@ -570,7 +571,7 @@ class _GoalProgressCardState extends AdaptiveGoalCardState<GoalProgressCard> {
           child: GoalCardComponents.buildMetricChip(
             label: 'Target',
             value: data['targetMetric']?.toString() ?? 'N/A',
-            color: Colors.green,
+            color: theme.AppTheme.greenColor,
             icon: Icons.flag_outlined,
           ),
         ),
@@ -608,13 +609,13 @@ class _GoalProgressCardState extends AdaptiveGoalCardState<GoalProgressCard> {
   
   Color _getThirdMetricColor(int daysRemaining, bool isInterventionGoalComplete) {
     if (isInterventionGoalComplete) {
-      return Colors.green;
+      return theme.AppTheme.greenColor;
     } else if (daysRemaining > 7) {
-      return Colors.teal;
+      return theme.AppTheme.tealColor;
     } else if (daysRemaining > 0) {
-      return Colors.red;
+      return theme.AppTheme.redColor;
     } else {
-      return Colors.grey;
+      return theme.AppTheme.greyColor;
     }
   }
   

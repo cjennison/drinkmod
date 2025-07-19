@@ -30,6 +30,83 @@ class AppTheme {
   static const Color goalWarning = Color(0xFFF39C12);
   static const Color goalExceeded = Color(0xFFE74C3C);
   
+  // Additional semantic colors
+  static const Color lightBackground = Color(0xFFF5F5F7);
+  static const Color cardBackground = Color(0xFFFFFFFF);
+  static const Color overlayBackground = Color(0x0D000000); // Colors.black.withValues(alpha: 0.05)
+  
+  // Purple theme colors
+  static const Color purpleColor = Color(0xFF9B59B6);
+  static const Color purpleLight = Color(0xFFE8D5E8);
+  static const Color purpleDark = Color(0xFF8E44AD);
+  
+  // Pink/Red theme colors  
+  static const Color pinkColor = Color(0xFFE91E63);
+  
+  // Teal theme colors
+  static const Color tealColor = Color(0xFF1ABC9C);
+  static const Color tealLight = Color(0xFFD5F4F1);
+  
+  // Amber theme colors
+  static const Color amberColor = Color(0xFFFFC107);
+  
+  // Dark text colors
+  static const Color darkText = Color(0xFF1A1A1A);
+  static const Color mediumText = Color(0xFF666666);
+  static const Color lightText = Color(0xFF999999);
+  
+  // Extended color palette for comprehensive coverage
+  static const Color whiteColor = Color(0xFFFFFFFF);
+  static const Color greyColor = Color(0xFF9E9E9E);
+  static const Color greyLight = Color(0xFFEEEEEE);  // grey.shade200
+  static const Color greyMedium = Color(0xFF757575); // grey.shade600
+  static const Color greyDark = Color(0xFF616161);   // grey.shade500
+  static const Color greyVeryLight = Color(0xFFBDBDBD); // grey.shade400
+  static const Color greyExtraLight = Color(0xFFF5F5F5); // grey.shade100
+  static const Color greyWithAlpha = Color(0x4D9E9E9E); // grey.withValues(alpha: 0.3)
+  static const Color redColor = Color(0xFFF44336);
+  static const Color redLight = Color(0xFFFFEBEE);   // red.withOpacity(0.1)
+  static const Color redMedium = Color(0xFFEF5350);  // red.withOpacity(0.2) border
+  static const Color redDark = Color(0xFFD32F2F);    // red.shade700
+  static const Color redVeryLight = Color(0xFFFFCDD2); // red.shade100
+  static const Color redVeryVeryLight = Color(0xFFFFF5F5); // red.shade50
+  static const Color redMediumDark = Color(0xFFE53935); // red.shade600
+  static const Color orangeColor = Color(0xFFFF9800);
+  static const Color orangeMedium = Color(0xFFFFB74D); // orange.shade400
+  static const Color orangeDark = Color(0xFFF57C00);   // orange.shade600
+  static const Color orangeDarkest = Color(0xFFE65100); // orange.shade700
+  static const Color orangeLight = Color(0xFFFFE0B2);  // orange.shade100
+  static const Color orangeVeryLight = Color(0xFFFFF3E0); // orange.shade50
+  static const Color orangeLightest = Color(0xFFFFCC80); // orange.shade200
+  static const Color greenColor = Color(0xFF4CAF50);
+  static const Color greenMedium = Color(0xFF66BB6A); // green.shade400
+  static const Color greenDark = Color(0xFF388E3C);   // green.shade600
+  static const Color greenLight = Color(0xFFC8E6C9); // green.shade100
+  static const Color blueColor = Color(0xFF2196F3);
+  static const Color blueLight = Color(0xFFE3F2FD);   // blue.withOpacity(0.05)
+  static const Color blueMedium = Color(0xFFBBDEFB);  // blue.withOpacity(0.1)
+  static const Color blueLighter = Color(0xFFF3F9FF); // blue.shade50
+  static const Color blueLightShade = Color(0xFFE3F2FD); // blue.shade50
+  static const Color blueMediumShade = Color(0xFFBBDEFB); // blue.shade200  
+  static const Color blueDarkShade = Color(0xFF1976D2);   // blue.shade700
+  static const Color greenLightShade = Color(0xFFE8F5E8); // green.shade50
+  static const Color greenMediumShade = Color(0xFFC8E6C9); // green.shade200
+  static const Color greenDarkShade = Color(0xFF388E3C);   // green.shade700
+  
+  // Additional utility colors
+  static const Color transparentColor = Colors.transparent;
+  static const Color blackColor = Color(0xFF000000);
+  static const Color blackSemiTransparent = Color(0x14000000); // black.withValues(alpha: 0.05)
+  static const Color blackMediumTransparent = Color(0x1A000000); // black.withValues(alpha: 0.1)
+  static const Color blackText87 = Color(0xDD000000); // Colors.black87
+  static const Color blackText54 = Color(0x8A000000); // Colors.black54
+  static const Color indigoLight = Color(0xFFE8EAF6); // indigo.shade50
+  static const Color greenVeryLight = Color(0xFFE8F5E8); // green.shade50 
+  static const Color tealVeryLight = Color(0xFFE0F2F1); // teal.shade50
+  static const Color redMediumLight = Color(0xFFEF5350); // red.shade400
+  static const Color orangeTransparent = Color(0x1AFF9800); // orange.withValues(alpha: 0.1)
+  static const Color orangeMediumTransparent = Color(0x4DFF9800); // orange.withValues(alpha: 0.3)
+  
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,

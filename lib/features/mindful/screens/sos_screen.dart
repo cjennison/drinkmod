@@ -4,6 +4,7 @@ import '../../../core/services/goal_management_service.dart';
 import '../../../core/services/app_events_service.dart';
 import '../../../core/models/app_event.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_theme.dart' as theme;
 import '../../progress/widgets/goal_progress_card.dart';
 import '../../progress/shared/types/goal_display_types.dart';
 import '../models/meditation_config.dart';
@@ -90,18 +91,18 @@ class _SOSScreenState extends State<SOSScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F7),
+      backgroundColor: theme.AppTheme.lightBackground,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF5F5F7),
+        backgroundColor: theme.AppTheme.lightBackground,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.black),
+          icon: Icon(Icons.close, color: theme.AppTheme.textPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
           'SOS Support',
           style: TextStyle(
-            color: Colors.black,
+            color: theme.AppTheme.textPrimary,
             fontSize: 20,
             fontWeight: FontWeight.w600,
           ),
@@ -151,19 +152,19 @@ class _SOSScreenState extends State<SOSScreen> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.green.shade50,
-            Colors.teal.shade50,
+            theme.AppTheme.greenVeryLight,
+            theme.AppTheme.tealVeryLight,
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.green.shade100),
+        border: Border.all(color: theme.AppTheme.greenLight),
       ),
       child: Column(
         children: [
           Icon(
             Icons.check_circle,
             size: 48,
-            color: Colors.green.shade500,
+            color: theme.AppTheme.greyDark,
           ),
           const SizedBox(height: 16),
           const Text(
@@ -206,8 +207,8 @@ class _SOSScreenState extends State<SOSScreen> {
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green.shade600,
-                foregroundColor: Colors.white,
+                backgroundColor: theme.AppTheme.greenDark,
+                foregroundColor: theme.AppTheme.whiteColor,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -237,19 +238,19 @@ class _SOSScreenState extends State<SOSScreen> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.blue.shade50,
-            Colors.indigo.shade50,
+            theme.AppTheme.blueLighter,
+            theme.AppTheme.indigoLight,
           ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.blue.shade100),
+        border: Border.all(color: theme.AppTheme.blueMedium),
       ),
       child: Column(
         children: [
           Icon(
             Icons.favorite,
             size: 48,
-            color: Colors.red.shade400,
+            color: theme.AppTheme.redMediumLight,
           ),
           const SizedBox(height: 16),
           const Text(
@@ -281,11 +282,11 @@ class _SOSScreenState extends State<SOSScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.AppTheme.whiteColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: theme.AppTheme.blackSemiTransparent,
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -299,7 +300,7 @@ class _SOSScreenState extends State<SOSScreen> {
               Icon(
                 Icons.flag,
                 size: 24,
-                color: Colors.blue.shade600,
+                color: theme.AppTheme.blueColor,
               ),
               const SizedBox(width: 12),
               const Text(
@@ -307,7 +308,7 @@ class _SOSScreenState extends State<SOSScreen> {
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1A1A1A),
+                  color: theme.AppTheme.darkText,
                 ),
               ),
             ],
@@ -318,7 +319,7 @@ class _SOSScreenState extends State<SOSScreen> {
             style: TextStyle(
               fontSize: 14,
               height: 1.4,
-              color: Color(0xFF666666),
+              color: theme.AppTheme.mediumText,
             ),
           ),
           const SizedBox(height: 16),
@@ -336,11 +337,11 @@ class _SOSScreenState extends State<SOSScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.AppTheme.whiteColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: theme.AppTheme.blackSemiTransparent,
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -352,13 +353,13 @@ class _SOSScreenState extends State<SOSScreen> {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: Colors.blue.shade50,
+              color: theme.AppTheme.blueLight,
               borderRadius: BorderRadius.circular(32),
             ),
             child: Icon(
               Icons.waves,
               size: 32,
-              color: Colors.blue.shade600,
+              color: theme.AppTheme.blueColor,
             ),
           ),
           const SizedBox(height: 16),
@@ -367,7 +368,7 @@ class _SOSScreenState extends State<SOSScreen> {
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1A1A1A),
+              color: theme.AppTheme.darkText,
             ),
           ),
           const SizedBox(height: 8),
@@ -376,7 +377,7 @@ class _SOSScreenState extends State<SOSScreen> {
             style: TextStyle(
               fontSize: 14,
               height: 1.4,
-              color: Color(0xFF666666),
+              color: theme.AppTheme.mediumText,
             ),
             textAlign: TextAlign.center,
           ),
@@ -386,8 +387,8 @@ class _SOSScreenState extends State<SOSScreen> {
             child: ElevatedButton(
               onPressed: _startRandomUrgeSurfing,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue.shade600,
-                foregroundColor: Colors.white,
+                backgroundColor: theme.AppTheme.blueColor,
+                foregroundColor: theme.AppTheme.whiteColor,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),

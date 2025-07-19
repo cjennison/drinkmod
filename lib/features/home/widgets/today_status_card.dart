@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../../core/utils/drink_status_utils.dart';
 import '../../../core/services/hive_database_service.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_theme.dart' as theme;
 
 /// Today's status card showing current progress and daily goal
 class TodayStatusCard extends StatelessWidget {
@@ -74,7 +75,7 @@ class TodayStatusCard extends StatelessWidget {
                       'Today, ${DateFormat('MMM d').format(date)}',
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.grey.shade600,
+                        color: theme.AppTheme.greyMedium,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -106,7 +107,7 @@ class TodayStatusCard extends StatelessWidget {
                       isDrinkingDay ? 'of $dailyLimit drinks' : 'drink${totalDrinks != 1 ? 's' : ''} logged',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey.shade600,
+                        color: theme.AppTheme.greyMedium,
                       ),
                     ),
                   ],
@@ -119,15 +120,15 @@ class TodayStatusCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.1),
+                color: theme.AppTheme.redLight,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.red.withValues(alpha: 0.2)),
+                border: Border.all(color: theme.AppTheme.redMedium),
               ),
               child: Row(
                 children: [
                   Icon(
                     Icons.info_outline,
-                    color: Colors.red.shade700,
+                    color: theme.AppTheme.redDark,
                     size: 16,
                   ),
                   const SizedBox(width: 8),
@@ -136,7 +137,7 @@ class TodayStatusCard extends StatelessWidget {
                       'You\'ve logged drinks on your planned alcohol-free day. That\'s okay - tomorrow is a fresh start.',
                       style: TextStyle(
                         fontSize: 13,
-                        color: Colors.red.shade700,
+                        color: theme.AppTheme.redDark,
                       ),
                     ),
                   ),
@@ -182,7 +183,7 @@ class HomeDrinkVisualizer extends StatelessWidget {
               child: Container(
                 height: 8,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
+                  color: theme.AppTheme.greyLight,
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: FractionallySizedBox(
@@ -191,8 +192,8 @@ class HomeDrinkVisualizer extends StatelessWidget {
                   child: Container(
                     decoration: BoxDecoration(
                       color: isOverLimit 
-                          ? Colors.orange.shade400 
-                          : Colors.green.shade400,
+                          ? theme.AppTheme.orangeMedium
+                          : theme.AppTheme.greenMedium,
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -205,8 +206,8 @@ class HomeDrinkVisualizer extends StatelessWidget {
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 color: isOverLimit 
-                    ? Colors.orange.shade600 
-                    : Colors.green.shade600,
+                    ? theme.AppTheme.orangeDark
+                    : theme.AppTheme.greenDark,
               ),
             ),
           ],
@@ -219,14 +220,14 @@ class HomeDrinkVisualizer extends StatelessWidget {
               '0',
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.grey.shade500,
+                color: theme.AppTheme.greyDark,
               ),
             ),
             Text(
               '$dailyLimit (goal)',
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.grey.shade500,
+                color: theme.AppTheme.greyDark,
               ),
             ),
           ],

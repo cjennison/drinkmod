@@ -3,6 +3,7 @@ import '../../../core/services/goal_management_service.dart';
 import '../../../core/services/hive_database_service.dart';
 import '../../../core/achievements/achievement_helper.dart';
 import '../../../core/theme/app_spacing.dart';
+import '../../../core/theme/app_theme.dart' as theme;
 import '../widgets/goal_card.dart';
 import '../widgets/goal_history_modal.dart';
 import '../services/chart_data_service.dart';
@@ -220,7 +221,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
             Icon(
               Icons.trending_up_outlined,
               size: 80,
-              color: Colors.grey,
+              color: theme.AppTheme.greyColor,
             ),
             SizedBox(height: 20),
             Text(
@@ -235,7 +236,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
               'Create a goal to track your progress',
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.grey,
+                color: theme.AppTheme.greyColor,
               ),
             ),
           ],
@@ -298,7 +299,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
             // Weekly Adherence Chart
             _buildChartCard(
               icon: Icons.trending_up,
-              iconColor: Colors.green.shade600,
+              iconColor: theme.AppTheme.greenDark,
               title: 'Weekly Goal Adherence',
               description: 'Your progress over the last 12 weeks',
               chart: WeeklyAdherenceChart(data: _weeklyAdherenceData),
@@ -309,7 +310,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
             // Weekly Pattern Chart
             _buildChartCard(
               icon: Icons.bar_chart,
-              iconColor: Colors.blue.shade600,
+              iconColor: theme.AppTheme.blueColor,
               title: 'Weekly Drinking Pattern',
               description: 'Average drinks by day of week',
               chart: WeeklyDrinkingPatternChart(data: _weeklyPatternData),
@@ -320,7 +321,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
             // Time of Day Chart
             _buildChartCard(
               icon: Icons.access_time,
-              iconColor: Colors.orange.shade600,
+              iconColor: theme.AppTheme.orangeDark,
               title: 'Time of Day Patterns',
               description: 'When you typically drink',
               chart: TimeOfDayPatternChart(data: _timeOfDayData),
@@ -331,7 +332,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
             // Intervention Success Chart
             _buildChartCard(
               icon: Icons.shield_outlined,
-              iconColor: Colors.purple.shade600,
+              iconColor: theme.AppTheme.purpleDark,
               title: 'Intervention Success',
               description: 'How often you resist urges',
               chart: InterventionSuccessChart(data: _interventionData),
@@ -383,7 +384,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
             Text(
               description,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.grey.shade600,
+                color: theme.AppTheme.greyMedium,
                 fontSize: 13,
               ),
             ),
@@ -404,7 +405,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
           Icon(
             Icons.flag_outlined,
             size: 100,
-            color: Colors.grey.shade400,
+            color: theme.AppTheme.greyVeryLight,
           ),
           const SizedBox(height: 24),
           const Text(
@@ -412,7 +413,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: theme.AppTheme.blackText87,
             ),
             textAlign: TextAlign.center,
           ),
@@ -421,7 +422,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
             'You\'ve made great progress before.\nLet\'s set up a new goal to continue your journey!',
             style: TextStyle(
               fontSize: 16,
-              color: Colors.grey.shade600,
+              color: theme.AppTheme.greyMedium,
               height: 1.5,
             ),
             textAlign: TextAlign.center,
@@ -432,8 +433,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
             child: ElevatedButton(
               onPressed: _startNewGoalSetup,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue.shade600,
-                foregroundColor: Colors.white,
+                backgroundColor: theme.AppTheme.blueColor,
+                foregroundColor: theme.AppTheme.whiteColor,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -456,7 +457,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
               'View Previous Goals',
               style: TextStyle(
                 fontSize: 16,
-                color: Colors.blue.shade600,
+                color: theme.AppTheme.blueColor,
                 fontWeight: FontWeight.w500,
               ),
             ),
