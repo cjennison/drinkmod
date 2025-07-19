@@ -5,6 +5,7 @@ import '../../../core/services/journal_service.dart';
 import '../../../core/models/journal_entry.dart';
 import 'meditation_session_screen.dart';
 import 'journal_screen.dart';
+import 'sos_screen.dart';
 
 /// Mindful page - Therapeutic mindfulness hub for alcohol moderation
 class MindfulScreen extends StatefulWidget {
@@ -1095,24 +1096,9 @@ class _MindfulScreenState extends State<MindfulScreen> {
   }
 
   void _showSOSDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('SOS - Urge Support'),
-        content: const Text('Quick access to urge surfing exercises.'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _startUrgeSurfingMeditation(context);
-            },
-            child: const Text('Start Urge Surfing'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
-          ),
-        ],
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const SOSScreen(),
       ),
     );
   }
