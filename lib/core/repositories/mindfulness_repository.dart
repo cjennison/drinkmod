@@ -1,8 +1,9 @@
 import '../models/mindfulness_session.dart';
-import '../models/daily_reflection_log.dart';
+import '../models/journal_entry.dart';
+import '../services/journal_service.dart';
+import '../services/mindfulness_analytics_service.dart';
 import '../services/mindfulness_session_service.dart';
 import '../services/reflection_service.dart';
-import '../services/mindfulness_analytics_service.dart';
 
 /// Repository pattern for mindfulness data management
 /// Provides a clean interface for UI components to interact with mindfulness data
@@ -116,126 +117,108 @@ class MindfulnessRepository {
   }
 
   // =============================================================================
-  // DAILY REFLECTIONS
+  // DAILY JOURNAL ENTRIES
   // =============================================================================
 
-  /// Get today's reflection log (creates if doesn't exist)
-  DailyReflectionLog getTodaysReflectionLog() {
-    return ReflectionService.getTodaysReflectionLog();
+  /// Get today's journal entry (creates if doesn't exist)
+  Future<JournalEntry> getTodaysJournalEntry() async {
+    return await JournalService.instance.getOrCreateTodaysEntry();
   }
 
-  /// Get reflection log for a specific date
-  DailyReflectionLog? getReflectionLogForDate(DateTime date) {
-    return ReflectionService.getReflectionLogForDate(date);
+  /// Get journal entry for a specific date
+  Future<JournalEntry?> getJournalEntryForDate(DateTime date) async {
+    return await JournalService.instance.getEntryByDate(date);
   }
 
-  /// Update today's daily check-in
-  Future<DailyReflectionLog> updateTodaysCheckIn(String checkInText) async {
-    final updatedLog = await ReflectionService.updateTodaysCheckIn(checkInText);
-
-    // Log the check-in event
-    final event = MindfulnessAnalyticsService.createDailyCheckInEvent(checkInText);
+  /// Update today's journal entry
+  Future<JournalEntry> updateTodaysJournalEntry(JournalEntry entry) async {
+    await JournalService.instance.updateTodaysEntry(entry);
+    
+    // Log the journal event
+    final event = MindfulnessAnalyticsService.createJournalEntryEvent(entry);
     await MindfulnessAnalyticsService.logMindfulnessEvent(event);
 
-    return updatedLog;
+    return entry;
   }
 
-  /// Add a reflection entry to today
-  Future<DailyReflectionLog> addReflectionEntryToday(
-    ReflectionCategory category,
-    String content,
-  ) async {
-    final updatedLog = await ReflectionService.addReflectionEntryToday(
-      category,
-      content,
+  /// Add gratitude entry to today's journal
+  Future<JournalEntry> addGratitudeToday(String gratitude) async {
+    final entry = await getTodaysJournalEntry();
+    final currentGratitude = entry.gratitudeEntry ?? '';
+    final updatedGratitude = currentGratitude.isEmpty 
+        ? gratitude 
+        : '$currentGratitude\n$gratitude';
+    final updatedEntry = entry.copyWith(gratitudeEntry: updatedGratitude);
+    
+    return await updateTodaysJournalEntry(updatedEntry);
+  }
+
+  /// Add challenge entry to today's journal
+  Future<JournalEntry> addChallengeToday(String challenge) async {
+    final entry = await getTodaysJournalEntry();
+    final currentChallenges = entry.challengesEntry ?? '';
+    final updatedChallenges = currentChallenges.isEmpty 
+        ? challenge 
+        : '$currentChallenges\n$challenge';
+    final updatedEntry = entry.copyWith(challengesEntry: updatedChallenges);
+    
+    return await updateTodaysJournalEntry(updatedEntry);
+  }
+
+  /// Add accomplishment to today's journal
+  Future<JournalEntry> addAccomplishmentToday(String accomplishment) async {
+    final entry = await getTodaysJournalEntry();
+    final currentAccomplishments = entry.accomplishmentsEntry ?? '';
+    final updatedAccomplishments = currentAccomplishments.isEmpty 
+        ? accomplishment 
+        : '$currentAccomplishments\n$accomplishment';
+    final updatedEntry = entry.copyWith(accomplishmentsEntry: updatedAccomplishments);
+    
+    return await updateTodaysJournalEntry(updatedEntry);
+  }
+
+  /// Update mood for today's journal
+  Future<JournalEntry> updateTodaysMood(MoodLevel mood, {int? anxietyLevel, int? stressLevel}) async {
+    final entry = await getTodaysJournalEntry();
+    final updatedEntry = entry.copyWith(
+      overallMood: mood,
+      anxietyLevel: anxietyLevel,
+      stressLevel: stressLevel,
     );
-
-    // Log the reflection entry event
-    final entry = updatedLog.entries.last; // Get the newly added entry
-    final event = MindfulnessAnalyticsService.createReflectionEntryEvent(entry);
-    await MindfulnessAnalyticsService.logMindfulnessEvent(event);
-
-    return updatedLog;
+    
+    return await updateTodaysJournalEntry(updatedEntry);
   }
 
-  /// Add a reflection entry to a specific date
-  Future<DailyReflectionLog> addReflectionEntryToDate(
-    DateTime date,
-    ReflectionCategory category,
-    String content,
-  ) async {
-    return await ReflectionService.addReflectionEntryToDate(
-      date,
-      category,
-      content,
-    );
+  /// Add emotion tags to today's journal
+  Future<JournalEntry> addEmotionTagsToday(List<String> tags) async {
+    final entry = await getTodaysJournalEntry();
+    final updatedTags = Set<String>.from(entry.emotionTags)..addAll(tags);
+    final updatedEntry = entry.copyWith(emotionTags: updatedTags.toList());
+    
+    return await updateTodaysJournalEntry(updatedEntry);
   }
 
-  /// Update a reflection entry
-  Future<DailyReflectionLog> updateReflectionEntry(
-    DateTime date,
-    String entryId,
-    String newContent,
-  ) async {
-    return await ReflectionService.updateReflectionEntry(
-      date,
-      entryId,
-      newContent,
-    );
-  }
-
-  /// Remove a reflection entry
-  Future<DailyReflectionLog> removeReflectionEntry(
-    DateTime date,
-    String entryId,
-  ) async {
-    return await ReflectionService.removeReflectionEntry(date, entryId);
-  }
-
-  /// Get today's entries for a specific category
-  List<ReflectionEntry> getTodaysEntriesForCategory(ReflectionCategory category) {
-    return ReflectionService.getTodaysEntriesForCategory(category);
-  }
-
-  /// Get today's gratitude entries
-  List<ReflectionEntry> getTodaysGratitudeEntries() {
-    return ReflectionService.getTodaysGratitudeEntries();
-  }
-
-  /// Get today's trigger entries
-  List<ReflectionEntry> getTodaysTriggerEntries() {
-    return ReflectionService.getTodaysTriggerEntries();
-  }
-
-  /// Get today's values entries
-  List<ReflectionEntry> getTodaysValuesEntries() {
-    return ReflectionService.getTodaysValuesEntries();
-  }
-
-  /// Get today's progress entries
-  List<ReflectionEntry> getTodaysProgressEntries() {
-    return ReflectionService.getTodaysProgressEntries();
-  }
-
-  /// Get recent reflection logs
-  List<DailyReflectionLog> getRecentReflectionLogs(int days) {
-    return ReflectionService.getRecentReflectionLogs(days);
+  /// Get recent journal entries
+  Future<List<JournalEntry>> getRecentJournalEntries(int days) async {
+    final now = DateTime.now();
+    final startDate = now.subtract(Duration(days: days));
+    return await JournalService.instance.getEntriesInRange(startDate, now);
   }
 
   /// Get reflection statistics
-  Map<String, dynamic> getReflectionStatistics({
+  Future<Map<String, dynamic>> getReflectionStatistics({
     DateTime? startDate,
     DateTime? endDate,
-  }) {
-    return ReflectionService.getReflectionStatistics(
+  }) async {
+    return await ReflectionService.getReflectionStatistics(
       startDate: startDate,
       endDate: endDate,
     );
   }
 
   /// Get reflection streaks
-  Map<String, int> getReflectionStreaks() {
-    return ReflectionService.getReflectionStreaks();
+  Future<Map<String, int>> getReflectionStreaks() async {
+    return await ReflectionService.getReflectionStreaks();
   }
 
   // =============================================================================
@@ -243,29 +226,29 @@ class MindfulnessRepository {
   // =============================================================================
 
   /// Generate comprehensive mindfulness insights
-  Map<String, dynamic> generateMindfulnessInsights({
+  Future<Map<String, dynamic>> generateMindfulnessInsights({
     DateTime? startDate,
     DateTime? endDate,
-  }) {
-    return MindfulnessAnalyticsService.generateMindfulnessInsights(
+  }) async {
+    return await MindfulnessAnalyticsService.generateMindfulnessInsights(
       startDate: startDate,
       endDate: endDate,
     );
   }
 
   /// Get daily mindfulness summary
-  Map<String, dynamic> getDailyMindfulnessSummary(DateTime date) {
-    return MindfulnessAnalyticsService.getDailyMindfulnessSummary(date);
+  Future<Map<String, dynamic>> getDailyMindfulnessSummary(DateTime date) async {
+    return await MindfulnessAnalyticsService.getDailyMindfulnessSummary(date);
   }
 
   /// Get weekly mindfulness trends
-  List<Map<String, dynamic>> getWeeklyTrends() {
-    return MindfulnessAnalyticsService.getWeeklyTrends();
+  Future<List<Map<String, dynamic>>> getWeeklyTrends() async {
+    return await MindfulnessAnalyticsService.getWeeklyTrends();
   }
 
   /// Get mindfulness milestones
-  List<Map<String, dynamic>> getMindfulnessMilestones() {
-    return MindfulnessAnalyticsService.getMindfulnessMilestones();
+  Future<List<Map<String, dynamic>>> getMindfulnessMilestones() async {
+    return await MindfulnessAnalyticsService.getMindfulnessMilestones();
   }
 
   /// Get mood patterns analysis
@@ -284,15 +267,15 @@ class MindfulnessRepository {
   // =============================================================================
 
   /// Check if user has any mindfulness activity today
-  bool hasActivityToday() {
+  Future<bool> hasActivityToday() async {
     final sessions = getTodaysSessions();
-    final reflectionLog = getTodaysReflectionLog();
+    final journalEntry = await getTodaysJournalEntry();
     
-    return sessions.isNotEmpty || reflectionLog.hasContent;
+    return sessions.isNotEmpty || journalEntry.completionPercentage > 0.1;
   }
 
   /// Get today's mindfulness summary for dashboard
-  Map<String, dynamic> getTodaysSummary() {
+  Future<Map<String, dynamic>> getTodaysSummary() async {
     final sessions = getTodaysSessions();
     final completedSessions = sessions.where((s) => s.wasCompleted).length;
     final totalMinutes = sessions
@@ -300,19 +283,19 @@ class MindfulnessRepository {
         .map((s) => s.actualDurationSeconds! ~/ 60)
         .fold(0, (sum, minutes) => sum + minutes);
     
-    final reflectionLog = getTodaysReflectionLog();
+    final journalEntry = await getTodaysJournalEntry();
     
     return {
       'totalSessions': sessions.length,
       'completedSessions': completedSessions,
       'totalMinutes': totalMinutes,
-      'hasReflection': reflectionLog.hasContent,
-      'reflectionEntries': reflectionLog.entries.length,
-      'hasCheckIn': reflectionLog.dailyCheckIn?.isNotEmpty ?? false,
-      'gratitudeCount': reflectionLog.gratitudeEntries.length,
-      'triggerCount': reflectionLog.triggerEntries.length,
-      'valuesCount': reflectionLog.valuesEntries.length,
-      'progressCount': reflectionLog.progressEntries.length,
+      'hasReflection': journalEntry.completionPercentage > 0.1,
+      'hasGratitude': (journalEntry.gratitudeEntry?.isNotEmpty ?? false),
+      'hasChallenges': (journalEntry.challengesEntry?.isNotEmpty ?? false),
+      'hasAccomplishments': (journalEntry.accomplishmentsEntry?.isNotEmpty ?? false),
+      'overallMood': journalEntry.overallMood?.index,
+      'anxietyLevel': journalEntry.anxietyLevel,
+      'stressLevel': journalEntry.stressLevel,
     };
   }
 
@@ -377,8 +360,8 @@ class MindfulnessRepository {
   }
 
   /// Get streak information for dashboard
-  Map<String, dynamic> getStreakInformation() {
-    final streaks = getReflectionStreaks();
+  Future<Map<String, dynamic>> getStreakInformation() async {
+    final streaks = await getReflectionStreaks();
     final sessionStats = getSessionStatistics();
     
     return {
@@ -392,6 +375,6 @@ class MindfulnessRepository {
   /// Clear all mindfulness data (for testing/development)
   Future<void> clearAllData() async {
     await MindfulnessSessionService.clearAllSessions();
-    await ReflectionService.clearAllReflections();
+    await ReflectionService.clearAllReflectionData();
   }
 }

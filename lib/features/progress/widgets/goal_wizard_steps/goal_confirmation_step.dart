@@ -406,37 +406,36 @@ class _GoalConfirmationStepState extends State<GoalConfirmationStep>
           ),
         ),
         
-        const SizedBox(height: 12),
-        
-        // Secondary action - View Goal History
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton(
-            onPressed: widget.onViewHistory,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.grey.shade700,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              side: BorderSide(color: Colors.grey.shade400),
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.history, size: 20),
-                SizedBox(width: 8),
-                Text(
-                  'View Goal History',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+        // Secondary action - View Goal History (hidden for now)
+        // const SizedBox(height: 12),
+        // SizedBox(
+        //   width: double.infinity,
+        //   child: OutlinedButton(
+        //     onPressed: widget.onViewHistory,
+        //     style: OutlinedButton.styleFrom(
+        //       foregroundColor: Colors.grey.shade700,
+        //       padding: const EdgeInsets.symmetric(vertical: 16),
+        //       shape: RoundedRectangleBorder(
+        //         borderRadius: BorderRadius.circular(12),
+        //       ),
+        //       side: BorderSide(color: Colors.grey.shade400),
+        //     ),
+        //     child: const Row(
+        //       mainAxisAlignment: MainAxisAlignment.center,
+        //       children: [
+        //         Icon(Icons.history, size: 20),
+        //         SizedBox(width: 8),
+        //         Text(
+        //           'View Goal History',
+        //           style: TextStyle(
+        //             fontSize: 16,
+        //             fontWeight: FontWeight.w600,
+        //           ),
+        //         ),
+        //       ],
+        //     ),
+        //   ),
+        // ),
       ],
     );
   }

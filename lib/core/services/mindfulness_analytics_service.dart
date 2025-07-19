@@ -1,5 +1,5 @@
 import '../models/mindfulness_session.dart';
-import '../models/daily_reflection_log.dart';
+import '../models/journal_entry.dart';
 import '../models/app_event.dart';
 import 'mindfulness_session_service.dart';
 import 'reflection_service.dart';
@@ -8,16 +8,16 @@ import 'reflection_service.dart';
 class MindfulnessAnalyticsService {
   
   /// Generate comprehensive mindfulness insights
-  static Map<String, dynamic> generateMindfulnessInsights({
+  static Future<Map<String, dynamic>> generateMindfulnessInsights({
     DateTime? startDate,
     DateTime? endDate,
-  }) {
+  }) async {
     final sessionStats = MindfulnessSessionService.getSessionStatistics(
       startDate: startDate,
       endDate: endDate,
     );
     
-    final reflectionStats = ReflectionService.getReflectionStatistics(
+    final reflectionStats = await ReflectionService.getReflectionStatistics(
       startDate: startDate,
       endDate: endDate,
     );
@@ -27,7 +27,7 @@ class MindfulnessAnalyticsService {
       endDate: endDate,
     );
     
-    final streaks = ReflectionService.getReflectionStreaks();
+    final streaks = await ReflectionService.getReflectionStreaks();
     final recentTrend = MindfulnessSessionService.getRecentTrend();
     
     return {
@@ -36,7 +36,7 @@ class MindfulnessAnalyticsService {
       'moodPatterns': moodPatterns,
       'streaks': streaks,
       'recentTrend': recentTrend,
-      'combinedInsights': _generateCombinedInsights(
+      'combinedInsights': await _generateCombinedInsights(
         sessionStats,
         reflectionStats,
         moodPatterns,
@@ -45,20 +45,20 @@ class MindfulnessAnalyticsService {
   }
 
   /// Generate combined insights from session and reflection data
-  static Map<String, dynamic> _generateCombinedInsights(
+  static Future<Map<String, dynamic>> _generateCombinedInsights(
     Map<String, dynamic> sessionStats,
     Map<String, dynamic> reflectionStats,
     Map<String, dynamic> moodPatterns,
-  ) {
+  ) async {
     // Calculate overall mindfulness engagement
     final totalSessions = sessionStats['totalSessions'] as int;
-    final activeDays = reflectionStats['activeDays'] as int;
+    final totalEntries = reflectionStats['totalEntries'] as int;
     final totalMinutes = sessionStats['totalMinutes'] as int;
     
     // Engagement score (0-100)
     final engagementScore = _calculateEngagementScore(
       totalSessions,
-      activeDays,
+      totalEntries,
       totalMinutes,
     );
     
@@ -261,9 +261,9 @@ class MindfulnessAnalyticsService {
   }
   
   /// Get mindfulness activity summary for a specific date
-  static Map<String, dynamic> getDailyMindfulnessSummary(DateTime date) {
+  static Future<Map<String, dynamic>> getDailyMindfulnessSummary(DateTime date) async {
     final sessions = MindfulnessSessionService.getSessionsForDate(date);
-    final reflectionLog = ReflectionService.getReflectionLogForDate(date);
+    final reflectionLog = await ReflectionService.getReflectionLogForDate(date);
     
     final completedSessions = sessions.where((s) => s.wasCompleted).length;
     final totalMinutes = sessions
@@ -279,29 +279,32 @@ class MindfulnessAnalyticsService {
       'completedSessions': completedSessions,
       'totalMinutes': totalMinutes,
       'urgeSurfingSessions': urgeSurfingSessions,
-      'hasReflection': reflectionLog?.hasContent ?? false,
-      'reflectionEntries': reflectionLog?.entries.length ?? 0,
-      'hasCheckIn': reflectionLog?.dailyCheckIn?.isNotEmpty ?? false,
+      'hasReflection': reflectionLog != null,
+      'hasGratitude': (reflectionLog?.gratitudeEntry?.isNotEmpty ?? false),
+      'hasChallenges': (reflectionLog?.challengesEntry?.isNotEmpty ?? false),
+      'hasAccomplishments': (reflectionLog?.accomplishmentsEntry?.isNotEmpty ?? false),
+      'overallMood': reflectionLog?.overallMood?.index,
+      'anxietyLevel': reflectionLog?.anxietyLevel,
     };
   }
   
   /// Get weekly mindfulness trends
-  static List<Map<String, dynamic>> getWeeklyTrends() {
+  static Future<List<Map<String, dynamic>>> getWeeklyTrends() async {
     final trends = <Map<String, dynamic>>[];
     final now = DateTime.now();
     
     for (int i = 0; i < 7; i++) {
       final date = now.subtract(Duration(days: i));
-      trends.add(getDailyMindfulnessSummary(date));
+      trends.add(await getDailyMindfulnessSummary(date));
     }
     
     return trends.reversed.toList(); // Chronological order
   }
   
   /// Get mindfulness milestones achieved
-  static List<Map<String, dynamic>> getMindfulnessMilestones() {
+  static Future<List<Map<String, dynamic>>> getMindfulnessMilestones() async {
     final sessionStats = MindfulnessSessionService.getSessionStatistics();
-    final streaks = ReflectionService.getReflectionStreaks();
+    final streaks = await ReflectionService.getReflectionStreaks();
     
     final milestones = <Map<String, dynamic>>[];
     
@@ -394,21 +397,33 @@ class MindfulnessAnalyticsService {
     );
   }
   
-  /// Create reflection entry event
-  static AppEvent createReflectionEntryEvent(ReflectionEntry entry) {
+  /// Create journal entry event
+  static AppEvent createJournalEntryEvent(JournalEntry entry) {
     return AppEvent.reflectionEntryAdded(
-      timestamp: entry.timestamp,
+      timestamp: entry.updatedAt ?? entry.createdAt,
       entryId: entry.id,
-      category: entry.category.name,
-      contentLength: entry.content.length,
+      category: 'journal',
+      contentLength: _calculateJournalContentLength(entry),
     );
   }
   
-  /// Create daily check-in event
-  static AppEvent createDailyCheckInEvent(String checkIn) {
+  /// Calculate total content length for journal entry
+  static int _calculateJournalContentLength(JournalEntry entry) {
+    int length = 0;
+    length += entry.gratitudeEntry?.length ?? 0;
+    length += entry.challengesEntry?.length ?? 0;
+    length += entry.accomplishmentsEntry?.length ?? 0;
+    length += entry.emotionsEntry?.length ?? 0;
+    length += entry.freeformEntry?.length ?? 0;
+    length += entry.copingStrategiesEntry?.length ?? 0;
+    return length;
+  }
+  
+  /// Create daily mood update event
+  static AppEvent createMoodUpdateEvent(MoodLevel mood) {
     return AppEvent.dailyCheckInCompleted(
       timestamp: DateTime.now(),
-      checkInLength: checkIn.length,
+      checkInLength: mood.label.length,
     );
   }
 }

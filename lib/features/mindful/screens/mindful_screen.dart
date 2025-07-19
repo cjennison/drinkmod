@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../models/meditation_config.dart';
+import '../../../core/services/journal_service.dart';
+import '../../../core/models/journal_entry.dart';
 import 'meditation_session_screen.dart';
+import 'journal_screen.dart';
 
 /// Mindful page - Therapeutic mindfulness hub for alcohol moderation
 class MindfulScreen extends StatefulWidget {
@@ -11,6 +15,30 @@ class MindfulScreen extends StatefulWidget {
 }
 
 class _MindfulScreenState extends State<MindfulScreen> {
+  // Force refresh key for FutureBuilders
+  int _refreshKey = 0;
+
+  void _refreshJournalStatus() {
+    setState(() {
+      _refreshKey++;
+    });
+  }
+
+  Future<JournalEntry?> _getJournalData() async {
+    final today = DateTime.now();
+    return await JournalService.instance.getEntryByDate(today);
+  }
+
+  String _getDisplayText(String? journalContent, String placeholder) {
+    if (journalContent != null && journalContent.isNotEmpty) {
+      // Show excerpt of journal content, limited to fit in the box
+      return journalContent.length > 60 
+          ? '${journalContent.substring(0, 60)}...'
+          : journalContent;
+    }
+    return placeholder;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -35,13 +63,6 @@ class _MindfulScreenState extends State<MindfulScreen> {
               
               // Reflection section
               _buildReflectionSection(context),
-              
-              const SizedBox(height: 32),
-              
-              // Insights section
-              _buildInsightsSection(context),
-              
-              const SizedBox(height: 24),
             ],
           ),
         ),
@@ -199,123 +220,251 @@ class _MindfulScreenState extends State<MindfulScreen> {
   }
 
   Widget _buildReflectionSection(BuildContext context) {
+    final theme = Theme.of(context);
+    final today = DateTime.now();
+    final dateFormat = DateFormat('EEEE, MMMM d');
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader(
-          context,
-          'Personal Reflection',
-          'Notes for your journey',
-          Icons.edit_note,
+        Row(
+          children: [
+            Expanded(
+              child: _buildSectionHeader(
+                context,
+                'Personal Reflection',
+                dateFormat.format(today),
+                Icons.edit_note,
+              ),
+            ),
+            // Today's journal status
+            FutureBuilder<bool>(
+              key: ValueKey(_refreshKey),
+              future: JournalService.instance.hasJournaledToday(),
+              builder: (context, snapshot) {
+                final hasJournaled = snapshot.data ?? false;
+                return Container(
+                  decoration: BoxDecoration(
+                    color: hasJournaled 
+                        ? Colors.green.withValues(alpha: 0.1)
+                        : theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        hasJournaled ? Icons.check_circle : Icons.edit,
+                        size: 16,
+                        color: hasJournaled ? Colors.green : theme.colorScheme.primary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        hasJournaled ? 'Complete' : 'Pending',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: hasJournaled ? Colors.green : theme.colorScheme.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ],
         ),
         
         const SizedBox(height: 16),
         
-        // Reflection categories
-        _buildReflectionCard(
-          context,
-          'Daily Check-In',
-          'How am I feeling today?',
-          Icons.today,
-          Colors.blue,
-        ),
-        
-        const SizedBox(height: 12),
-        
-        Row(
-          children: [
-            Expanded(
-              child: _buildReflectionCard(
-                context,
-                'Gratitude',
-                'What went well?',
-                Icons.star,
-                Colors.amber,
-                isCompact: true,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildReflectionCard(
-                context,
-                'Triggers',
-                'What challenged me?',
-                Icons.warning_amber,
-                Colors.orange,
-                isCompact: true,
-              ),
-            ),
-          ],
-        ),
-        
-        const SizedBox(height: 12),
-        
-        Row(
-          children: [
-            Expanded(
-              child: _buildReflectionCard(
-                context,
-                'Values',
-                'What matters to me?',
-                Icons.favorite,
-                Colors.purple,
-                isCompact: true,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildReflectionCard(
-                context,
-                'Progress',
-                'How have I grown?',
-                Icons.trending_up,
-                Colors.green,
-                isCompact: true,
-              ),
-            ),
-          ],
+        // Conditional content based on whether user has journaled today
+        FutureBuilder(
+          key: ValueKey(_refreshKey),
+          future: _getJournalData(),
+          builder: (context, snapshot) {
+            final journalData = snapshot.data;
+            final hasJournaled = journalData != null;
+            
+            if (hasJournaled) {
+              // Show main journal entry card + 4 section buttons
+              return Column(
+                children: [
+                  // Main journal entry card
+                  _buildTodaysJournalCard(context),
+                  
+                  const SizedBox(height: 12),
+                  
+                  // Quick reflection categories
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildReflectionCard(
+                          context,
+                          'Gratitude',
+                          'What went well?',
+                          Icons.star,
+                          Colors.amber,
+                          isCompact: true,
+                          deepLinkSection: 'gratitude',
+                          journalContent: journalData.gratitudeEntry,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildReflectionCard(
+                          context,
+                          'Challenges',
+                          'What was difficult?',
+                          Icons.warning_amber,
+                          Colors.orange,
+                          isCompact: true,
+                          deepLinkSection: 'challenges',
+                          journalContent: journalData.challengesEntry,
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 12),
+                  
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildReflectionCard(
+                          context,
+                          'Emotions',
+                          'How did you feel?',
+                          Icons.psychology,
+                          Colors.purple,
+                          isCompact: true,
+                          deepLinkSection: 'emotions',
+                          journalContent: journalData.emotionsEntry,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildReflectionCard(
+                          context,
+                          'Accomplishments',
+                          'What did you achieve?',
+                          Icons.trending_up,
+                          Colors.green,
+                          isCompact: true,
+                          deepLinkSection: 'accomplishments',
+                          journalContent: journalData.accomplishmentsEntry,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            } else {
+              // Show CTA to start journaling
+              return _buildJournalCTA(context);
+            }
+          },
         ),
       ],
     );
   }
 
-  Widget _buildInsightsSection(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionHeader(
-          context,
-          'Mindfulness Insights',
-          'Your mindful journey patterns',
-          Icons.insights,
+  Widget _buildJournalCTA(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    return SizedBox(
+      width: double.infinity,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+              theme.colorScheme.secondaryContainer.withValues(alpha: 0.3),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: theme.colorScheme.primary.withValues(alpha: 0.2),
+            width: 1,
+          ),
         ),
-        
-        const SizedBox(height: 16),
-        
-        Row(
-          children: [
-            Expanded(
-              child: _buildInsightCard(
-                context,
-                'Session History',
-                'Track your practice',
-                Icons.history,
-                Colors.indigo,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => _openJournal(context),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    padding: const EdgeInsets.all(20),
+                    child: Icon(
+                      Icons.auto_stories,
+                      color: theme.colorScheme.primary,
+                      size: 32,
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  Text(
+                    'Start Today\'s Journal',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 8),
+                  
+                  Text(
+                    'Take a few minutes to reflect on your day, emotions, and experiences',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  
+                  const SizedBox(height: 20),
+                  
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.edit,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Begin Journaling',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildInsightCard(
-                context,
-                'Mood Patterns',
-                'Emotional trends',
-                Icons.psychology,
-                Colors.teal,
-              ),
-            ),
-          ],
+          ),
         ),
-      ],
+      ),
     );
   }
 
@@ -607,6 +756,98 @@ class _MindfulScreenState extends State<MindfulScreen> {
     );
   }
 
+  Widget _buildTodaysJournalCard(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+            theme.colorScheme.secondaryContainer.withValues(alpha: 0.3),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.2),
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => _openJournal(context),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.all(12),
+                      child: Icon(
+                        Icons.auto_stories,
+                        color: theme.colorScheme.primary,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Today\'s Journal',
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.onSurface,
+                            ),
+                          ),
+                          Text(
+                            'Reflect on your day and emotions',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      color: theme.colorScheme.primary,
+                      size: 16,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openJournal(BuildContext context, {String? section}) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => JournalScreen(
+          deepLinkSection: section,
+        ),
+      ),
+    );
+    
+    // Refresh the screen when returning from journal
+    _refreshJournalStatus();
+  }
+
   Widget _buildReflectionCard(
     BuildContext context,
     String title,
@@ -614,6 +855,8 @@ class _MindfulScreenState extends State<MindfulScreen> {
     IconData icon,
     Color color, {
     bool isCompact = false,
+    String? deepLinkSection,
+    String? journalContent,
   }) {
     final theme = Theme.of(context);
     
@@ -631,8 +874,11 @@ class _MindfulScreenState extends State<MindfulScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
           onTap: () {
-            // TODO: Navigate to reflection prompt
-            _showReflectionDialog(context, title, prompt);
+            if (deepLinkSection != null) {
+              _openJournal(context, section: deepLinkSection);
+            } else {
+              _showReflectionDialog(context, title, prompt);
+            }
           },
           child: Padding(
             padding: EdgeInsets.all(isCompact ? 12 : 16),
@@ -690,71 +936,14 @@ class _MindfulScreenState extends State<MindfulScreen> {
                 if (isCompact) ...[
                   const SizedBox(height: 8),
                   Text(
-                    prompt,
+                    _getDisplayText(journalContent, prompt),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInsightCard(
-    BuildContext context,
-    String title,
-    String subtitle,
-    IconData icon,
-    Color color,
-  ) {
-    final theme = Theme.of(context);
-    
-    return Container(
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: color.withValues(alpha: 0.2),
-          width: 1,
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: () {
-            // TODO: Navigate to insights
-            _showInsightsDialog(context, title);
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  icon,
-                  color: color,
-                  size: 24,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  title,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                  ),
-                ),
               ],
             ),
           ),
@@ -899,22 +1088,6 @@ class _MindfulScreenState extends State<MindfulScreen> {
               Navigator.of(context).pop();
             },
             child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showInsightsDialog(BuildContext context, String title) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: Text('$title insights and analytics would appear here.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
           ),
         ],
       ),

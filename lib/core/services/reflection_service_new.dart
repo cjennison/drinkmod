@@ -15,11 +15,6 @@ class ReflectionService {
     return await JournalService.instance.getEntryByDate(date);
   }
 
-  /// Alias for backward compatibility - same as getJournalEntryForDate
-  static Future<JournalEntry?> getReflectionLogForDate(DateTime date) async {
-    return await getJournalEntryForDate(date);
-  }
-
   /// Get or create journal entry for a specific date
   static Future<JournalEntry> getOrCreateJournalEntryForDate(DateTime date) async {
     final entry = await getJournalEntryForDate(date);
