@@ -141,13 +141,13 @@ class _GroundingExerciseModalState extends State<GroundingExerciseModal>
     return Dialog(
       backgroundColor: Colors.transparent,
       child: Container(
-        width: screenWidth * 0.9,
-        height: screenHeight * 0.8, // Increased height to prevent clipping
+        width: screenWidth * 0.95,
+        height: screenHeight * 0.9,
         constraints: BoxConstraints(
-          maxHeight: screenHeight * 0.85, // Maximum height constraint
-          minHeight: 600, // Minimum height to ensure content fits
+          maxHeight: screenHeight * 0.92,
+          minHeight: 600,
         ),
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -424,17 +424,18 @@ class _GroundingExerciseModalState extends State<GroundingExerciseModal>
           
           const Spacer(),
           
-          // Examples (if available) - made flexible to prevent overflow
+          // Examples (if available) - fixed height container
           if ((currentStepData['examples'] as List).isNotEmpty) ...[
-            Flexible(
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(16),
-                ),
+            Container(
+              width: double.infinity,
+              height: 120, // Fixed height to prevent layout shifts
+              padding: const EdgeInsets.all(20),
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -465,9 +466,9 @@ class _GroundingExerciseModalState extends State<GroundingExerciseModal>
               ),
             ),
           ] else
-            const SizedBox(height: 20),
+            const SizedBox(height: 140), // Match the height when examples are shown
           
-          // Next button with safe area
+          // Next button with safe area - always at bottom
           SafeArea(
             top: false,
             child: SizedBox(
@@ -567,6 +568,34 @@ class _GroundingExerciseModalState extends State<GroundingExerciseModal>
                   textAlign: TextAlign.center,
                 ),
               ],
+            ),
+          ),
+          
+          const SizedBox(height: 24),
+          
+          // Close button
+          SafeArea(
+            top: false,
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.teal.shade800,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Close',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             ),
           ),
         ],

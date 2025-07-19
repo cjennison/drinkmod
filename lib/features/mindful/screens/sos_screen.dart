@@ -19,6 +19,7 @@ class _SOSScreenState extends State<SOSScreen> {
   final GoalManagementService _goalService = GoalManagementService.instance;
   Map<String, dynamic>? _activeGoal;
   bool _isLoading = true;
+  bool _hasCompletedAction = false;
 
   @override
   void initState() {
@@ -42,6 +43,12 @@ class _SOSScreenState extends State<SOSScreen> {
         });
       }
     }
+  }
+
+  void _markActionCompleted() {
+    setState(() {
+      _hasCompletedAction = true;
+    });
   }
 
   void _startRandomUrgeSurfing() {
@@ -69,7 +76,7 @@ class _SOSScreenState extends State<SOSScreen> {
           config: config,
         ),
       ),
-    );
+    ).then((_) => _markActionCompleted());
   }
 
   @override
@@ -99,8 +106,11 @@ class _SOSScreenState extends State<SOSScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Immediate calming message
-              _buildCalmingMessage(),
+              // Completion message or initial calming message
+              if (_hasCompletedAction) 
+                _buildCompletionMessage()
+              else
+                _buildCalmingMessage(),
               
               const SizedBox(height: 24),
               
@@ -120,6 +130,77 @@ class _SOSScreenState extends State<SOSScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildCompletionMessage() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.green.shade50,
+            Colors.teal.shade50,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.green.shade100),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.check_circle,
+            size: 48,
+            color: Colors.green.shade500,
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'You Did Great',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1A1A1A),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'You took action to help yourself feel better. That takes courage and strength.',
+            style: TextStyle(
+              fontSize: 16,
+              height: 1.4,
+              color: Color(0xFF666666),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green.shade600,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+              child: const Text(
+                'Close SOS',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -173,23 +254,57 @@ class _SOSScreenState extends State<SOSScreen> {
   }
 
   Widget _buildGoalSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Your Current Goal',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1A1A1A),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
-        ),
-        const SizedBox(height: 12),
-        GoalProgressCard(
-          goalData: _activeGoal!,
-          variant: GoalCardSize.expanded,
-        ),
-      ],
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.flag,
+                size: 24,
+                color: Colors.blue.shade600,
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Remember Your Goal',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1A1A1A),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'You\'re working toward something important. This temporary moment doesn\'t define your journey.',
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.4,
+              color: Color(0xFF666666),
+            ),
+          ),
+          const SizedBox(height: 16),
+          GoalProgressCard(
+            goalData: _activeGoal!,
+            variant: GoalCardSize.expanded,
+          ),
+        ],
+      ),
     );
   }
 
@@ -360,7 +475,7 @@ class _SOSScreenState extends State<SOSScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) => const BreathingExerciseModal(),
-    );
+    ).then((_) => _markActionCompleted());
   }
 
   void _showGroundingExercise() {
@@ -368,6 +483,6 @@ class _SOSScreenState extends State<SOSScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) => const GroundingExerciseModal(),
-    );
+    ).then((_) => _markActionCompleted());
   }
 }
