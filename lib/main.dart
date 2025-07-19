@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'core/navigation/app_router.dart';
@@ -5,8 +6,22 @@ import 'core/theme/app_theme.dart';
 import 'core/achievements/achievement_helper.dart';
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  runApp(const DrinkmodApp());
+  // Add error handling and debugging
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
+    
+    // Add error handling for unhandled exceptions
+    FlutterError.onError = (FlutterErrorDetails details) {
+      FlutterError.presentError(details);
+      debugPrint('Flutter Error: ${details.exception}');
+      debugPrint('Stack trace: ${details.stack}');
+    };
+    
+    runApp(const DrinkmodApp());
+  }, (error, stack) {
+    debugPrint('Unhandled error: $error');
+    debugPrint('Stack trace: $stack');
+  });
 }
 
 class DrinkmodApp extends StatelessWidget {
@@ -17,14 +32,37 @@ class DrinkmodApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Initialize achievement system with global navigator
-    AchievementHelper.initialize(navigatorKey);
-    
-    return MaterialApp.router(
-      title: 'Drinkmod',
-      theme: AppTheme.lightTheme,
-      routerConfig: AppRouter.router,
-      debugShowCheckedModeBanner: false,
-    );
+    try {
+      // Initialize achievement system with global navigator
+      AchievementHelper.initialize(navigatorKey);
+      
+      return MaterialApp.router(
+        title: 'Drinkmod',
+        theme: AppTheme.lightTheme,
+        routerConfig: AppRouter.router,
+        debugShowCheckedModeBanner: false,
+      );
+    } catch (e, stack) {
+      debugPrint('Error in DrinkmodApp build: $e');
+      debugPrint('Stack trace: $stack');
+      
+      // Return a basic error screen if something goes wrong
+      return MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                const Text('App Initialization Error'),
+                const SizedBox(height: 8),
+                Text('$e'),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
   }
 }
