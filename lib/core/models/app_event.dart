@@ -13,6 +13,7 @@ enum AppEventType {
   urgeSurfingUsed,             // User used urge surfing feature
   reflectionEntryAdded,        // User added a reflection entry
   dailyCheckInCompleted,       // User completed daily check-in
+  sosSessionCompleted,         // User completed an SOS session after taking action
 }
 
 /// Represents an event that occurred in the app for tracking achievements
@@ -268,6 +269,24 @@ class AppEvent {
       type: AppEventType.dailyCheckInCompleted,
       metadata: {
         'checkInLength': checkInLength,
+        ...?additionalData,
+      },
+    );
+  }
+
+  /// Create an SOS session completed event
+  static AppEvent sosSessionCompleted({
+    required DateTime timestamp,
+    required String actionType,
+    required int sessionDurationSeconds,
+    Map<String, dynamic>? additionalData,
+  }) {
+    return AppEvent(
+      timestamp: timestamp,
+      type: AppEventType.sosSessionCompleted,
+      metadata: {
+        'actionType': actionType,
+        'sessionDurationSeconds': sessionDurationSeconds,
         ...?additionalData,
       },
     );

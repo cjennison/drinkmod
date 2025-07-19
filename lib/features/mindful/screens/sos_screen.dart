@@ -1,6 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../../core/services/goal_management_service.dart';
+import '../../../core/services/app_events_service.dart';
+import '../../../core/models/app_event.dart';
 import '../../progress/widgets/goal_progress_card.dart';
 import '../../progress/shared/types/goal_display_types.dart';
 import '../models/meditation_config.dart';
@@ -17,13 +19,17 @@ class SOSScreen extends StatefulWidget {
 
 class _SOSScreenState extends State<SOSScreen> {
   final GoalManagementService _goalService = GoalManagementService.instance;
+  final AppEventsService _eventsService = AppEventsService.instance;
   Map<String, dynamic>? _activeGoal;
   bool _isLoading = true;
   bool _hasCompletedAction = false;
+  DateTime? _sessionStartTime;
+  String _completedActionType = '';
 
   @override
   void initState() {
     super.initState();
+    _sessionStartTime = DateTime.now();
     _loadGoalData();
   }
 
@@ -45,9 +51,10 @@ class _SOSScreenState extends State<SOSScreen> {
     }
   }
 
-  void _markActionCompleted() {
+  void _markActionCompleted(String actionType) {
     setState(() {
       _hasCompletedAction = true;
+      _completedActionType = actionType;
     });
   }
 
@@ -76,7 +83,7 @@ class _SOSScreenState extends State<SOSScreen> {
           config: config,
         ),
       ),
-    ).then((_) => _markActionCompleted());
+    ).then((_) => _markActionCompleted('urge_surfing'));
   }
 
   @override
@@ -181,7 +188,22 @@ class _SOSScreenState extends State<SOSScreen> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () async {
+                // Record SOS completion event before closing
+                final sessionDuration = DateTime.now().difference(_sessionStartTime!).inSeconds;
+                await _eventsService.recordEvent(AppEvent.sosSessionCompleted(
+                  timestamp: DateTime.now(),
+                  actionType: _completedActionType,
+                  sessionDurationSeconds: sessionDuration,
+                  additionalData: {
+                    'sessionStartTime': _sessionStartTime!.toIso8601String(),
+                  },
+                ));
+                
+                if (mounted) {
+                  Navigator.of(context).pop();
+                }
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green.shade600,
                 foregroundColor: Colors.white,
@@ -475,7 +497,7 @@ class _SOSScreenState extends State<SOSScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) => const BreathingExerciseModal(),
-    ).then((_) => _markActionCompleted());
+    ).then((_) => _markActionCompleted('breathing_exercise'));
   }
 
   void _showGroundingExercise() {
@@ -483,6 +505,6 @@ class _SOSScreenState extends State<SOSScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) => const GroundingExerciseModal(),
-    ).then((_) => _markActionCompleted());
+    ).then((_) => _markActionCompleted('grounding_exercise'));
   }
 }
