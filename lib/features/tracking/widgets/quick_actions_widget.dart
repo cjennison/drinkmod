@@ -33,7 +33,7 @@ class QuickActionsWidget extends StatelessWidget {
     );
     
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
+      margin: EdgeInsets.zero,
       child: Column(
         children: [
           if (isRetroactive) ...[

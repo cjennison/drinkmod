@@ -33,7 +33,7 @@ class DailyStatusCard extends StatelessWidget {
     final isAlcoholFreeDayDeviation = drinkStatus == DrinkStatus.alcoholFreeViolation;
     
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
+      margin: EdgeInsets.zero,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,

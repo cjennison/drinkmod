@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/services/goal_management_service.dart';
 import '../../../core/services/app_events_service.dart';
 import '../../../core/models/app_event.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../progress/widgets/goal_progress_card.dart';
 import '../../progress/shared/types/goal_display_types.dart';
 import '../models/meditation_config.dart';
@@ -109,7 +110,7 @@ class _SOSScreenState extends State<SOSScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: AppSpacing.screenPadding,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

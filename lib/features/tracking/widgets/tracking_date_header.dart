@@ -50,7 +50,7 @@ class TrackingDateHeader extends StatelessWidget {
                   onTap: onCalendarTap,
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    margin: const EdgeInsets.symmetric(horizontal: 8),
+                    margin: EdgeInsets.zero,
                     decoration: BoxDecoration(
                       color: Colors.grey.shade50,
                       borderRadius: BorderRadius.circular(12),

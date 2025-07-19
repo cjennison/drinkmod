@@ -22,7 +22,7 @@ class DrinkEntriesList extends StatelessWidget {
   Widget build(BuildContext context) {
     if (entries.isEmpty) {
       return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20),
+        margin: EdgeInsets.zero,
         padding: const EdgeInsets.all(40),
         decoration: BoxDecoration(
           color: Colors.grey.shade50,
@@ -57,7 +57,7 @@ class DrinkEntriesList extends StatelessWidget {
     }
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
+      margin: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

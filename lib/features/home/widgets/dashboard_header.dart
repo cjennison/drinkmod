@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/drink_status_utils.dart';
 import '../../../core/services/hive_database_service.dart';
 
@@ -31,7 +32,7 @@ class DashboardHeader extends StatelessWidget {
     
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: AppSpacing.screenPadding, // Use consistent padding
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,

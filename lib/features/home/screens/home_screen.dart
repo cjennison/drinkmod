@@ -5,6 +5,7 @@ import '../../../core/services/hive_database_service.dart';
 import '../../../core/services/goal_management_service.dart';
 import '../../../core/utils/progress_metrics_service.dart';
 import '../../../core/achievements/achievement_helper.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../tracking/screens/drink_logging_screen.dart';
 import '../../tracking/screens/drink_logging_cubit.dart';
 import '../../tracking/screens/tracking_screen.dart';
@@ -264,7 +265,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         onRefresh: _refreshHomeData,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16.0),
+          padding: AppSpacing.screenPadding,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

@@ -215,7 +215,7 @@ class _GoalProgressCardState extends AdaptiveGoalCardState<GoalProgressCard> {
     final actions = data['recentActions'] as List<dynamic>? ?? [];
     
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -311,14 +311,8 @@ class _GoalProgressCardState extends AdaptiveGoalCardState<GoalProgressCard> {
   }
 
   EdgeInsets _getCardMargin() {
-    switch (widget.variant) {
-      case GoalCardSize.compact:
-        return const EdgeInsets.symmetric(horizontal: 8, vertical: 4);
-      case GoalCardSize.standard:
-        return const EdgeInsets.symmetric(horizontal: 12, vertical: 6);
-      case GoalCardSize.expanded:
-        return const EdgeInsets.symmetric(horizontal: 16, vertical: 8);
-    }
+    // Use zero margin - let parent handle spacing
+    return EdgeInsets.zero;
   }
 
   DateTime? _calculateEndDate() {

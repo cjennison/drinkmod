@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/services/hive_database_service.dart';
 import '../../../core/utils/drink_intervention_utils.dart';
+import '../../../core/theme/app_spacing.dart';
 
 /// Week overview widget showing drinking patterns for the week
 class WeekOverviewWidget extends StatelessWidget {
@@ -22,8 +23,8 @@ class WeekOverviewWidget extends StatelessWidget {
     final weekStart = date.subtract(Duration(days: date.weekday - 1));
     
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(20),
+      margin: EdgeInsets.zero, // Remove margin to let parent handle spacing
+      padding: AppSpacing.screenPadding, // Use consistent padding
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),

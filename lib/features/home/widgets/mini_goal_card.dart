@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/services/goal_management_service.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../progress/widgets/goal_progress_card.dart';
 import '../../progress/shared/types/goal_display_types.dart';
 
@@ -68,12 +69,12 @@ class _MiniGoalCardState extends State<MiniGoalCard> {
   Widget _buildGoalCTACard(BuildContext context) {
     return Card(
       elevation: 3,
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: EdgeInsets.zero, // Let parent handle spacing
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
       child: Container(
-        padding: const EdgeInsets.all(20),
+        padding: AppSpacing.screenPadding, // Use consistent padding
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           gradient: LinearGradient(

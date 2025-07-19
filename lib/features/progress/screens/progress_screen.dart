@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/services/goal_management_service.dart';
 import '../../../core/services/hive_database_service.dart';
 import '../../../core/achievements/achievement_helper.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../widgets/goal_card.dart';
 import '../widgets/goal_history_modal.dart';
 import '../services/chart_data_service.dart';
@@ -243,7 +244,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
     }
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: AppSpacing.screenPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -355,7 +356,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: AppSpacing.screenPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -396,7 +397,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
   Widget _buildNoActiveGoalContent() {
     return Padding(
-      padding: const EdgeInsets.all(24.0),
+      padding: AppSpacing.screenPadding,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [

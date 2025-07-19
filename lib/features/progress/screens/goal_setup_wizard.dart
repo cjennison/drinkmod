@@ -146,64 +146,232 @@ class _GoalSetupWizardState extends State<GoalSetupWizard> {
     final shouldReplace = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('Replace Current Goal?'),
-        content: Column(
+      builder: (context) => _buildGoalReplacementDialog(),
+    );
+    
+    if (shouldReplace == true) {
+      await _archiveCurrentGoal();
+      // Continue with goal setup wizard
+    } else {
+      Navigator.of(context).pop(); // Return to previous screen
+    }
+  }
+
+  Widget _buildGoalReplacementDialog() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    
+    // Get properly formatted goal name
+    final goalTypeString = _existingGoal?['goalType']?.toString() ?? '';
+    final formattedGoalName = goalTypeString.startsWith('GoalType.') 
+        ? _formatGoalTypeName(goalTypeString)
+        : (_existingGoal?['title'] ?? 'Current Goal');
+    
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        width: screenWidth * 0.9,
+        constraints: const BoxConstraints(
+          maxWidth: 400,
+          minHeight: 300,
+        ),
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              const Color(0xFFF39C12), // App warning color
+              const Color(0xFF4A90E2), // App primary color
+              const Color(0xFF357ABD), // App primary variant
+            ],
+          ),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('You already have an active goal:'),
-            const SizedBox(height: 12),
+            // Header with icon and title
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Icon(
+                    Icons.swap_horiz,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                const Expanded(
+                  child: Text(
+                    'Replace Current Goal?',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 24),
+            
+            // Current goal display
             Container(
-              padding: const EdgeInsets.all(12),
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue.shade200),
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.3),
+                  width: 1,
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    _existingGoal?['title'] ?? 'Current Goal',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
+                  const Text(
+                    'Your Active Goal:',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 8),
                   Text(
-                    'Type: ${_existingGoal?['goalType'] ?? 'Unknown'}',
-                    style: const TextStyle(fontSize: 14),
+                    formattedGoalName,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            
+            const SizedBox(height: 20),
+            
+            // Explanation text
             const Text(
-              'Creating a new goal will archive your current goal and replace it. Your progress will be saved in your goal history.',
+              'Creating a new goal will save your current progress and start fresh with your new challenge.',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                height: 1.4,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            
+            const SizedBox(height: 32),
+            
+            // Action buttons
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.white.withValues(alpha: 0.2),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.3),
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                    child: const Text(
+                      'Keep Current Goal',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFFF39C12), // App warning color
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Replace Goal',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Keep Current Goal'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.orange,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Replace Goal'),
-          ),
-        ],
       ),
     );
+  }
 
-    if (shouldReplace != true && mounted) {
-      // User chose to keep current goal, exit wizard
-      Navigator.of(context).pop();
+  String _formatGoalTypeName(String goalTypeString) {
+    switch (goalTypeString) {
+      case 'GoalType.dailyLimit':
+        return 'Daily Drink Limit';
+      case 'GoalType.weeklyLimit':
+      case 'GoalType.weeklyReduction':
+        return 'Weekly Reduction';
+      case 'GoalType.dryDays':
+      case 'GoalType.alcoholFreeDays':
+        return 'Alcohol-Free Days';
+      case 'GoalType.streakDays':
+      case 'GoalType.streakMaintenance':
+        return 'Streak Maintenance';
+      case 'GoalType.reductionPercent':
+        return 'Reduction Goal';
+      case 'GoalType.customTarget':
+      case 'GoalType.customGoal':
+        return 'Custom Goal';
+      case 'GoalType.interventionWins':
+        return 'Intervention Wins';
+      case 'GoalType.moodImprovement':
+        return 'Mood Improvement';
+      case 'GoalType.costSavings':
+        return 'Cost Savings';
+      default:
+        return 'Current Goal';
+    }
+  }
+
+  Future<void> _archiveCurrentGoal() async {
+    // Archive the current goal by completing it
+    try {
+      final goalService = GoalManagementService.instance;
+      await goalService.completeActiveGoal();
+    } catch (e) {
+      debugPrint('Error archiving goal: $e');
     }
   }
   

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/utils/drink_status_utils.dart';
 import '../../../core/services/hive_database_service.dart';
+import '../../../core/theme/app_spacing.dart';
 
 /// Today's status card showing current progress and daily goal
 class TodayStatusCard extends StatelessWidget {
@@ -33,8 +34,8 @@ class TodayStatusCard extends StatelessWidget {
     final statusIcon = DrinkDayResultUtils.getStateIcon(dayResultState);
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(20),
+      margin: EdgeInsets.zero, // Let parent handle spacing
+      padding: AppSpacing.screenPadding, // Use consistent padding
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,

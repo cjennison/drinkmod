@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_spacing.dart';
 
 /// Quick action buttons for home screen drink logging
 class HomeQuickActions extends StatelessWidget {
@@ -14,7 +15,7 @@ class HomeQuickActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
+      margin: EdgeInsets.zero, // Let parent handle spacing
       child: Row(
         children: [
           Expanded(

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../models/meditation_config.dart';
 import '../../../core/services/journal_service.dart';
 import '../../../core/models/journal_entry.dart';
+import '../../../core/theme/app_spacing.dart';
 import 'meditation_session_screen.dart';
 import 'journal_screen.dart';
 import 'sos_screen.dart';
@@ -48,7 +49,7 @@ class _MindfulScreenState extends State<MindfulScreen> {
       backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
+          padding: AppSpacing.screenPadding,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

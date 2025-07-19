@@ -6,6 +6,7 @@ import '../../../core/services/hive_database_service.dart';
 import '../../../core/utils/drink_calculator.dart';
 import '../../../core/utils/drink_intervention_utils.dart';
 import '../../../core/achievements/achievement_helper.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../shared/widgets/before_journey_banner.dart';
 import '../widgets/drink_item_view_modal.dart';
 import '../widgets/tracking_date_header.dart';
@@ -179,7 +180,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
           ),
           // Scrollable content
           SliverPadding(
-            padding: const EdgeInsets.all(16),
+            padding: AppSpacing.screenPadding,
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 // Daily status card
@@ -234,7 +235,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
   Widget _buildFutureDateBlock() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: AppSpacing.screenPadding,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -449,7 +450,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
     );
     
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: AppSpacing.screenPadding,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -472,7 +473,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
           if (warning != null) ...[
             const SizedBox(height: 16),
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: AppSpacing.screenPadding,
               decoration: BoxDecoration(
                 color: warning.severity == QuickLogWarningSeverity.error 
                     ? Colors.red.shade50 
@@ -662,7 +663,7 @@ class _TrackingScreenState extends State<TrackingScreen> {
           ] else ...[
             // Show message when quick log is not available
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: AppSpacing.screenPadding,
               child: Column(
                 children: [
                   Icon(
